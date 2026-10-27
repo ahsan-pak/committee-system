@@ -5,53 +5,154 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Committee System</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--g:#0f766e;--g2:#115e59;--bg:#f1f5f9;--card:#fff;--tx:#0f172a;--mu:#64748b;--bd:#e2e8f0;--red:#dc2626;--amb:#d97706;--ok:#16a34a}
+:root{--ink:#12203A;--ink2:#1C2E52;--paper:#F2F4F7;--card:#fff;--line:#E3E7EE;--tx:#152033;--mu:#667085;--brand:#0A7C66;--brandd:#086654;--brandl:#E3F4EF;--amber:#9A6412;--amberl:#FDF1DC;--red:#C2362B;--redl:#FBE6E3}
 *{box-sizing:border-box}
-body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--tx);font-size:15px}
-h2,h3{margin:0 0 10px}
-.wrap{max-width:1100px;margin:0 auto;padding:14px}
-.top{background:var(--g);color:#fff;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
-.top b{font-size:17px}
-.nav{display:flex;gap:6px;overflow-x:auto;padding:10px 14px;background:#fff;border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:5}
-.nav button{border:0;background:#f1f5f9;padding:9px 14px;border-radius:8px;cursor:pointer;white-space:nowrap;font-size:14px;color:var(--tx)}
-.nav button.on{background:var(--g);color:#fff}
-.nav .cnt{background:var(--red);color:#fff;border-radius:10px;padding:0 6px;font-size:12px;margin-left:5px}
-.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:16px;margin-bottom:14px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
-.grid .card{margin:0}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font-family:'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;background:var(--paper);color:var(--tx);font-size:15px;line-height:1.5;font-variant-numeric:tabular-nums}
+h1,h2,h3{margin:0;letter-spacing:-.01em}
+h2{font-size:17px;margin-bottom:12px}
+h3{font-size:15px;margin-bottom:10px}
+.sec{margin:28px 0 12px}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
 .muted{color:var(--mu);font-size:13px}
-label{display:block;font-size:13px;color:var(--mu);margin:10px 0 4px}
-input,select,textarea{width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;font-size:15px;background:#fff;font-family:inherit}
-input[type=radio]{width:auto}
-.btn{background:var(--g);color:#fff;border:0;padding:10px 16px;border-radius:8px;cursor:pointer;font-size:14px;font-weight:600}
-.btn:hover{background:var(--g2)}
-.btn:disabled{opacity:.5;cursor:wait}
-.btn.sm{padding:6px 10px;font-size:13px}
-.btn.red{background:var(--red)}
-.btn.gray{background:#64748b}
-.btn.out{background:#fff;color:var(--g);border:1px solid var(--g)}
-.top .btn{background:#fff;color:var(--g)}
-table{width:100%;border-collapse:collapse;font-size:14px}
-th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--bd);vertical-align:middle}
-th{color:var(--mu);font-weight:600;font-size:12px;text-transform:uppercase}
-.tw{overflow-x:auto}
-.badge{display:inline-block;padding:3px 9px;border-radius:12px;font-size:12px;font-weight:600}
-.badge.pending{background:#fef3c7;color:#92400e}
-.badge.approved,.badge.verified,.badge.paid,.badge.open{background:#dcfce7;color:#166534}
-.badge.rejected,.badge.closed{background:#fee2e2;color:#991b1b}
+
+.shell{display:grid;grid-template-columns:248px 1fr;min-height:100vh}
+.side{background:var(--ink);color:#C9D3E6;display:flex;flex-direction:column;padding:18px 14px;position:sticky;top:0;height:100vh}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:16px;color:#fff;padding:4px 8px 18px}
+.nav{display:flex;flex-direction:column;gap:2px;flex:1;overflow:auto}
+.nav button{position:relative;display:flex;align-items:center;gap:12px;border:0;background:transparent;color:#B8C4DA;padding:10px 12px;border-radius:10px;cursor:pointer;font:inherit;font-weight:600;text-align:left;width:100%;transition:background .15s,color .15s}
+.nav button:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav button.on{background:rgba(52,211,168,.14);color:#fff}
+.nav button.on svg{color:#34D3A8}
+.nav .cnt{margin-left:auto;background:#F0B44C;color:#3a2600;border-radius:999px;font-size:12px;font-weight:800;padding:0 7px;min-width:20px;text-align:center}
+.who{display:flex;align-items:center;gap:10px;padding:14px 8px 0;border-top:1px solid rgba(255,255,255,.1);margin-top:10px}
+.av{width:34px;height:34px;border-radius:10px;background:#34D3A8;color:#06352A;display:grid;place-items:center;font-weight:800;flex:none}
+.wn{display:flex;flex-direction:column;min-width:0;flex:1}
+.wn b{color:#fff;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wn span{font-size:12px;color:#8FA0BF}
+.ico{border:0;background:transparent;color:#B8C4DA;cursor:pointer;padding:7px;border-radius:8px;display:grid;place-items:center}
+.ico:hover{background:rgba(255,255,255,.08);color:#fff}
+.main{min-width:0}
+.wrap{max-width:1080px;margin:0 auto;padding:28px 28px 56px}
+.mtop{display:none}
+.ph{margin-bottom:20px}
+.ph h1{font-size:26px;font-weight:800;letter-spacing:-.02em}
+.ph p{margin:2px 0 0;color:var(--mu)}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:14px}
+.card.tw{padding:6px 10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px}
+.grid .card{margin:0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+.two .card{margin:0}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-@media(max-width:560px){.row{grid-template-columns:1fr}}
-.auth{max-width:420px;margin:30px auto}
-.tabs2{display:flex;margin-bottom:10px}
-.tabs2 button{flex:1;padding:10px;border:0;background:#e2e8f0;cursor:pointer;font-weight:600}
-.tabs2 button.on{background:var(--g);color:#fff}
-.bank{background:#f0fdfa;border:1px dashed var(--g);border-radius:10px;padding:12px;margin:10px 0;line-height:1.7}
-.empty{text-align:center;color:var(--mu);padding:30px}
-#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:11px 18px;border-radius:8px;display:none;z-index:99;max-width:90%;text-align:center}
-#toast.err{background:var(--red)}
+.tw{overflow-x:auto}
+
+.hero{background:var(--ink);color:#fff;border-radius:18px;padding:24px 26px;display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-bottom:20px}
+.hl{color:#9FB0CE;font-size:14px;font-weight:600}
+.hv{font-size:40px;font-weight:800;letter-spacing:-.02em;line-height:1.15;margin:2px 0}
+.hs{color:#9FB0CE;font-size:14px}
+.hstrip{display:flex;gap:30px;margin:0;align-self:flex-end;flex-wrap:wrap}
+.hstrip dt{color:#9FB0CE;font-size:13px}
+.hstrip dd{margin:0;font-size:20px;font-weight:700}
+
+.list .li{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.list .li:last-child{border-bottom:0}
+.li .t{flex:1;min-width:0}
+.li .t b{display:block;font-size:14px}
+.li .t span{color:var(--mu);font-size:13px}
+.li .amt2{font-weight:700}
+.note{background:var(--amberl);color:var(--amber);border-radius:12px;padding:12px 14px;margin-bottom:16px;font-weight:600}
+
+.cc-h{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.amt{font-size:24px;font-weight:800;letter-spacing:-.02em}
+.amt small{font-size:13px;font-weight:600;color:var(--mu);letter-spacing:0}
+.slots{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}
+.slot{width:28px;height:28px;border-radius:8px;border:1.5px dashed #C4CCDA;color:#98A2B3;display:grid;place-items:center;font-size:12px;font-weight:700}
+.slot.on{border:1.5px solid var(--brand);background:var(--brandl);color:var(--brandd)}
+.slot.me{background:var(--brand);border-color:var(--brand);color:#fff}
+.bar{height:6px;background:var(--line);border-radius:6px;overflow:hidden;margin:10px 0 4px}
+.bar i{display:block;height:100%;background:var(--brand);border-radius:6px}
+
+label{display:block;font-size:13px;font-weight:600;color:#475467;margin:14px 0 6px}
+input,select,textarea{width:100%;padding:11px 12px;border:1px solid #CBD2DE;border-radius:10px;font:inherit;background:#fff;color:var(--tx)}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(10,124,102,.15)}
+input[type=radio]{width:auto}
+.btn{background:var(--brand);color:#fff;border:0;padding:11px 18px;border-radius:10px;cursor:pointer;font:inherit;font-size:14px;font-weight:700;transition:background .15s}
+.btn:hover{background:var(--brandd)}
+.btn:disabled{opacity:.55;cursor:wait}
+.btn.sm{padding:7px 12px;font-size:13px;border-radius:8px}
+.btn.red{background:var(--redl);color:var(--red)}
+.btn.red:hover{background:#F6D3CE}
+.btn.gray{background:#EEF1F6;color:#344054}
+.btn.gray:hover{background:#E1E6EF}
+.btn.out{background:#fff;color:var(--brandd);border:1px solid #BFE3D8}
+.btn.out:hover{background:var(--brandl)}
 .actions{display:flex;gap:6px;flex-wrap:wrap}
-.stat{font-size:22px;font-weight:700;color:var(--g)}
+
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;padding:11px 12px;border-bottom:1px solid var(--line);color:var(--mu);font-weight:600;font-size:13px;white-space:nowrap}
+td{text-align:left;padding:12px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+
+.badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;text-transform:capitalize}
+.badge i{width:6px;height:6px;border-radius:50%;background:currentColor}
+.badge.pending{background:var(--amberl);color:var(--amber)}
+.badge.approved,.badge.verified,.badge.paid,.badge.open{background:var(--brandl);color:var(--brandd)}
+.badge.rejected,.badge.closed{background:var(--redl);color:var(--red)}
+
+.bank{background:var(--brandl);border:1px solid #BFE3D8;border-radius:12px;padding:12px 14px;margin:10px 0;line-height:1.7}
+.empty{text-align:center;color:var(--mu);padding:34px 16px;border:1.5px dashed #CBD2DE;border-radius:14px;background:#fff;margin-bottom:14px}
+.empty svg{color:#98A2B3;margin-bottom:6px}
+.empty p{margin:0 0 12px}
+.stat{font-size:26px;font-weight:800;color:var(--brand)}
+
+#toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;display:none;z-index:99;max-width:90%;text-align:center;box-shadow:0 10px 30px rgba(18,32,58,.25);font-weight:600}
+#toast.err{background:var(--red)}
+
+.auth{display:grid;grid-template-columns:1.05fr 1fr;min-height:100vh}
+.ap{background:var(--ink);color:#fff;padding:40px 48px;display:flex;flex-direction:column;justify-content:space-between;gap:32px}
+.ap .brand{padding:0}
+.ap h1{font-size:38px;line-height:1.12;font-weight:800;letter-spacing:-.02em;margin:0 0 14px;max-width:16ch}
+.ap p{color:#B8C4DA;max-width:42ch;margin:0}
+.ap .slots{margin-top:28px;max-width:300px}
+.ap .slot{width:38px;height:38px;border-color:rgba(255,255,255,.25);color:rgba(255,255,255,.5);font-size:14px}
+.ap .slot.on{background:rgba(52,211,168,.18);border-color:#34D3A8;color:#8CF0D0}
+.ap .slot.me{background:#34D3A8;color:#06352A;border-color:#34D3A8}
+.fine{color:#8FA0BF;font-size:13px}
+.af{display:grid;place-items:center;padding:32px 20px;background:#fff}
+.af-in{width:100%;max-width:390px}
+.af h2{font-size:26px;font-weight:800;margin-bottom:4px;letter-spacing:-.02em}
+.seg{display:flex;background:#EEF1F6;border-radius:10px;padding:4px;margin:20px 0 4px}
+.seg button{flex:1;border:0;background:transparent;padding:9px;border-radius:8px;font:inherit;font-weight:700;color:#475467;cursor:pointer}
+.seg button.on{background:#fff;color:var(--tx);box-shadow:0 1px 3px rgba(16,24,40,.12)}
+
+@media(max-width:899px){
+  .shell{display:block}
+  .side{position:fixed;left:0;right:0;bottom:0;top:auto;height:auto;flex-direction:row;padding:6px 6px calc(6px + env(safe-area-inset-bottom));z-index:20}
+  .side .brand,.side .who{display:none}
+  .nav{flex-direction:row;overflow-x:auto;gap:2px}
+  .nav button{flex-direction:column;gap:3px;font-size:11px;padding:7px 10px;width:auto;min-width:70px;align-items:center;text-align:center;white-space:nowrap}
+  .nav .cnt{position:absolute;top:2px;right:10px;margin:0;font-size:11px;min-width:18px}
+  .mtop{display:flex;justify-content:space-between;align-items:center;background:var(--ink);color:#fff;padding:12px 16px}
+  .mtop .brand{padding:0}
+  .wrap{padding:18px 16px 110px}
+  .ph h1{font-size:22px}
+  .hv{font-size:32px}
+  .two{grid-template-columns:1fr}
+  #toast{bottom:90px}
+  .auth{grid-template-columns:1fr}
+  .ap{padding:22px 20px;gap:0}
+  .ap h1{font-size:24px;margin:0}
+  .ap .slots,.ap p,.fine{display:none}
+  .af{padding:24px 20px 40px;place-items:start center}
+}
+@media(max-width:560px){.row{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
@@ -67,14 +168,14 @@ const EMAIL_DOMAIN = '@committee-app.com';
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let me = null, tab = '', ch = null, tmr = null;
-let D = {committees:[],memberships:[],payments:[],payouts:[],settings:{},profiles:[]};
+let D = {committees:[],memberships:[],payments:[],payouts:[],accounts:[],profiles:[]};
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money = n => 'Rs ' + Number(n || 0).toLocaleString('en-PK');
 const fdate = d => d ? new Date(d).toLocaleDateString('en-GB') : '-';
-const badge = s => `<span class="badge ${esc(s)}">${esc(s)}</span>`;
-const empty = t => `<div class="card empty">${esc(t)}</div>`;
+const badge = s => `<span class="badge ${esc(s)}"><i></i>${esc(s)}</span>`;
+const empty = (t, icon, btn) => `<div class="empty">${ic(icon || 'inbox', 28)}<p>${esc(t)}</p>${btn ? `<button class="btn sm" onclick="setTab('${btn[0]}')">${esc(btn[1])}</button>` : ''}</div>`;
 const cleanPhone = p => String(p || '').replace(/[^0-9]/g, '');
 
 function toast(m, err) {
@@ -83,27 +184,44 @@ function toast(m, err) {
 }
 
 // ================= AUTH =================
+function logoMark() {
+  return '<svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><rect x="2" y="2" width="10" height="10" rx="2.5" fill="#34D3A8"/><rect x="14" y="2" width="10" height="10" rx="2.5" fill="currentColor" opacity=".35"/><rect x="2" y="14" width="10" height="10" rx="2.5" fill="currentColor" opacity=".35"/><rect x="14" y="14" width="10" height="10" rx="2.5" fill="currentColor" opacity=".35"/></svg>';
+}
+
 function showAuth(mode = 'login') {
+  const demo = Array.from({ length: 12 }, (_, i) => `<span class="slot ${i < 7 ? 'on' : ''} ${i === 7 ? 'me' : ''}">${i + 1}</span>`).join('');
   $('app').innerHTML = `
-  <div class="wrap"><div class="auth card">
-    <h2 style="text-align:center;color:var(--g)">Committee System</h2>
-    <div class="tabs2">
-      <button class="${mode==='login'?'on':''}" onclick="showAuth('login')">Login</button>
-      <button class="${mode==='signup'?'on':''}" onclick="showAuth('signup')">Sign Up</button>
-    </div>
-    ${mode === 'login' ? `
-      <label>Phone Number</label><input id="l_phone" type="tel" placeholder="03001234567">
-      <label>Password</label><input id="l_pass" type="password" onkeydown="if(event.key==='Enter')doLogin()">
-      <br><button class="btn" style="width:100%" id="lbtn" onclick="doLogin()">Login</button>
-    ` : `
-      <label>Full Name *</label><input id="s_name">
-      <label>Phone Number *</label><input id="s_phone" type="tel" placeholder="03001234567">
-      <label>CNIC (optional)</label><input id="s_cnic" placeholder="35202-1234567-1">
-      <label>Password * (minimum 6 characters)</label><input id="s_pass" type="password">
-      <label>Confirm Password *</label><input id="s_pass2" type="password">
-      <br><button class="btn" style="width:100%" id="sbtn" onclick="doSignup()">Create Account</button>
-    `}
-  </div></div>`;
+  <div class="auth">
+    <section class="ap">
+      <div class="brand">${logoMark()}<span>Committee System</span></div>
+      <div>
+        <h1>Every installment, recorded and verified.</h1>
+        <p>Join a committee, pay by bank or wallet, and see each payment confirmed by your admin.</p>
+        <div class="slots" aria-hidden="true">${demo}</div>
+      </div>
+      <span class="fine">One slot per member, one payout per month.</span>
+    </section>
+    <section class="af"><div class="af-in">
+      <h2>${mode === 'login' ? 'Welcome back' : 'Create your account'}</h2>
+      <p class="muted">${mode === 'login' ? 'Log in with your phone number and password.' : 'Your name, phone number and a password are all you need.'}</p>
+      <div class="seg">
+        <button class="${mode === 'login' ? 'on' : ''}" onclick="showAuth('login')">Log in</button>
+        <button class="${mode === 'signup' ? 'on' : ''}" onclick="showAuth('signup')">Sign up</button>
+      </div>
+      ${mode === 'login' ? `
+        <label>Phone number</label><input id="l_phone" type="tel" inputmode="numeric" placeholder="03001234567">
+        <label>Password</label><input id="l_pass" type="password" onkeydown="if(event.key==='Enter')doLogin()">
+        <br><button class="btn" style="width:100%" id="lbtn" onclick="doLogin()">Log in</button>
+      ` : `
+        <label>Full name *</label><input id="s_name">
+        <label>Phone number *</label><input id="s_phone" type="tel" inputmode="numeric" placeholder="03001234567">
+        <label>CNIC (optional)</label><input id="s_cnic" placeholder="35202-1234567-1">
+        <label>Password * (minimum 6 characters)</label><input id="s_pass" type="password">
+        <label>Confirm password *</label><input id="s_pass2" type="password">
+        <br><button class="btn" style="width:100%" id="sbtn" onclick="doSignup()">Create account</button>
+      `}
+    </div></section>
+  </div>`;
 }
 
 async function doLogin() {
@@ -151,7 +269,7 @@ async function boot() {
   const { data: p, error } = await sb.from('profiles').select('*').eq('id', session.user.id).single();
   if (error || !p) { toast('Profile not found, please log in again', 1); await sb.auth.signOut(); return showAuth('login'); }
   me = p;
-  tab = me.role === 'admin' ? 'a_requests' : 'm_committees';
+  tab = me.role === 'admin' ? 'a_home' : 'm_home';
   await loadData();
   renderShell();
   subscribeRealtime();
@@ -164,13 +282,13 @@ async function loadData() {
     sb.from('memberships').select('*, profiles(name,phone), committees(name,monthly_amount)').order('created_at', { ascending: false }),
     sb.from('payments').select('*, profiles(name,phone), memberships(committees(name))').order('created_at', { ascending: false }),
     sb.from('payouts').select('*, profiles(name,phone), committees(name)').order('created_at', { ascending: false }),
-    sb.from('settings').select('*').eq('id', 1).single()
+    sb.from('payment_accounts').select('*').order('created_at', { ascending: true })
   ];
   if (admin) q.push(sb.from('profiles').select('*').order('created_at', { ascending: false }));
   const r = await Promise.all(q);
   const names = ['committees', 'memberships', 'payments', 'payouts'];
   names.forEach((n, i) => { if (r[i].error) console.error(n, r[i].error); D[n] = r[i].data || []; });
-  D.settings = r[4].data || {};
+  D.accounts = r[4].data || [];
   if (admin) D.profiles = r[5].data || [];
 }
 
@@ -192,18 +310,58 @@ async function refresh() {
 }
 
 // ================= SHELL =================
+const ICONS = {
+  home: '<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/>',
+  inbox: '<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5h13L22 12v7H2v-7z"/>',
+  card: '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>',
+  layers: '<path d="M12 3 2 8l10 5 10-5-10-5z"/><path d="m2 13 10 5 10-5"/>',
+  users: '<circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-3.5 3-6 7-6s7 2.5 7 6"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7"/><path d="M18 14.5c2.5.6 4 2.5 4 5.5"/>',
+  down: '<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/>',
+  bar: '<path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/>',
+  bank: '<path d="M3 10 12 4l9 6"/><path d="M5 10v8"/><path d="M10 10v8"/><path d="M14 10v8"/><path d="M19 10v8"/><path d="M3 21h18"/>',
+  history: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  logout: '<path d="M9 21H5V3h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>'
+};
+const ic = (n, s = 18) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n] || ''}</svg>`;
+
 const TABS = {
-  member: [['m_committees', 'Committees'], ['m_pay', 'Make Payment'], ['m_history', 'History'], ['m_payouts', 'Payouts']],
-  admin: [['a_requests', 'Requests'], ['a_payments', 'Payments'], ['a_committees', 'Committees'], ['a_members', 'Members'],
-          ['a_payouts', 'Payouts'], ['a_reports', 'Reports'], ['a_bank', 'Bank Details']]
+  member: [['m_home', 'Overview', 'home'], ['m_committees', 'Committees', 'layers'], ['m_pay', 'Make payment', 'card'],
+           ['m_history', 'History', 'history'], ['m_payouts', 'Payouts', 'down']],
+  admin: [['a_home', 'Overview', 'home'], ['a_requests', 'Requests', 'inbox'], ['a_payments', 'Payments', 'card'],
+          ['a_committees', 'Committees', 'layers'], ['a_members', 'Members', 'users'], ['a_payouts', 'Payouts', 'down'],
+          ['a_reports', 'Reports', 'bar'], ['a_bank', 'Accounts', 'bank']]
+};
+const SUBS = {
+  m_home: 'Your payments and committees at a glance',
+  m_committees: 'Browse committees and request to join',
+  m_pay: 'Pay by bank, wallet or cash and upload your proof',
+  m_history: 'Every payment you have submitted',
+  m_payouts: 'Your turn in each committee and payouts received',
+  a_home: 'What needs your attention today',
+  a_requests: 'Approve or reject people who want to join',
+  a_payments: 'Check proofs and verify payments',
+  a_committees: 'Create and manage committees',
+  a_members: 'Everyone who has signed up',
+  a_payouts: 'Record who received the monthly pot',
+  a_reports: 'Collections per committee and member',
+  a_bank: 'Banks and wallets members can pay into'
 };
 
 function renderShell() {
-  $('app').innerHTML = `
-    <div class="top"><div><b>Committee System</b><br><span style="font-size:13px;opacity:.9">${esc(me.name)} ${me.role === 'admin' ? '(Admin)' : ''}</span></div>
-    <button class="btn sm" onclick="logout()">Logout</button></div>
-    <div class="nav" id="nav"></div>
-    <div class="wrap" id="content"></div>`;
+  const ini = (me.name || '?').trim().charAt(0).toUpperCase();
+  $('app').innerHTML = `<div class="shell">
+    <aside class="side">
+      <div class="brand">${logoMark()}<span>Committee System</span></div>
+      <nav id="nav" class="nav"></nav>
+      <div class="who"><div class="av">${esc(ini)}</div>
+        <div class="wn"><b>${esc(me.name)}</b><span>${me.role === 'admin' ? 'Administrator' : 'Member'}</span></div>
+        <button class="ico" onclick="logout()" title="Log out" aria-label="Log out">${ic('logout')}</button></div>
+    </aside>
+    <main class="main">
+      <div class="mtop"><div class="brand">${logoMark()}<span>Committee System</span></div>
+        <button class="ico" onclick="logout()" aria-label="Log out">${ic('logout')}</button></div>
+      <div id="content" class="wrap"></div>
+    </main></div>`;
   renderNav(); renderTab();
 }
 
@@ -212,40 +370,108 @@ function renderNav() {
   const pr = D.memberships.filter(m => m.status === 'pending').length;
   const pp = D.payments.filter(p => p.status === 'pending').length;
   const el = $('nav'); if (!el) return;
-  el.innerHTML = list.map(([k, l]) => {
+  el.innerHTML = list.map(([k, l, i]) => {
     let c = '';
     if (me.role === 'admin' && k === 'a_requests' && pr) c = `<span class="cnt">${pr}</span>`;
     if (me.role === 'admin' && k === 'a_payments' && pp) c = `<span class="cnt">${pp}</span>`;
-    return `<button class="${tab === k ? 'on' : ''}" onclick="setTab('${k}')">${l}${c}</button>`;
+    return `<button class="${tab === k ? 'on' : ''}" onclick="setTab('${k}')">${ic(i)}<span>${l}</span>${c}</button>`;
   }).join('');
 }
 
-function setTab(k) { tab = k; renderNav(); renderTab(); }
+function setTab(k) { tab = k; renderNav(); renderTab(); window.scrollTo(0, 0); }
 
 function renderTab() {
   const map = {
-    m_committees: vMCommittees, m_pay: vMPay, m_history: vMHistory, m_payouts: vMPayouts,
-    a_requests: vARequests, a_payments: vAPayments, a_committees: vACommittees, a_members: vAMembers,
+    m_home: vMHome, m_committees: vMCommittees, m_pay: vMPay, m_history: vMHistory, m_payouts: vMPayouts,
+    a_home: vAHome, a_requests: vARequests, a_payments: vAPayments, a_committees: vACommittees, a_members: vAMembers,
     a_payouts: vAPayouts, a_reports: vAReports, a_bank: vABank
   };
   const c = $('content'); if (!c) return;
-  c.innerHTML = map[tab]();
+  const cur = TABS[me.role === 'admin' ? 'admin' : 'member'].find(x => x[0] === tab);
+  c.innerHTML = `<header class="ph"><h1>${esc(cur ? cur[1] : '')}</h1><p>${esc(SUBS[tab] || '')}</p></header>` + map[tab]();
   if (tab === 'm_pay') payMemChange();
   if (tab === 'a_payouts') payoutCommChange();
 }
 
+function slotGrid(c, mineSlot, admin) {
+  const taken = new Set(admin ? D.memberships.filter(m => m.committee_id === c.id && m.status === 'approved').map(m => m.slot_number) : []);
+  const n = Math.min(c.total_members, 60);
+  let h = '<div class="slots" aria-label="Slots">';
+  for (let i = 1; i <= n; i++) h += `<span class="slot ${taken.has(i) ? 'on' : ''} ${mineSlot === i ? 'me' : ''}">${i}</span>`;
+  if (c.total_members > n) h += `<span class="muted">+${c.total_members - n} more</span>`;
+  return h + '</div>';
+}
+
+function vAHome() {
+  const ver = D.payments.filter(p => p.status === 'verified');
+  const total = ver.reduce((a, p) => a + Number(p.amount), 0);
+  const month = new Date().toISOString().slice(0, 7);
+  const thisMonth = ver.filter(p => p.month_label === month).reduce((a, p) => a + Number(p.amount), 0);
+  const pendP = D.payments.filter(p => p.status === 'pending');
+  const pendR = D.memberships.filter(m => m.status === 'pending');
+  const open = D.committees.filter(c => c.status === 'open').length;
+  const members = D.profiles.filter(p => p.role !== 'admin').length;
+  const payList = pendP.slice(0, 5).map(p => `<div class="li"><div class="t"><b>${esc(p.profiles?.name)}</b><span>${esc(p.memberships?.committees?.name)} · ${esc(p.month_label)} · ${esc(p.method)}</span></div>
+    <span class="amt2">${money(p.amount)}</span>
+    <div class="actions">${p.proof_path ? `<button class="btn sm out" onclick="viewProof('${esc(p.proof_path)}')">Proof</button>` : ''}<button class="btn sm" onclick="verifyPay('${p.id}')">Verify</button></div></div>`).join('');
+  const reqList = pendR.slice(0, 5).map(m => `<div class="li"><div class="t"><b>${esc(m.profiles?.name)}</b><span>${esc(m.committees?.name)} · ${esc(m.profiles?.phone)}</span></div>
+    <div class="actions"><button class="btn sm" onclick="approveMem('${m.id}')">Approve</button><button class="btn sm red" onclick="rejectMem('${m.id}')">Reject</button></div></div>`).join('');
+  const comms = D.committees.map(c => {
+    const n = D.memberships.filter(m => m.committee_id === c.id && m.status === 'approved').length;
+    const pct = Math.min(100, Math.round(n / c.total_members * 100));
+    return `<div class="card"><div class="cc-h"><h3>${esc(c.name)}</h3>${badge(c.status)}</div>
+      <div class="amt">${money(c.monthly_amount)} <small>per month</small></div>
+      <div class="bar"><i style="width:${pct}%"></i></div><div class="muted">${n} of ${c.total_members} slots filled</div>${slotGrid(c, null, true)}</div>`;
+  }).join('');
+  return `<div class="hero"><div><div class="hl">Collected so far</div><div class="hv">${money(total)}</div>
+      <div class="hs">${ver.length} verified payment${ver.length === 1 ? '' : 's'}</div></div>
+    <dl class="hstrip"><div><dt>This month</dt><dd>${money(thisMonth)}</dd></div><div><dt>Members</dt><dd>${members}</dd></div><div><dt>Open committees</dt><dd>${open}</dd></div></dl></div>
+    <div class="two">
+      <div class="card"><h2>Payments to verify${pendP.length ? ' (' + pendP.length + ')' : ''}</h2>${payList ? `<div class="list">${payList}</div>` : '<p class="muted">Nothing waiting. New payments appear here as members submit them.</p>'}
+        ${pendP.length > 5 ? `<button class="btn sm gray" onclick="setTab('a_payments')">See all</button>` : ''}</div>
+      <div class="card"><h2>Join requests${pendR.length ? ' (' + pendR.length + ')' : ''}</h2>${reqList ? `<div class="list">${reqList}</div>` : '<p class="muted">No one is waiting to join.</p>'}
+        ${pendR.length > 5 ? `<button class="btn sm gray" onclick="setTab('a_requests')">See all</button>` : ''}</div>
+    </div>
+    <h2 class="sec">Committees</h2>` + (comms ? `<div class="grid">${comms}</div>` : empty('No committees yet. Create your first one to start taking members.', 'layers', ['a_committees', 'Create a committee']));
+}
+
+function vMHome() {
+  const mine = D.payments.filter(p => p.user_id === me.id);
+  const ver = mine.filter(p => p.status === 'verified');
+  const total = ver.reduce((a, p) => a + Number(p.amount), 0);
+  const pend = mine.filter(p => p.status === 'pending').length;
+  const rej = mine.filter(p => p.status === 'rejected').length;
+  const mems = D.memberships.filter(m => m.user_id === me.id);
+  const appr = mems.filter(m => m.status === 'approved');
+  const wait = mems.filter(m => m.status === 'pending').length;
+  const cards = appr.map(m => {
+    const c = D.committees.find(x => x.id === m.committee_id); if (!c) return '';
+    return `<div class="card"><div class="cc-h"><h3>${esc(c.name)}</h3>${badge('approved')}</div>
+      <div class="amt">${money(c.monthly_amount)} <small>per month</small></div>
+      <p class="muted" style="margin:8px 0 0">Your turn is number <b>${m.slot_number ?? '-'}</b> of ${c.total_members}</p>${slotGrid(c, m.slot_number, false)}
+      <button class="btn sm" onclick="setTab('m_pay')">Make payment</button></div>`;
+  }).join('');
+  return (rej ? `<div class="note">${rej} of your payments ${rej === 1 ? 'was' : 'were'} rejected. Open History to see why and submit again.</div>` : '') +
+    `<div class="hero"><div><div class="hl">Paid so far</div><div class="hv">${money(total)}</div>
+      <div class="hs">${ver.length} verified payment${ver.length === 1 ? '' : 's'}</div></div>
+    <dl class="hstrip"><div><dt>Committees</dt><dd>${appr.length}</dd></div><div><dt>Awaiting verification</dt><dd>${pend}</dd></div><div><dt>Join requests pending</dt><dd>${wait}</dd></div></dl></div>
+    <h2>Your committees</h2>` + (cards ? `<div class="grid">${cards}</div>` : empty('You are not in a committee yet. Pick one and send a join request.', 'layers', ['m_committees', 'Browse committees']));
+}
+
 // ================= MEMBER VIEWS =================
 function vMCommittees() {
-  if (!D.committees.length) return empty('No committees available yet');
-  return '<h2>Available Committees</h2><div class="grid">' + D.committees.map(c => {
+  if (!D.committees.length) return empty('No committees yet. The admin will add them here.', 'layers');
+  return '<div class="grid">' + D.committees.map(c => {
     const m = D.memberships.find(x => x.committee_id === c.id && x.user_id === me.id);
     let act;
-    if (m) act = badge(m.status) + (m.status === 'approved' && m.slot_number ? ` <span class="muted">Your number: <b>${m.slot_number}</b></span>` : '');
-    else if (c.status !== 'open') act = '<span class="badge closed">closed</span>';
-    else act = `<button class="btn" onclick="joinC('${c.id}')">Send Join Request</button>`;
-    return `<div class="card"><h3>${esc(c.name)}</h3>
-      <p class="muted">Monthly installment: <b>${money(c.monthly_amount)}</b><br>Total members: ${c.total_members}<br>
-      Starts: ${fdate(c.start_date)}${c.duration_months ? '<br>Duration: ' + c.duration_months + ' months' : ''}</p>${act}</div>`;
+    if (m) act = badge(m.status);
+    else if (c.status !== 'open') act = badge('closed');
+    else act = `<button class="btn" onclick="joinC('${c.id}')">Send join request</button>`;
+    const mine = m && m.status === 'approved' ? m.slot_number : null;
+    return `<div class="card"><div class="cc-h"><h3>${esc(c.name)}</h3>${m || c.status !== 'open' ? '' : badge('open')}</div>
+      <div class="amt">${money(c.monthly_amount)} <small>per month</small></div>
+      <p class="muted" style="margin:8px 0 0">${c.total_members} members${c.duration_months ? ' · ' + c.duration_months + ' months' : ''}${c.start_date ? ' · starts ' + fdate(c.start_date) : ''}</p>
+      ${mine ? `<p class="muted" style="margin:6px 0 0">Your turn is number <b>${mine}</b></p>${slotGrid(c, mine, false)}` : '<div style="height:12px"></div>'}${act}</div>`;
   }).join('') + '</div>';
 }
 
@@ -259,21 +485,17 @@ async function joinC(id) {
 function vMPay() {
   const mine = D.memberships.filter(m => m.user_id === me.id && m.status === 'approved');
   if (!mine.length) return empty('You must be approved in a committee before making a payment');
-  const s = D.settings || {};
-  const hasBank = s.bank_name || s.account_number || s.iban;
+  const accts = D.accounts.filter(a => a.active);
   return `<div class="card" style="max-width:560px"><h2>Make Payment</h2>
     <label>Committee</label>
     <select id="p_mem" onchange="payMemChange()">${mine.map(m => `<option value="${m.id}">${esc(m.committees?.name)}</option>`).join('')}</select>
     <div class="row"><div><label>Month</label><input id="p_month" type="month" value="${new Date().toISOString().slice(0, 7)}"></div>
     <div><label>Amount (Rs)</label><input id="p_amt" type="number" min="1"></div></div>
     <label>Payment method</label>
-    <div><label style="display:inline;color:var(--tx)"><input type="radio" name="pm" value="bank" checked onchange="payMethodChange()"> Bank Transfer</label>
+    <div><label style="display:inline;color:var(--tx)"><input type="radio" name="pm" value="bank" checked onchange="payMethodChange()"> Online (Bank / Wallet)</label>
     &nbsp;&nbsp;<label style="display:inline;color:var(--tx)"><input type="radio" name="pm" value="cash" onchange="payMethodChange()"> Cash</label></div>
     <div id="bankbox">
-      <div class="bank">${hasBank ? `<b>Send payment to this account:</b><br>
-        Bank: ${esc(s.bank_name)}<br>Account Title: ${esc(s.account_title)}<br>
-        Account No: ${esc(s.account_number)}<br>${s.iban ? 'IBAN: ' + esc(s.iban) + '<br>' : ''}${s.note ? '<span class="muted">' + esc(s.note) + '</span>' : ''}`
-        : 'Admin has not added bank details yet.'}</div>
+      ${accts.length ? '<b>Send payment to any one of these accounts:</b>' + accts.map(a => `<div class="bank"><b>${esc(a.provider)}</b> <span class="muted">(${esc(a.type)})</span><br>Title: ${esc(a.account_title)}<br>Number: ${esc(a.account_number)}${a.iban ? '<br>IBAN: ' + esc(a.iban) : ''}${a.note ? '<br><span class="muted">' + esc(a.note) + '</span>' : ''}</div>`).join('') + `<label>Which account did you pay to? *</label><select id="p_acc">${accts.map(a => `<option value="${esc(a.provider)} - ${esc(a.account_number)}">${esc(a.provider)} - ${esc(a.account_number)}</option>`).join('')}</select>` : '<div class="bank">Admin has not added any payment account yet.</div>'}
       <label>Payment screenshot / proof *</label><input id="p_file" type="file" accept="image/*,application/pdf">
     </div>
     <div id="cashbox" style="display:none" class="bank">After you hand over the cash, the admin will verify and approve the payment.</div>
@@ -299,6 +521,8 @@ async function submitPay() {
   if (!amount || amount <= 0) return toast('Enter a valid amount', 1);
   if (D.payments.find(p => p.membership_id === mid && p.month_label === month && p.status !== 'rejected'))
     return toast('A payment for this month is already submitted', 1);
+  if (method === 'bank' && !$('p_acc')) return toast('No payment account available. Contact the admin', 1);
+  const acc = (method === 'bank' && $('p_acc')) ? $('p_acc').value : null;
   let path = null;
   $('pbtn').disabled = true;
   if (method === 'bank') {
@@ -310,7 +534,7 @@ async function submitPay() {
     if (up.error) { $('pbtn').disabled = false; return toast('Upload failed: ' + up.error.message, 1); }
   }
   const { error } = await sb.from('payments').insert({
-    membership_id: mid, user_id: me.id, month_label: month, amount, method, proof_path: path, note: note || null, status: 'pending'
+    membership_id: mid, user_id: me.id, month_label: month, amount, method, proof_path: path, account_label: acc, note: note || null, status: 'pending'
   });
   if (error) { $('pbtn').disabled = false; return toast('Payment could not be saved: ' + error.message, 1); }
   toast('Payment submitted. Admin will verify it');
@@ -320,17 +544,17 @@ async function submitPay() {
 function vMHistory() {
   const list = D.payments.filter(p => p.user_id === me.id);
   if (!list.length) return empty('No payments yet');
-  return `<h2>My Payments</h2><div class="card tw"><table><tr><th>Committee</th><th>Month</th><th>Amount</th><th>Method</th><th>Status</th><th>Date</th><th>Note</th></tr>` +
+  return `<div class="card tw"><table><tr><th>Committee</th><th>Month</th><th>Amount</th><th>Method</th><th>Status</th><th>Date</th><th>Note</th></tr>` +
     list.map(p => `<tr><td>${esc(p.memberships?.committees?.name)}</td><td>${esc(p.month_label)}</td><td>${money(p.amount)}</td>
-    <td>${esc(p.method)}</td><td>${badge(p.status)}</td><td>${fdate(p.created_at)}</td><td>${esc(p.note)}</td></tr>`).join('') + '</table></div>';
+    <td>${esc(p.method)}${p.account_label ? '<br><span class="muted">' + esc(p.account_label) + '</span>' : ''}</td><td>${badge(p.status)}</td><td>${fdate(p.created_at)}</td><td>${esc(p.note)}</td></tr>`).join('') + '</table></div>';
 }
 
 function vMPayouts() {
   const mine = D.memberships.filter(m => m.user_id === me.id && m.status === 'approved');
   const list = D.payouts.filter(p => p.member_id === me.id);
-  return `<h2>My Committee Numbers</h2>` +
+  return `<h2>Your turn in each committee</h2>` +
     (mine.length ? `<div class="grid">${mine.map(m => `<div class="card"><h3>${esc(m.committees?.name)}</h3><p>Your number: <span class="stat">${m.slot_number ?? '-'}</span></p></div>`).join('')}</div>` : empty('No approved committees')) +
-    `<h2 style="margin-top:20px">Payout</h2>` +
+    `<h2 class="sec">Payouts received</h2>` +
     (list.length ? `<div class="card tw"><table><tr><th>Committee</th><th>Month</th><th>Amount</th><th>Status</th></tr>` +
       list.map(p => `<tr><td>${esc(p.committees?.name)}</td><td>${esc(p.month_label)}</td><td>${money(p.amount)}</td><td>${badge(p.status)}</td></tr>`).join('') + '</table></div>' : empty('No payouts received yet'));
 }
@@ -339,12 +563,12 @@ function vMPayouts() {
 function vARequests() {
   const pend = D.memberships.filter(m => m.status === 'pending');
   const done = D.memberships.filter(m => m.status !== 'pending').slice(0, 30);
-  let h = '<h2>Join Requests</h2>';
+  let h = '<h2>Waiting for approval</h2>';
   h += pend.length ? `<div class="card tw"><table><tr><th>Member</th><th>Phone</th><th>Committee</th><th>Date</th><th></th></tr>` +
     pend.map(m => `<tr><td>${esc(m.profiles?.name)}</td><td>${esc(m.profiles?.phone)}</td><td>${esc(m.committees?.name)}</td><td>${fdate(m.created_at)}</td>
     <td class="actions"><button class="btn sm" onclick="approveMem('${m.id}')">Approve</button><button class="btn sm red" onclick="rejectMem('${m.id}')">Reject</button></td></tr>`).join('') + '</table></div>'
     : empty('No pending requests');
-  h += '<h3>Previous Requests</h3>';
+  h += '<h2 class="sec">Previous requests</h2>';
   h += done.length ? `<div class="card tw"><table><tr><th>Member</th><th>Committee</th><th>Number</th><th>Status</th><th></th></tr>` +
     done.map(m => `<tr><td>${esc(m.profiles?.name)}</td><td>${esc(m.committees?.name)}</td><td>${m.slot_number ?? '-'}</td><td>${badge(m.status)}</td>
     <td><button class="btn sm gray" onclick="removeMem('${m.id}')">Remove</button></td></tr>`).join('') + '</table></div>' : empty('Nothing here');
@@ -374,17 +598,17 @@ async function removeMem(id) {
 function vAPayments() {
   const pend = D.payments.filter(p => p.status === 'pending');
   const done = D.payments.filter(p => p.status !== 'pending').slice(0, 50);
-  let h = '<h2>Pending Payments</h2>';
+  let h = '<h2>Waiting for verification</h2>';
   h += pend.length ? `<div class="card tw"><table><tr><th>Member</th><th>Committee</th><th>Month</th><th>Amount</th><th>Method</th><th>Proof</th><th>Note</th><th></th></tr>` +
     pend.map(p => `<tr><td>${esc(p.profiles?.name)}<br><span class="muted">${esc(p.profiles?.phone)}</span></td>
-    <td>${esc(p.memberships?.committees?.name)}</td><td>${esc(p.month_label)}</td><td>${money(p.amount)}</td><td>${esc(p.method)}</td>
+    <td>${esc(p.memberships?.committees?.name)}</td><td>${esc(p.month_label)}</td><td>${money(p.amount)}</td><td>${esc(p.method)}${p.account_label ? '<br><span class="muted">' + esc(p.account_label) + '</span>' : ''}</td>
     <td>${p.proof_path ? `<button class="btn sm out" onclick="viewProof('${esc(p.proof_path)}')">View</button>` : 'Cash'}</td><td>${esc(p.note)}</td>
     <td class="actions"><button class="btn sm" onclick="verifyPay('${p.id}')">Verify</button><button class="btn sm red" onclick="rejectPay('${p.id}')">Reject</button></td></tr>`).join('') + '</table></div>'
     : empty('No pending payments');
-  h += '<h3>Previous Payments</h3>';
+  h += '<h2 class="sec">Previous payments</h2>';
   h += done.length ? `<div class="card tw"><table><tr><th>Member</th><th>Committee</th><th>Month</th><th>Amount</th><th>Method</th><th>Status</th><th>Proof</th></tr>` +
     done.map(p => `<tr><td>${esc(p.profiles?.name)}</td><td>${esc(p.memberships?.committees?.name)}</td><td>${esc(p.month_label)}</td><td>${money(p.amount)}</td>
-    <td>${esc(p.method)}</td><td>${badge(p.status)}</td><td>${p.proof_path ? `<button class="btn sm out" onclick="viewProof('${esc(p.proof_path)}')">View</button>` : '-'}</td></tr>`).join('') + '</table></div>' : empty('Nothing here');
+    <td>${esc(p.method)}${p.account_label ? '<br><span class="muted">' + esc(p.account_label) + '</span>' : ''}</td><td>${badge(p.status)}</td><td>${p.proof_path ? `<button class="btn sm out" onclick="viewProof('${esc(p.proof_path)}')">View</button>` : '-'}</td></tr>`).join('') + '</table></div>' : empty('Nothing here');
   return h;
 }
 
@@ -415,7 +639,7 @@ function vACommittees() {
     <div class="row"><div><label>Start Date</label><input id="c_start" type="date"></div>
     <div><label>Duration (months)</label><input id="c_dur" type="number" min="1"></div></div>
     <br><button class="btn" onclick="addCommittee()">Create</button></div>
-    <h2>Committees</h2>` +
+    <h2 class="sec">Committees</h2>` +
     (D.committees.length ? `<div class="card tw"><table><tr><th>Name</th><th>Monthly</th><th>Members</th><th>Approved</th><th>Status</th><th></th></tr>` +
       D.committees.map(c => {
         const n = D.memberships.filter(m => m.committee_id === c.id && m.status === 'approved').length;
@@ -445,7 +669,7 @@ async function delC(id) {
 }
 
 function vAMembers() {
-  return `<h2>All Members (${D.profiles.length})</h2><div class="card tw"><table><tr><th>Name</th><th>Phone</th><th>CNIC</th><th>Role</th><th>Date</th></tr>` +
+  return `<h2>${D.profiles.length} registered</h2><div class="card tw"><table><tr><th>Name</th><th>Phone</th><th>CNIC</th><th>Role</th><th>Date</th></tr>` +
     D.profiles.map(p => `<tr><td>${esc(p.name)}</td><td>${esc(p.phone)}</td><td>${esc(p.cnic) || '-'}</td><td>${esc(p.role)}</td><td>${fdate(p.created_at)}</td></tr>`).join('') + '</table></div>';
 }
 
@@ -457,7 +681,7 @@ function vAPayouts() {
     <div><label>Amount (Rs)</label><input id="po_amt" type="number" min="1"></div></div>
     <label>Status</label><select id="po_st"><option value="pending">pending</option><option value="paid">paid</option></select>
     <br><button class="btn" onclick="addPayout()">Save</button></div>
-    <h2>Payouts</h2>` +
+    <h2 class="sec">Payouts</h2>` +
     (D.payouts.length ? `<div class="card tw"><table><tr><th>Committee</th><th>Member</th><th>Month</th><th>Amount</th><th>Status</th><th></th></tr>` +
       D.payouts.map(p => `<tr><td>${esc(p.committees?.name)}</td><td>${esc(p.profiles?.name)}</td><td>${esc(p.month_label)}</td><td>${money(p.amount)}</td><td>${badge(p.status)}</td>
       <td class="actions">${p.status !== 'paid' ? `<button class="btn sm" onclick="payoutPaid('${p.id}')">Mark Paid</button>` : ''}<button class="btn sm red" onclick="delPayout('${p.id}')">X</button></td></tr>`).join('') + '</table></div>' : empty('No payouts yet'));
@@ -488,7 +712,7 @@ async function delPayout(id) {
 
 function vAReports() {
   if (!D.committees.length) return empty('No committees yet');
-  return '<h2>Reports</h2>' + D.committees.map(c => {
+  return '' + D.committees.map(c => {
     const mems = D.memberships.filter(m => m.committee_id === c.id && m.status === 'approved');
     let total = 0;
     const rows = mems.map(m => {
@@ -507,23 +731,40 @@ function vAReports() {
 }
 
 function vABank() {
-  const s = D.settings || {};
-  return `<div class="card" style="max-width:560px"><h2>My Bank Details</h2>
-    <p class="muted">Members will see these details when making a payment.</p>
-    <label>Bank Name</label><input id="b_bank" value="${esc(s.bank_name)}">
-    <label>Account Title</label><input id="b_title" value="${esc(s.account_title)}">
-    <label>Account Number</label><input id="b_acc" value="${esc(s.account_number)}">
-    <label>IBAN (optional)</label><input id="b_iban" value="${esc(s.iban)}">
-    <label>Note (optional)</label><input id="b_note" value="${esc(s.note)}" placeholder="e.g. Please attach a screenshot after payment">
-    <br><button class="btn" onclick="saveBank()">Save</button></div>`;
+  const list = D.accounts;
+  return `<div class="card" style="max-width:560px"><h2>Add Payment Account</h2>
+    <p class="muted">Add as many banks or wallets (JazzCash, Easypaisa, etc.) as you want. Members will choose one when paying.</p>
+    <label>Type</label><select id="a_type"><option value="Bank">Bank</option><option value="Mobile Wallet">Mobile Wallet</option><option value="Other">Other</option></select>
+    <label>Bank / Wallet Name *</label><input id="a_prov" placeholder="e.g. HBL, Meezan, JazzCash, Easypaisa">
+    <label>Account Title *</label><input id="a_title">
+    <label>Account / Wallet Number *</label><input id="a_num">
+    <label>IBAN (optional)</label><input id="a_iban">
+    <label>Note (optional)</label><input id="a_note" placeholder="e.g. Please attach a screenshot after payment">
+    <br><button class="btn" onclick="addAccount()">Add Account</button></div>
+    <h2 class="sec">My accounts</h2>` +
+    (list.length ? `<div class="card tw"><table><tr><th>Name</th><th>Type</th><th>Title</th><th>Number</th><th>Visible</th><th></th></tr>` +
+      list.map(a => `<tr><td>${esc(a.provider)}</td><td>${esc(a.type)}</td><td>${esc(a.account_title)}</td><td>${esc(a.account_number)}${a.iban ? '<br><span class="muted">' + esc(a.iban) + '</span>' : ''}</td>
+      <td>${a.active ? badge('open') : badge('closed')}</td>
+      <td class="actions"><button class="btn sm gray" onclick="toggleAcc('${a.id}', ${a.active})">${a.active ? 'Hide' : 'Show'}</button><button class="btn sm red" onclick="delAcc('${a.id}')">Delete</button></td></tr>`).join('') + '</table></div>' : empty('No payment accounts added yet'));
 }
-async function saveBank() {
-  const { error } = await sb.from('settings').update({
-    bank_name: $('b_bank').value.trim(), account_title: $('b_title').value.trim(),
-    account_number: $('b_acc').value.trim(), iban: $('b_iban').value.trim(), note: $('b_note').value.trim()
-  }).eq('id', 1);
+async function addAccount() {
+  const provider = $('a_prov').value.trim(), title = $('a_title').value.trim(), num = $('a_num').value.trim();
+  if (!provider || !title || !num) return toast('Name, title and number are required', 1);
+  const { error } = await sb.from('payment_accounts').insert({
+    type: $('a_type').value, provider, account_title: title, account_number: num,
+    iban: $('a_iban').value.trim() || null, note: $('a_note').value.trim() || null
+  });
   if (error) return toast(error.message, 1);
-  toast('Bank details saved'); await loadData();
+  toast('Account added'); await loadData(); renderTab();
+}
+async function toggleAcc(id, active) {
+  const { error } = await sb.from('payment_accounts').update({ active: !active }).eq('id', id);
+  if (error) return toast(error.message, 1); refresh();
+}
+async function delAcc(id) {
+  if (!confirm('Delete this account?')) return;
+  const { error } = await sb.from('payment_accounts').delete().eq('id', id);
+  if (error) return toast(error.message, 1); refresh();
 }
 
 // ================= START =================
