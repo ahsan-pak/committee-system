@@ -669,8 +669,16 @@ async function delC(id) {
 }
 
 function vAMembers() {
-  return `<h2>${D.profiles.length} registered</h2><div class="card tw"><table><tr><th>Name</th><th>Phone</th><th>CNIC</th><th>Role</th><th>Date</th></tr>` +
-    D.profiles.map(p => `<tr><td>${esc(p.name)}</td><td>${esc(p.phone)}</td><td>${esc(p.cnic) || '-'}</td><td>${esc(p.role)}</td><td>${fdate(p.created_at)}</td></tr>`).join('') + '</table></div>';
+  return `<h2>${D.profiles.length} registered</h2><div class="card tw"><table><tr><th>Name</th><th>Phone</th><th>CNIC</th><th>Role</th><th>Date</th><th></th></tr>` +
+    D.profiles.map(p => `<tr><td>${esc(p.name)}</td><td>${esc(p.phone)}</td><td>${esc(p.cnic) || '-'}</td><td>${esc(p.role)}</td><td>${fdate(p.created_at)}</td>
+    <td>${p.role === 'admin' ? '' : `<button class="btn sm red" onclick="delMember('${p.id}')">Delete</button>`}</td></tr>`).join('') + '</table></div>';
+}
+async function delMember(id) {
+  const p = D.profiles.find(x => x.id === id); if (!p) return;
+  if (!confirm('Delete ' + p.name + '? This permanently removes their account, join requests, payments and payouts. This cannot be undone.')) return;
+  const { error } = await sb.rpc('delete_member', { target: id });
+  if (error) return toast(error.message, 1);
+  toast('Member deleted'); refresh();
 }
 
 function vAPayouts() {
