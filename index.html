@@ -240,7 +240,7 @@ const EMAIL_DOMAIN = '@committee-app.com';
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let me = null, tab = '', ch = null, tmr = null;
-let D = {committees:[],memberships:[],shares:[],payments:[],payouts:[],accounts:[],profiles:[],draws:[]};
+let D = {committees:[],memberships:[],shares:[],payments:[],payouts:[],accounts:[],profiles:[]};
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -422,7 +422,7 @@ async function logout() {
   const s = document.querySelector('.shell'); if (s) s.classList.add('out');
   if (ch) { sb.removeChannel(ch); ch = null; }
   await Promise.all([sb.auth.signOut(), new Promise(r => setTimeout(r, 320))]);
-  me = null; D = { committees: [], memberships: [], shares: [], payments: [], payouts: [], accounts: [], profiles: [], draws: [] };
+  me = null; D = { committees: [], memberships: [], shares: [], payments: [], payouts: [], accounts: [], profiles: [] };
   closeModal(); showAuth('login'); toast('You have been logged out');
 }
 
@@ -450,10 +450,9 @@ async function loadData(uid) {
     sb.from('payments').select('*, profiles!user_id(name,phone), memberships(committees(name))').order('created_at', { ascending: false }),
     sb.from('payouts').select('*, profiles(name,phone), committees(name)').order('created_at', { ascending: false }),
     sb.from('payment_accounts').select('*').order('created_at', { ascending: true }),
-    sb.from('committee_draws').select('*').order('created_at', { ascending: false }).limit(30),
     sb.from('membership_shares').select('*, memberships(user_id,committee_id,status,profiles(name,phone),committees(name,monthly_amount,total_members,start_date))').order('created_at', { ascending: true })
   ]);
-  const keys = ['profiles', 'committees', 'memberships', 'payments', 'payouts', 'accounts', 'draws', 'shares'];
+  const keys = ['profiles', 'committees', 'memberships', 'payments', 'payouts', 'accounts', 'shares'];
   keys.forEach((k, i) => { if (r[i].error) { console.error(k, r[i].error); if (!window.__lde) { window.__lde = 1; toast('Could not load ' + k + ': ' + r[i].error.message, 1); } } D[k] = r[i].data || []; });
   const bad = r.find(x => x.error);
   if (bad && !loadData.warned) { loadData.warned = true; toast('Could not load some data: ' + bad.error.message, 1); setTimeout(() => { loadData.warned = false; }, 15000); }
@@ -503,7 +502,7 @@ const TABS = {
            ['m_history', 'History', 'history'], ['m_payouts', 'Payouts', 'down']],
   admin: [['a_home', 'Overview', 'home'], ['a_requests', 'Requests', 'inbox'], ['a_payments', 'Payments', 'card'],
           ['a_committees', 'Committees', 'layers'], ['a_members', 'Members', 'users'], ['a_payouts', 'Payouts', 'down'],
-          ['a_schedule', 'Schedule', 'cal'], ['a_wheel', 'Live Wheel', 'history'], ['a_reports', 'Reports', 'bar'], ['a_bank', 'Accounts', 'bank'], ['a_backup', 'Backup', 'save'],
+          ['a_schedule', 'Schedule', 'cal'], ['a_reports', 'Reports', 'bar'], ['a_bank', 'Accounts', 'bank'], ['a_backup', 'Backup', 'save'],
           ['m_committees', 'My Committees', 'layers'], ['m_pay', 'My Payments', 'card'], ['m_payouts', 'My Payouts', 'down']]
 };
 const SUBS = {
@@ -519,7 +518,6 @@ const SUBS = {
   a_members: 'Everyone who has signed up',
   a_payouts: 'Record who received the monthly pot',
   a_schedule: 'Choose who gets each month and track payouts',
-  a_wheel: 'Run a committee draw and publish the result to approved members',
   a_backup: 'Download all your data as an Excel file',
   a_reports: 'Collections per committee and member',
   a_bank: 'Banks and wallets members can pay into'
@@ -562,7 +560,7 @@ function renderTab(fade) {
   const map = {
     m_home: vMHome, m_committees: vMCommittees, m_pay: vMPay, m_history: vMHistory, m_payouts: vMPayouts,
     a_home: vAHome, a_requests: vARequests, a_payments: vAPayments, a_committees: vACommittees, a_members: vAMembers,
-    a_payouts: vAPayouts, a_reports: vAReports, a_bank: vABank, a_schedule: vASchedule, a_wheel: vAWheel, a_backup: vABackup
+    a_payouts: vAPayouts, a_reports: vAReports, a_bank: vABank, a_schedule: vASchedule, a_backup: vABackup
   };
   const c = $('content'); if (!c) return;
   const cur = TABS[me.role === 'admin' ? 'admin' : 'member'].find(x => x[0] === tab);
@@ -570,7 +568,6 @@ function renderTab(fade) {
   c.innerHTML = `<header class="ph"><h1>${esc(cur ? cur[1] : '')}</h1><p>${esc(SUBS[tab] || '')}</p></header>` + map[tab]();
   if (tab === 'm_pay') payMemChange();
   if (tab === 'a_payouts') payoutCommChange();
-  setTimeout(initLiveWheels, 40);
 }
 
 function vAHome() {
@@ -651,10 +648,9 @@ function vMCommittees() {
     return `<div class="card"><div class="cc-h"><h3>${esc(c.name)}</h3>${m || c.status !== 'open' ? '' : badge('open')}</div>
       <div class="amt">${money(c.monthly_amount)} <small>per share / month</small></div>
       <p class="muted" style="margin:8px 0 0">${c.total_members} wheel slots${m?.share_count ? ' · Your shares: ' + m.share_count : ''}${c.duration_months ? ' · ' + c.duration_months + ' months' : ''}${c.start_date ? ' · starts ' + fdate(c.start_date) : ''}</p>
-      ${((D.draws||[]).filter(d=>d.committee_id===c.id).slice(0,1)).map(d=>drawCardMarkup(d)).join('')}
-      ${ok ? `<p class="pay-line"><b>Your shares:</b> ${Math.max(1,Number(m.share_count||1))} · Monthly total: <b>${money(Number(c.monthly_amount)*Math.max(1,Number(m.share_count||1)))}</b></p>${(D.shares||[]).filter(sh=>sh.membership_id===m.id).map(sh=>`<p class="pay-line">Share ${sh.share_number} · No. ${sh.slot_number||'-'} · Payout: <b>${sh.payout_month?fmtMonth(sh.payout_month):'Not assigned'}</b></p>`).join('')}<div class="ringbox">${ringSVG(c, { mine: m.slot_number })}</div>${ringLegend(true)}
+      ${ok ? `<p class="pay-line"><b>Your shares:</b> ${Math.max(1,Number(m.share_count||1))} · Monthly total: <b>${money(Number(c.monthly_amount)*Math.max(1,Number(m.share_count||1)))}</b></p>${(D.shares||[]).filter(sh=>sh.membership_id===m.id).map(sh=>`<p class="pay-line">${esc(me.name)}${Number(sh.share_number)>1?' - '+sh.share_number:''} · No. ${sh.slot_number||'-'} · Payout: <b>${sh.payout_month?fmtMonth(sh.payout_month):'Not assigned'}</b></p>`).join('')}<div class="ringbox">${ringSVG(c, { mine: m.slot_number })}</div>${ringLegend(true)}
         <p class="pay-line">${sm ? 'Legacy turn: <b>' + sm.label + '</b> · ' + money(pot(c)) : 'Share-wise payout months are shown above once assigned.'}</p>
-        ${c.show_roster ? `<button class="btn sm out" onclick="openRoster('${c.id}')">See all members and payout months</button>` : ''}` : ''}
+        ${c.show_roster ? `<button class="btn sm out" onclick="openRoster('${c.id}')">See all members and payout months</button>` : ''}<button class="btn sm out" style="margin-top:8px" onclick="addShare('${m.id}')">+ Add Another Share</button>` : ''}
       <div style="margin-top:12px">${act}</div></div>`;
   }).join('') + '</div>';
 }
@@ -673,6 +669,22 @@ async function openRoster(cid) {
   openModal(`<h2>${esc(c.name)}</h2><p class="muted">${money(c.monthly_amount)} per member · pot ${money(pot(c))} per month</p>
     <div class="tw" style="margin-top:10px">${rows ? `<table><tr><th>Payout month</th><th>Turn</th><th>Member</th><th>Status</th></tr>${rows}</table>` : '<p class="muted">The admin has not assigned turns yet.</p>'}</div>
     <div class="mfoot"><button class="btn" onclick="closeModal()">Close</button></div>`, true);
+}
+
+async function addShare(membershipId) {
+  const m = D.memberships.find(x => x.id === membershipId && x.user_id === me.id && x.status === 'approved');
+  if (!m) return toast('Approved committee membership not found', 1);
+  const c = D.committees.find(x => x.id === m.committee_id);
+  if (!c) return toast('Committee not found', 1);
+  const next = Math.max(1, Number(m.share_count || 1)) + 1;
+  if (next > 20) return toast('Maximum 20 shares per committee membership', 1);
+  if (!confirm('Add one more share in ' + c.name + '? Your monthly installment will become ' + money(Number(c.monthly_amount) * next) + '. The new share has its own Rs ' + money(Number(c.monthly_amount)) + ' payout turn.')) return;
+  const { error } = await sb.rpc('request_add_membership_share', { p_membership_id: membershipId });
+  if (error) return toast('Could not add share: ' + error.message, 1);
+  await loadData();
+  renderNav();
+  renderTab(false);
+  toast('Another share added. Admin can assign its payout month in Schedule.');
 }
 
 async function joinC(id) {
@@ -1133,7 +1145,7 @@ function vASchedule() {
       const m=mems.find(x=>x.id===sh.membership_id);
       const opts='<option value="">Not assigned</option>'+Array.from({length:Number(c.total_members)||1},(_,i)=>{const n=i+1;return `<option value="${n}" ${Number(sh.slot_number)===n?'selected':''}>No. ${n}</option>`}).join('');
       const month=sh.payout_month||'';
-      return `<tr><td>${esc(m?.profiles?.name||'Member')}</td><td>Share ${sh.share_number}</td><td><select class="cell" onchange="assignShareSlot('${sh.id}',this.value)">${opts}</select></td><td><input type="month" class="cell" value="${esc(month)}" onchange="assignShareMonth('${sh.id}',this.value)"></td><td>${money(c.monthly_amount)}</td></tr>`;
+      return `<tr><td>${esc(m?.profiles?.name||'Member')}${Number(sh.share_number)>1?' - '+sh.share_number:''}</td><td>Share ${sh.share_number}</td><td><select class="cell" onchange="assignShareSlot('${sh.id}',this.value)">${opts}</select></td><td><input type="month" class="cell" value="${esc(month)}" onchange="assignShareMonth('${sh.id}',this.value)"></td><td>${money(c.monthly_amount)}</td></tr>`;
     }).join('');
     const loose=mems.filter(m=>!(D.shares||[]).some(sh=>sh.membership_id===m.id));
     return `<div class="sh"><div><h2 style="margin:0">${esc(c.name)} ${badge(c.status)}</h2><p class="muted" style="margin:4px 0 0">${money(c.monthly_amount)} per share/month · ${shares.length} total shares · ${mems.length} approved members</p></div><div class="actions"><button class="btn sm out" onclick="copySchedule('${c.id}')">Copy for WhatsApp</button></div></div><div class="card tw"><table><tr><th>Member</th><th>Share</th><th>Wheel number</th><th>Payout month</th><th>Monthly payment</th></tr>${rows||'<tr><td colspan="5">No approved shares yet</td></tr>'}</table></div>${loose.length?`<p class="note">${loose.length} approved member(s) have no share records yet. Re-run the migration share-sync section after checking the SQL result.</p>`:''}`;
@@ -1167,7 +1179,7 @@ async function assignSlot(cid, n, uid) {
 function copySchedule(cid) {
   const c=D.committees.find(x=>x.id===cid);if(!c)return;
   const lines=[c.name,money(c.monthly_amount)+' per share / month',''];
-  (D.shares||[]).filter(sh=>sh.committee_id===cid).sort((a,b)=>(a.slot_number||999)-(b.slot_number||999)).forEach(sh=>{const m=D.memberships.find(x=>x.id===sh.membership_id);lines.push((sh.slot_number?'No. '+sh.slot_number:'No. -')+' · '+(m?.profiles?.name||'Member')+' · Share '+sh.share_number+' · '+(sh.payout_month?fmtMonth(sh.payout_month):'Payout not assigned'));});
+  (D.shares||[]).filter(sh=>sh.committee_id===cid).sort((a,b)=>(a.slot_number||999)-(b.slot_number||999)).forEach(sh=>{const m=D.memberships.find(x=>x.id===sh.membership_id);lines.push((sh.slot_number?'No. '+sh.slot_number:'No. -')+' · '+(m?.profiles?.name||'Member')+(Number(sh.share_number)>1?' - '+sh.share_number:'')+' · Share '+sh.share_number+' · '+(sh.payout_month?fmtMonth(sh.payout_month):'Payout not assigned'));});
   copyText(lines.join('\n'));
 }
 async function markPayout(cid, uid, key, amt) {
@@ -1175,95 +1187,6 @@ async function markPayout(cid, uid, key, amt) {
   if (error) return toast(error.message, 1);
   await loadData();
   payoutPaid(data.id);
-}
-
-async function viewDrawRecording(path) {
-  const w=window.open('', '_blank');
-  const {data,error}=await sb.storage.from('committee-draw-recordings').createSignedUrl(path,300);
-  if(error||!data){if(w)w.close();return toast('Could not open recorded draw',1);}
-  if(w) w.location=data.signedUrl; else window.location=data.signedUrl;
-}
-
-function drawCardMarkup(d) {
-  const names = Array.isArray(d.wheel_names) ? d.wheel_names : [];
-  const winner = D.memberships.find(x => x.id === d.winner_membership_id);
-  const live = d.status === 'spinning';
-  return `<div class="card" style="margin-top:10px"><div class="cc-h"><b>${live ? '🎡 Live committee draw' : d.status==='completed' ? '🏆 Draw result' : 'Committee draw'}</b><span class="muted">${esc(fmtMonth(d.month_label))}</span></div>
-    ${names.length ? `<div class="draw-wheel-wrap"><div class="draw-wheel-stage"><div class="draw-pointer"></div><canvas class="live-draw-wheel" data-draw-id="${esc(d.id)}" width="640" height="640"></canvas></div><div class="draw-wheel-status" id="draw-status-${esc(d.id)}">${live ? 'Wheel spinning live…' : d.status==='completed' ? 'Winner: '+esc(d.winner_name||winner?.profiles?.name||'Winner') : esc(d.status)}</div></div>` : ''}
-    ${d.status==='completed' ? `<div class="draw-winner">🏆 ${esc(d.winner_name||winner?.profiles?.name||'Winner selected')}</div>` : ''}
-    ${d.recording_path ? `<button class="btn sm out" style="margin-top:8px" onclick="viewDrawRecording('${esc(d.recording_path)}')">▶ Watch recorded draw</button>` : (d.status==='completed' ? '<p class="muted">Recording is being prepared or was not available for this draw.</p>' : '')}
-  </div>`;
-}
-
-function drawWheelMarkup(d) { return drawCardMarkup(d); }
-function paintWheelFrame(canvas,names,angleDeg){
-  const ctx=canvas.getContext('2d'),size=canvas.width,cx=size/2,cy=size/2,r=size/2-8,step=Math.PI*2/names.length;
-  ctx.clearRect(0,0,size,size);ctx.save();ctx.translate(cx,cy);ctx.rotate(angleDeg*Math.PI/180);ctx.translate(-cx,-cy);
-  const colors=['#0A7C66','#1C2E52','#F0B44C','#5877A8','#D16D4D','#36A6A0','#6D5BD0','#B35C8E'];
-  names.forEach((n,i)=>{const a=-Math.PI/2+i*step,b=a+step;ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,a,b);ctx.closePath();ctx.fillStyle=colors[i%colors.length];ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=3;ctx.stroke();ctx.save();ctx.translate(cx,cy);ctx.rotate(a+step/2);ctx.textAlign='right';ctx.fillStyle='#fff';ctx.font='bold '+Math.max(14,Math.min(24,280/names.length))+'px Arial';let label=String(n.name||'Member');if(label.length>19)label=label.slice(0,17)+'…';ctx.fillText(label,r-20,8);ctx.restore();});
-  ctx.restore();ctx.beginPath();ctx.arc(cx,cy,34,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();ctx.strokeStyle='#DDE4EC';ctx.lineWidth=5;ctx.stroke();ctx.fillStyle='#12203A';ctx.font='bold 20px Arial';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('JP',cx,cy);
-}
-function initLiveWheels(){
-  document.querySelectorAll('canvas.live-draw-wheel').forEach(canvas=>{
-    const d=(D.draws||[]).find(x=>x.id===canvas.dataset.drawId);if(!d)return;
-    const names=Array.isArray(d.wheel_names)?d.wheel_names:[];if(!names.length)return;
-    const idx=Number.isInteger(d.winner_index)?d.winner_index:(d.winner_membership_id?names.findIndex(n=>n.membership_id===d.winner_membership_id):-1);
-    const duration=7000,started=Date.parse(d.started_at||d.created_at||new Date().toISOString());
-    const final=idx>=0?(((360-((idx+.5)*360/names.length)%360)+360)%360+2160):2160;
-    const stage=canvas.closest('.draw-wheel-stage');if(stage)stage.dataset.initialized='1';
-    const frame=()=>{
-      if(!canvas.isConnected)return;
-      const elapsed=Math.max(0,Date.now()-started),progress=d.status==='spinning'?Math.min(1,elapsed/duration):1,ease=1-Math.pow(1-progress,3);
-      paintWheelFrame(canvas,names,final*ease);
-      const st=document.getElementById('draw-status-'+d.id);
-      if(d.status==='spinning'&&progress<1)requestAnimationFrame(frame);
-      else if(st&&idx>=0)st.textContent='Winner: '+(d.winner_name||names[idx]?.name||'Selected');
-    };
-    frame();
-  });
-}
-
-function vAWheel() {
-  const cs=D.committees, recent=D.draws||[];
-  return `<div class="card" style="max-width:650px"><h2>Committee Wheel</h2><p class="muted">This wheel is synchronized from the saved draw record. Approved members can watch it live on their committee page; completed draws can be replayed from the private recording.</p>
-    <label>Committee</label><select id="wh_c">${cs.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join('')}</select>
-    <label>Draw month</label><input id="wh_month" type="month" value="${nowKey()}">
-    <p class="muted">The wheel recording is created automatically in this browser while the wheel runs. Keep this page open until upload finishes.</p><br>
-    <button class="btn" onclick="startWheel()" ${cs.length?'':'disabled'}>Spin the wheel</button></div>
-    <h2 class="sec">Recent draws</h2>${recent.length?`<div class="grid">${recent.map(d=>{const c=cs.find(x=>x.id===d.committee_id);return `<div class="card"><div class="muted">${esc(c?.name||'Committee')} · ${esc(fmtMonth(d.month_label))}</div>${drawCardMarkup(d)}</div>`}).join('')}</div>`:empty('No draws recorded yet','history')}`;
-}
-let wheelRecorder=null, wheelChunks=[];
-async function startWheel(){
-  const cid=$('wh_c')?.value, month=$('wh_month')?.value;
-  if(!cid||!month)return toast('Choose a committee and month',1);
-  const c=D.committees.find(x=>x.id===cid);
-  const members=D.memberships.filter(m=>m.committee_id===cid&&m.status==='approved'&&m.user_id&&m.profiles?.name);
-  if(!members.length)return toast('No approved members in this committee',1);
-  const committeeShares=(D.shares||[]).filter(sh=>sh.committee_id===cid);
-  if(committeeShares.length && committeeShares.some(sh=>!sh.slot_number||!sh.payout_month)) return toast('Schedule tab mein har share ka wheel number aur payout month assign karein pehle.',1);
-  const existing=D.draws.find(d=>d.committee_id===cid&&d.month_label===month&&d.status==='completed');
-  if(existing&&!confirm('A completed draw already exists for this month. Create another draw?'))return;
-  const names=members.flatMap(m=>{const shares=(D.shares||[]).filter(x=>x.membership_id===m.id);if(shares.length)return shares.map(sh=>({membership_id:m.id,share_id:sh.id,share_number:sh.share_number,name:m.profiles.name+' · Share '+sh.share_number,slot_number:sh.slot_number}));return Array.from({length:Math.max(1,Number(m.share_count||1))},(_,i)=>({membership_id:m.id,share_number:i+1,name:m.profiles.name+' · Share '+(i+1),slot_number:i===0?m.slot_number:null}));});
-  const {data:draw,error}=await sb.from('committee_draws').insert({committee_id:cid,month_label:month,status:'scheduled',wheel_names:names,created_by:me.id}).select().single();
-  if(error)return toast('Could not create draw: '+error.message,1);
-  const {data:started,error:startErr}=await sb.rpc('prepare_committee_draw',{p_draw_id:draw.id});
-  if(startErr)return toast('Could not start synchronized wheel: '+startErr.message,1);
-  await loadData(); renderNav(); if(tab==='a_wheel')renderTab(false);
-  const active=(D.draws||[]).find(d=>d.id===draw.id)||started;
-  const canvas=document.querySelector(`canvas.live-draw-wheel[data-draw-id="${draw.id}"]`);
-  if(canvas && canvas.captureStream && window.MediaRecorder){
-    try{const stream=canvas.captureStream(30);wheelChunks=[];wheelRecorder=new MediaRecorder(stream,{mimeType:MediaRecorder.isTypeSupported('video/webm;codecs=vp9')?'video/webm;codecs=vp9':'video/webm'});
-      wheelRecorder.ondataavailable=e=>{if(e.data&&e.data.size)wheelChunks.push(e.data)};
-      wheelRecorder.onstop=async()=>{try{const blob=new Blob(wheelChunks,{type:'video/webm'});if(blob.size&&blob.size<50*1024*1024){const path=`${cid}/${draw.id}.webm`;const up=await sb.storage.from('committee-draw-recordings').upload(path,blob,{contentType:'video/webm',upsert:true});if(!up.error){await sb.from('committee_draws').update({recording_path:path}).eq('id',draw.id);await loadData();if(tab==='a_wheel')renderTab(false);}else console.warn('Recording upload failed',up.error);}}catch(e){console.warn('Recording upload failed',e)}};
-      wheelRecorder.start();
-    }catch(e){console.warn('Browser recording unavailable',e)}
-  }
-  setTimeout(async()=>{
-    const {error:doneErr}=await sb.rpc('complete_committee_draw',{p_draw_id:draw.id});
-    if(doneErr){toast('Wheel ran but result could not be finalized: '+doneErr.message,1);return;}
-    await loadData();renderNav();if(tab==='a_wheel')renderTab(false);toast('Winner saved and published to members');
-    if(wheelRecorder&&wheelRecorder.state==='recording')wheelRecorder.stop();
-  },7000);
 }
 
 function vABackup() {
