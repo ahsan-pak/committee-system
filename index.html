@@ -1049,9 +1049,9 @@ function vAPayouts() {
     <label>Status</label><select id="po_st"><option value="pending">pending</option><option value="paid">paid</option></select>
     <br><button class="btn" onclick="addPayout()">Save</button></div>
     <h2 class="sec">Payouts</h2>` +
-    (D.payouts.length ? `<div class="card tw"><table><tr><th>Committee</th><th>Member</th><th>Share</th><th>Month</th><th>Amount</th><th>Status</th><th></th></tr>` +
-      D.payouts.map(p => `<tr><td>${esc(p.committees?.name)}</td><td>${esc(p.profiles?.name)}</td><td>${(D.shares||[]).find(sh=>sh.id===p.share_id)?.share_number||'-'}</td><td>${esc(p.month_label)}</td><td>${money(p.amount)}</td><td>${badge(p.status)}</td>
-      <td class="actions">${p.status !== 'paid' ? `<button class="btn sm" onclick="payoutPaid('${p.id}')">Mark Paid</button>` : ''}<button class="btn sm red" onclick="delPayout('${p.id}')">X</button></td></tr>`).join('') + '</table></div>' : empty('No payouts yet'));
+    (D.payouts.length ? `<div class="card tw"><table><tr><th>Committee</th><th>Member</th><th>Share</th><th>Month</th><th>Amount</th><th>Status</th><th>Member payout preference / account</th><th></th></tr>` +
+      D.payouts.map(p => { const prof = D.profiles.find(x => x.id === p.member_id); const pref = prof?.payout_preference || 'not set'; const account = pref === 'bank' ? [prof?.payout_bank_name, prof?.payout_account_title, prof?.payout_account_number, prof?.payout_iban ? 'IBAN: '+prof.payout_iban : null].filter(Boolean).map(esc).join('<br>') : (pref === 'cash' ? 'Cash' : 'Member has not saved a preference'); return `<tr><td>${esc(p.committees?.name)}</td><td>${esc(p.profiles?.name)}</td><td>${(D.shares||[]).find(sh=>sh.id===p.share_id)?.share_number||'-'}</td><td>${esc(p.month_label)}</td><td>${money(p.amount)}</td><td>${badge(p.status)}</td><td>${pref==='bank' ? '<b>Bank / wallet</b><br>' : ''}${account}</td>
+      <td class="actions">${p.status !== 'paid' ? `<button class="btn sm" onclick="payoutPaid('${p.id}')">Mark Paid</button>` : ''}<button class="btn sm red" onclick="delPayout('${p.id}')">X</button></td></tr>`; }).join('') + '</table></div>' : empty('No payouts yet'));
 }
 function payoutCommChange() {
   const sel = $('po_c'); if (!sel) return;
