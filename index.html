@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Committee System</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="preconnect" href="https://srqiphdhpgrrnpvkvkly.supabase.co" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -154,6 +154,76 @@ tr:last-child td{border-bottom:0}
 }
 @media(max-width:560px){.row{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+:root{--gold:#E3A72F}
+.btn:active{transform:scale(.97)}
+.btn.busy{position:relative;color:transparent!important;pointer-events:none}
+.btn.busy::after{content:'';position:absolute;inset:0;margin:auto;width:16px;height:16px;border:2px solid #fff;border-right-color:transparent;border-radius:50%;animation:rot .6s linear infinite}
+.ringbox{display:grid;place-items:center;margin:8px 0 2px}
+.ringbox svg,.ring-demo svg{width:100%;max-width:230px;height:auto;overflow:visible}
+.track{fill:none;stroke:#E8ECF3;stroke-width:2}
+.dot circle{fill:#fff;stroke:#C4CCDA;stroke-width:1.5;transition:fill .5s,stroke .5s}
+.dot text{font-size:11px;font-weight:700;text-anchor:middle;fill:#667085;pointer-events:none}
+.dot.done circle{fill:var(--brand);stroke:var(--brand)}
+.dot.done text{fill:#fff}
+.dot.now circle{fill:var(--gold);stroke:var(--gold);animation:halo 1.8s ease-out infinite}
+.dot.now text{fill:#2b1d00}
+.dot.empty circle{stroke-dasharray:3 3;fill:none}
+.dot.me circle{stroke:var(--ink);stroke-width:3.5;animation:none}
+.rc1{font-size:25px;font-weight:800;text-anchor:middle;fill:var(--ink)}
+.rc2{font-size:14px;font-weight:600;text-anchor:middle;fill:var(--mu)}
+.legend{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;color:var(--mu);font-size:12px;margin:2px 0 8px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.lg{width:10px;height:10px;border-radius:50%;display:inline-block;border:1.5px solid #C4CCDA}
+.lg.done{background:var(--brand);border-color:var(--brand)}.lg.now{background:var(--gold);border-color:var(--gold)}.lg.me{border:2.5px solid var(--ink)}
+.pay-line{margin:6px 0;font-size:14px}
+@keyframes halo{0%{stroke-width:1.5;stroke-opacity:1}100%{stroke-width:11;stroke-opacity:0}}
+@keyframes rot{to{transform:rotate(360deg)}}
+@keyframes pop{from{opacity:0;transform:translateY(10px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes shake{20%{transform:translateX(-8px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(3px)}}
+@keyframes slideIn{from{transform:translateX(-30px);opacity:0}to{transform:none;opacity:1}}
+@keyframes riseIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes bye{to{opacity:0;transform:scale(.985) translateY(8px)}}
+.shake{animation:shake .4s}
+.shell.enter .side{animation:slideIn .45s cubic-bezier(.2,.8,.2,1)}
+.shell.enter .main{animation:riseIn .5s .08s both cubic-bezier(.2,.8,.2,1)}
+.shell.out{animation:bye .3s forwards}
+.wrap.fade{animation:fadeIn .2s}
+.auth.in .af-in{animation:riseIn .5s .05s both cubic-bezier(.2,.8,.2,1)}
+.auth.in .ap{animation:fadeIn .5s}
+.loading{min-height:100vh;display:grid;place-content:center;justify-items:center;gap:14px;background:var(--ink);color:#9FB0CE;font-weight:600}
+.spin{width:48px;height:48px;animation:rot 1s linear infinite}
+.spin circle{stroke:#34D3A8;stroke-dasharray:90 150}
+.ap .apc{display:grid;gap:14px;justify-items:start}
+.ring-demo{width:100%;max-width:250px;margin-bottom:8px}
+.ap .dot circle{fill:transparent;stroke:rgba(255,255,255,.28)}
+.ap .dot text{fill:rgba(255,255,255,.75)}
+.ap .dot.done circle{fill:#34D3A8;stroke:#34D3A8}
+.ap .dot.done text{fill:#06352A}
+.ap .dot.now circle{fill:var(--gold);stroke:var(--gold)}
+.ap .dot.now text{fill:#2b1d00}
+.ap .track{stroke:rgba(255,255,255,.12)}
+.ap .rc1{fill:#fff}.ap .rc2{fill:#9FB0CE}
+.mback{position:fixed;inset:0;background:rgba(10,18,36,.55);display:grid;place-items:center;padding:16px;z-index:60;animation:fadeIn .15s;backdrop-filter:blur(2px)}
+.mbox{background:#fff;border-radius:18px;padding:22px;width:100%;max-width:460px;max-height:90vh;overflow:auto;animation:pop .24s cubic-bezier(.2,.9,.3,1.15);box-shadow:0 24px 60px rgba(10,18,36,.35)}
+.mbox.wide{max-width:640px}
+.mfoot{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap}
+dl.kv{margin:12px 0 0}
+.kv>div{display:flex;justify-content:space-between;gap:16px;padding:9px 0;border-bottom:1px solid var(--line)}
+.kv dt{color:var(--mu)}.kv dd{margin:0;text-align:right;font-weight:600}
+.warnbox{background:var(--amberl);color:var(--amber);padding:10px 12px;border-radius:10px;font-weight:600;font-size:13px;margin-top:14px}
+.rcpt .rh{display:flex;gap:12px;align-items:center;color:var(--ink)}
+.rcpt .rh b{display:block}.rcpt .rh span{font-size:12px;color:var(--mu)}.rcpt .rh .badge{margin-left:auto}
+.ramt{font-size:36px;font-weight:800;margin:14px 0 2px;color:var(--brandd);letter-spacing:-.02em}
+.sh{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin:6px 0 12px}
+select.cell{padding:7px 8px;min-width:160px;border-radius:8px;width:auto}
+tr.cur td{background:#FFF7E3}
+label.chk{display:flex;align-items:center;gap:10px;color:var(--tx);font-weight:600}
+label.chk input{width:auto}
+@media(max-width:899px){.shell.enter .side{animation:none}.ring-demo{display:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.dot.now.empty circle{fill:#FFF3D1}
+#lbtn,#sbtn{margin-top:18px}
 </style>
 </head>
 <body>
@@ -197,19 +267,101 @@ function toast(m, err) {
 function logoMark() {
   return '<svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><rect x="2" y="2" width="10" height="10" rx="2.5" fill="#34D3A8"/><rect x="14" y="2" width="10" height="10" rx="2.5" fill="currentColor" opacity=".35"/><rect x="2" y="14" width="10" height="10" rx="2.5" fill="currentColor" opacity=".35"/><rect x="14" y="14" width="10" height="10" rx="2.5" fill="currentColor" opacity=".35"/></svg>';
 }
+const nowKey = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); };
+const fmtMonth = k => { const [y, m] = String(k || '').split('-'); return m ? MON[+m - 1] + ' ' + y : '-'; };
+const fmtDT = d => d ? new Date(d).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
+const reduced = () => window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+// ---------- modal ----------
+function openModal(html, wide) {
+  closeModal();
+  const d = document.createElement('div');
+  d.id = 'modal'; d.className = 'mback';
+  d.innerHTML = `<div class="mbox ${wide ? 'wide' : ''}" role="dialog" aria-modal="true">${html}</div>`;
+  d.addEventListener('mousedown', e => { if (e.target === d) closeModal(); });
+  document.body.appendChild(d);
+  const f = d.querySelector('input,select,textarea'); if (f) setTimeout(() => f.focus(), 40);
+}
+function closeModal() { const m = $('modal'); if (m) m.remove(); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+async function copyText(t) {
+  try { await navigator.clipboard.writeText(t); }
+  catch (e) { const a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select(); document.execCommand('copy'); a.remove(); }
+  toast('Copied');
+}
+
+// ---------- rotation ring (the signature visual) ----------
+function curIdx(c) {
+  if (!c.start_date) return 0;
+  const s = new Date(c.start_date + 'T00:00:00'), n = new Date();
+  return (n.getFullYear() - s.getFullYear()) * 12 + (n.getMonth() - s.getMonth()) + 1;
+}
+function ringSVG(c, o = {}) {
+  const total = Math.max(1, Math.min(Number(c.total_members) || 1, 60));
+  const size = 240, mid = size / 2, R = mid - (total > 24 ? 14 : 24);
+  const dr = total <= 12 ? 13 : total <= 24 ? 9.5 : 6;
+  const cur = o.cur != null ? o.cur : curIdx(c);
+  const names = o.names || {}, filled = o.filled || null, mine = o.mine || 0;
+  let dots = '';
+  for (let i = 1; i <= total; i++) {
+    const a = (i - 1) / total * 2 * Math.PI - Math.PI / 2;
+    const x = (mid + R * Math.cos(a)).toFixed(1), y = (mid + R * Math.sin(a)).toFixed(1);
+    const sm = slotMonth(c, i);
+    const st = i < cur ? 'done' : i === cur ? 'now' : 'up';
+    const cls = 'dot ' + st + (i === mine ? ' me' : '') + (filled && !filled.has(i) ? ' empty' : '');
+    const tip = 'Turn ' + i + (sm ? ' - ' + sm.label : '') + (names[i] ? ' - ' + names[i] : '');
+    dots += `<g class="${cls}" data-n="${i}"${i === mine ? ' data-me="1"' : ''}><title>${esc(tip)}</title><circle cx="${x}" cy="${y}" r="${dr}"/>${total <= 16 ? `<text x="${x}" y="${y}" dy=".35em">${i}</text>` : ''}</g>`;
+  }
+  let l1, l2 = '';
+  if (cur >= 1 && cur <= total) { l1 = 'Month ' + cur; l2 = 'of ' + total; }
+  else if (cur > total) { l1 = 'Finished'; }
+  else if (c.start_date) { l1 = 'Starts'; l2 = slotMonth(c, 1).label; }
+  else { l1 = 'No start date'; }
+  return `<svg viewBox="0 0 ${size} ${size}" role="img" aria-label="Payout rotation"><circle class="track" cx="${mid}" cy="${mid}" r="${R}"/>${dots}<text class="rc1" x="${mid}" y="${mid - 2}">${esc(l1)}</text><text class="rc2" x="${mid}" y="${mid + 20}">${esc(l2)}</text></svg>`;
+}
+const ringLegend = me_ => `<div class="legend"><span><i class="lg done"></i>Received</span><span><i class="lg now"></i>This month</span>${me_ ? '<span><i class="lg me"></i>You</span>' : ''}</div>`;
+function setRingCur(svg, cur, total) {
+  svg.querySelectorAll('.dot').forEach(g => { const n = +g.dataset.n; g.setAttribute('class', 'dot ' + (n < cur ? 'done' : n === cur ? 'now' : 'up') + (g.dataset.me ? ' me' : '')); });
+  const a = svg.querySelector('.rc1'), b = svg.querySelector('.rc2');
+  if (a) a.textContent = 'Month ' + cur; if (b) b.textContent = 'of ' + total;
+}
+let demoT = null;
+function stopDemo() { if (demoT) { clearInterval(demoT); demoT = null; } }
+function startDemo() {
+  stopDemo();
+  if (reduced()) return;
+  let k = 3;
+  demoT = setInterval(() => {
+    const root = $('demo'); const svg = root && root.querySelector('svg');
+    if (!svg) return stopDemo();
+    k = k % 12 + 1; setRingCur(svg, k, 12);
+  }, 1300);
+}
+
+// ---------- count-up ----------
+function animateCounts(root) {
+  (root || document).querySelectorAll('[data-count]').forEach(el => {
+    const to = Number(el.dataset.count) || 0;
+    if (reduced() || !to) { el.textContent = money(to); return; }
+    const t0 = performance.now(), dur = 800;
+    const step = t => { const p = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - p, 3); el.textContent = money(Math.round(to * e)); if (p < 1) requestAnimationFrame(step); };
+    requestAnimationFrame(step);
+  });
+}
+
+// ================= AUTH =================
 function showAuth(mode = 'login') {
-  const demo = Array.from({ length: 12 }, (_, i) => `<span class="slot ${i < 7 ? 'on' : ''} ${i === 7 ? 'me' : ''}">${i + 1}</span>`).join('');
+  stopDemo();
   $('app').innerHTML = `
-  <div class="auth">
+  <div class="auth in">
     <section class="ap">
       <div class="brand">${logoMark()}<span>Committee System</span></div>
-      <div>
+      <div class="apc">
+        <div class="ring-demo" id="demo" aria-hidden="true">${ringSVG({ total_members: 12 }, { cur: 3 })}</div>
         <h1>Every installment, recorded and verified.</h1>
-        <p>Join a committee, pay by bank or wallet, and see each payment confirmed by your admin.</p>
-        <div class="slots" aria-hidden="true">${demo}</div>
+        <p>Join a committee, pay by bank or wallet, and see exactly which month your payout arrives.</p>
       </div>
-      <span class="fine">One slot per member, one payout per month.</span>
+      <span class="fine">One turn per member, one payout per month.</span>
     </section>
     <section class="af"><div class="af-in">
       <h2>${mode === 'login' ? 'Welcome back' : 'Create your account'}</h2>
@@ -219,104 +371,107 @@ function showAuth(mode = 'login') {
         <button class="${mode === 'signup' ? 'on' : ''}" onclick="showAuth('signup')">Sign up</button>
       </div>
       ${mode === 'login' ? `
-        <label>Phone number</label><input id="l_phone" type="tel" inputmode="numeric" placeholder="03001234567">
-        <label>Password</label><input id="l_pass" type="password" onkeydown="if(event.key==='Enter')doLogin()">
+        <label>Phone number</label><input id="l_phone" type="tel" inputmode="numeric" placeholder="03001234567" autocomplete="username">
+        <label>Password</label><input id="l_pass" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
         <br><button class="btn" style="width:100%" id="lbtn" onclick="doLogin()">Log in</button>
       ` : `
         <label>Full name *</label><input id="s_name">
         <label>Phone number *</label><input id="s_phone" type="tel" inputmode="numeric" placeholder="03001234567">
         <label>CNIC (optional)</label><input id="s_cnic" placeholder="35202-1234567-1">
-        <label>Password * (minimum 6 characters)</label><input id="s_pass" type="password">
-        <label>Confirm password *</label><input id="s_pass2" type="password">
+        <label>Password * (minimum 6 characters)</label><input id="s_pass" type="password" autocomplete="new-password">
+        <label>Confirm password *</label><input id="s_pass2" type="password" autocomplete="new-password">
         <br><button class="btn" style="width:100%" id="sbtn" onclick="doSignup()">Create account</button>
       `}
     </div></section>
   </div>`;
+  startDemo();
 }
+function shakeForm() { const f = document.querySelector('.af-in'); if (!f) return; f.classList.remove('shake'); void f.offsetWidth; f.classList.add('shake'); }
 
 async function doLogin() {
   const phone = cleanPhone($('l_phone').value), pass = $('l_pass').value;
-  if (!phone || !pass) return toast('Enter phone and password', 1);
-  $('lbtn').disabled = true;
+  if (!phone || !pass) { shakeForm(); return toast('Enter phone and password', 1); }
+  const b = $('lbtn'); b.disabled = true; b.classList.add('busy');
   const { error } = await sb.auth.signInWithPassword({ email: phone + EMAIL_DOMAIN, password: pass });
-  $('lbtn') && ($('lbtn').disabled = false);
-  if (error) return toast('Wrong phone or password', 1);
+  if (error) { b.disabled = false; b.classList.remove('busy'); shakeForm(); return toast('Wrong phone or password', 1); }
   boot();
 }
 
 async function doSignup() {
   const name = $('s_name').value.trim(), phone = cleanPhone($('s_phone').value),
         cnic = $('s_cnic').value.trim(), p1 = $('s_pass').value, p2 = $('s_pass2').value;
-  if (!name || !phone || !p1) return toast('Name, phone and password are required', 1);
-  if (phone.length < 10 || phone.length > 13) return toast('Enter a valid phone number', 1);
-  if (p1.length < 6) return toast('Password must be at least 6 characters', 1);
-  if (p1 !== p2) return toast('Passwords do not match', 1);
-  $('sbtn').disabled = true;
-  const { data, error } = await sb.auth.signUp({
-    email: phone + EMAIL_DOMAIN, password: p1,
-    options: { data: { name, phone, cnic } }
-  });
-  $('sbtn') && ($('sbtn').disabled = false);
+  const bad = m => { shakeForm(); toast(m, 1); };
+  if (!name || !phone || !p1) return bad('Name, phone and password are required');
+  if (phone.length < 10 || phone.length > 13) return bad('Enter a valid phone number');
+  if (p1.length < 6) return bad('Password must be at least 6 characters');
+  if (p1 !== p2) return bad('Passwords do not match');
+  const b = $('sbtn'); b.disabled = true; b.classList.add('busy');
+  const { data, error } = await sb.auth.signUp({ email: phone + EMAIL_DOMAIN, password: p1, options: { data: { name, phone, cnic } } });
   if (error) {
+    b.disabled = false; b.classList.remove('busy'); shakeForm();
     return toast(/registered|exists/i.test(error.message) ? 'This phone number is already registered' : error.message, 1);
   }
-  if (!data.session) {
-    toast('Account created, please log in', 0);
-    return showAuth('login');
-  }
+  if (!data.session) { toast('Account created, please log in'); return showAuth('login'); }
   boot();
 }
 
 async function logout() {
+  const s = document.querySelector('.shell'); if (s) s.classList.add('out');
   if (ch) { sb.removeChannel(ch); ch = null; }
-  await sb.auth.signOut(); me = null; showAuth('login');
+  await Promise.all([sb.auth.signOut(), new Promise(r => setTimeout(r, 320))]);
+  me = null; D = { committees: [], memberships: [], payments: [], payouts: [], accounts: [], profiles: [] };
+  closeModal(); showAuth('login'); toast('You have been logged out');
 }
 
 // ================= BOOT / DATA =================
+function showLoader() {
+  stopDemo();
+  $('app').innerHTML = `<div class="loading"><svg class="spin" viewBox="0 0 50 50" aria-hidden="true"><circle cx="25" cy="25" r="20" fill="none" stroke-width="4" stroke-linecap="round"/></svg><p>Loading your committees</p></div>`;
+}
 async function boot() {
   const { data: { session } } = await sb.auth.getSession();
   if (!session) return showAuth('login');
-  const { data: p, error } = await sb.from('profiles').select('*').eq('id', session.user.id).single();
-  if (error || !p) { toast('Profile not found, please log in again', 1); await sb.auth.signOut(); return showAuth('login'); }
-  me = p;
+  showLoader();
+  const ok = await loadData(session.user.id);
+  if (!ok) { toast('Profile not found, please log in again', 1); await sb.auth.signOut(); return showAuth('login'); }
   tab = me.role === 'admin' ? 'a_home' : 'm_home';
-  await loadData();
-  renderShell();
+  renderShell(true);
   subscribeRealtime();
 }
 
-async function loadData() {
-  const admin = me.role === 'admin';
-  const q = [
+async function loadData(uid) {
+  const r = await Promise.all([
+    sb.from('profiles').select('*').order('created_at', { ascending: false }),
     sb.from('committees').select('*').order('created_at', { ascending: false }),
     sb.from('memberships').select('*, profiles(name,phone), committees(name,monthly_amount)').order('created_at', { ascending: false }),
     sb.from('payments').select('*, profiles(name,phone), memberships(committees(name))').order('created_at', { ascending: false }),
     sb.from('payouts').select('*, profiles(name,phone), committees(name)').order('created_at', { ascending: false }),
     sb.from('payment_accounts').select('*').order('created_at', { ascending: true })
-  ];
-  if (admin) q.push(sb.from('profiles').select('*').order('created_at', { ascending: false }));
-  const r = await Promise.all(q);
-  const names = ['committees', 'memberships', 'payments', 'payouts'];
-  names.forEach((n, i) => { if (r[i].error) console.error(n, r[i].error); D[n] = r[i].data || []; });
-  D.accounts = r[4].data || [];
-  if (admin) D.profiles = r[5].data || [];
+  ]);
+  const keys = ['profiles', 'committees', 'memberships', 'payments', 'payouts', 'accounts'];
+  keys.forEach((k, i) => { if (r[i].error) console.error(k, r[i].error); D[k] = r[i].data || []; });
+  const id = uid || (me && me.id);
+  const mine = D.profiles.find(p => p.id === id);
+  if (!mine) return false;
+  me = mine; return true;
 }
 
 function subscribeRealtime() {
   if (ch) sb.removeChannel(ch);
   ch = sb.channel('live')
     .on('postgres_changes', { event: '*', schema: 'public' }, () => {
-      clearTimeout(tmr); tmr = setTimeout(refresh, 600);
+      clearTimeout(tmr); tmr = setTimeout(refresh, 500);
     }).subscribe();
 }
 
 async function refresh() {
   if (!me) return;
-  await loadData();
+  if (!(await loadData())) return;
   renderNav();
+  if ($('modal')) return;
   const a = document.activeElement, c = $('content');
   if (a && c && c.contains(a) && ['INPUT', 'SELECT', 'TEXTAREA'].includes(a.tagName)) return;
-  renderTab();
+  renderTab(false);
 }
 
 // ================= SHELL =================
@@ -347,23 +502,23 @@ const SUBS = {
   m_home: 'Your payments and committees at a glance',
   m_committees: 'Browse committees and request to join',
   m_pay: 'Pay by bank, wallet or cash and upload your proof',
-  m_history: 'Every payment you have submitted',
+  m_history: 'Every payment you have submitted, with receipts',
   m_payouts: 'Your turn in each committee and payouts received',
   a_home: 'What needs your attention today',
   a_requests: 'Approve or reject people who want to join',
   a_payments: 'Check proofs and verify payments',
-  a_committees: 'Create and manage committees',
+  a_committees: 'Create, edit and share committees',
   a_members: 'Everyone who has signed up',
   a_payouts: 'Record who received the monthly pot',
-  a_schedule: 'When each committee starts and who receives the pot each month',
+  a_schedule: 'Choose who gets each month and track payouts',
   a_backup: 'Download all your data as an Excel file',
   a_reports: 'Collections per committee and member',
   a_bank: 'Banks and wallets members can pay into'
 };
 
-function renderShell() {
+function renderShell(first) {
   const ini = (me.name || '?').trim().charAt(0).toUpperCase();
-  $('app').innerHTML = `<div class="shell">
+  $('app').innerHTML = `<div class="shell ${first ? 'enter' : ''}">
     <aside class="side">
       <div class="brand">${logoMark()}<span>Committee System</span></div>
       <nav id="nav" class="nav"></nav>
@@ -376,7 +531,7 @@ function renderShell() {
         <button class="ico" onclick="logout()" aria-label="Log out">${ic('logout')}</button></div>
       <div id="content" class="wrap"></div>
     </main></div>`;
-  renderNav(); renderTab();
+  renderNav(); renderTab(false); animateCounts();
 }
 
 function renderNav() {
@@ -392,9 +547,9 @@ function renderNav() {
   }).join('');
 }
 
-function setTab(k) { tab = k; renderNav(); renderTab(); window.scrollTo(0, 0); }
+function setTab(k) { tab = k; renderNav(); renderTab(true); animateCounts(); window.scrollTo(0, 0); }
 
-function renderTab() {
+function renderTab(fade) {
   const map = {
     m_home: vMHome, m_committees: vMCommittees, m_pay: vMPay, m_history: vMHistory, m_payouts: vMPayouts,
     a_home: vAHome, a_requests: vARequests, a_payments: vAPayments, a_committees: vACommittees, a_members: vAMembers,
@@ -402,42 +557,39 @@ function renderTab() {
   };
   const c = $('content'); if (!c) return;
   const cur = TABS[me.role === 'admin' ? 'admin' : 'member'].find(x => x[0] === tab);
+  c.classList.remove('fade'); if (fade) { void c.offsetWidth; c.classList.add('fade'); }
   c.innerHTML = `<header class="ph"><h1>${esc(cur ? cur[1] : '')}</h1><p>${esc(SUBS[tab] || '')}</p></header>` + map[tab]();
   if (tab === 'm_pay') payMemChange();
   if (tab === 'a_payouts') payoutCommChange();
 }
 
-function slotGrid(c, mineSlot, admin) {
-  const taken = new Set(admin ? D.memberships.filter(m => m.committee_id === c.id && m.status === 'approved').map(m => m.slot_number) : []);
-  const n = Math.min(c.total_members, 60);
-  let h = '<div class="slots" aria-label="Slots">';
-  for (let i = 1; i <= n; i++) h += `<span class="slot ${taken.has(i) ? 'on' : ''} ${mineSlot === i ? 'me' : ''}">${i}</span>`;
-  if (c.total_members > n) h += `<span class="muted">+${c.total_members - n} more</span>`;
-  return h + '</div>';
-}
-
 function vAHome() {
   const ver = D.payments.filter(p => p.status === 'verified');
   const total = ver.reduce((a, p) => a + Number(p.amount), 0);
-  const month = new Date().toISOString().slice(0, 7);
-  const thisMonth = ver.filter(p => p.month_label === month).reduce((a, p) => a + Number(p.amount), 0);
+  const thisMonth = ver.filter(p => p.month_label === nowKey()).reduce((a, p) => a + Number(p.amount), 0);
   const pendP = D.payments.filter(p => p.status === 'pending');
   const pendR = D.memberships.filter(m => m.status === 'pending');
   const open = D.committees.filter(c => c.status === 'open').length;
   const members = D.profiles.filter(p => p.role !== 'admin').length;
-  const payList = pendP.slice(0, 5).map(p => `<div class="li"><div class="t"><b>${esc(p.profiles?.name)}</b><span>${esc(p.memberships?.committees?.name)} · ${esc(p.month_label)} · ${esc(p.method)}</span></div>
+  const payList = pendP.slice(0, 5).map(p => `<div class="li"><div class="t"><b>${esc(p.profiles?.name)}</b><span>${esc(p.memberships?.committees?.name)} · ${fmtMonth(p.month_label)} · ${esc(p.method)}</span></div>
     <span class="amt2">${money(p.amount)}</span>
-    <div class="actions">${p.proof_path ? `<button class="btn sm out" onclick="viewProof('${esc(p.proof_path)}')">Proof</button>` : ''}<button class="btn sm" onclick="verifyPay('${p.id}')">Verify</button></div></div>`).join('');
+    <div class="actions"><button class="btn sm" onclick="openVerify('${p.id}')">Review</button></div></div>`).join('');
   const reqList = pendR.slice(0, 5).map(m => `<div class="li"><div class="t"><b>${esc(m.profiles?.name)}</b><span>${esc(m.committees?.name)} · ${esc(m.profiles?.phone)}</span></div>
-    <div class="actions"><button class="btn sm" onclick="approveMem('${m.id}')">Approve</button><button class="btn sm red" onclick="rejectMem('${m.id}')">Reject</button></div></div>`).join('');
+    <div class="actions"><button class="btn sm" onclick="openApprove('${m.id}')">Approve</button><button class="btn sm red" onclick="rejectMem('${m.id}')">Reject</button></div></div>`).join('');
   const comms = D.committees.map(c => {
-    const n = D.memberships.filter(m => m.committee_id === c.id && m.status === 'approved').length;
-    const pct = Math.min(100, Math.round(n / c.total_members * 100));
+    const ms = D.memberships.filter(m => m.committee_id === c.id && m.status === 'approved');
+    const filled = new Set(ms.filter(m => m.slot_number).map(m => m.slot_number));
+    const names = {}; ms.forEach(m => { if (m.slot_number) names[m.slot_number] = m.profiles?.name; });
+    const loose = ms.filter(m => !m.slot_number).length;
+    const pct = Math.min(100, Math.round(ms.length / c.total_members * 100));
     return `<div class="card"><div class="cc-h"><h3>${esc(c.name)}</h3>${badge(c.status)}</div>
       <div class="amt">${money(c.monthly_amount)} <small>per month</small></div>
-      <div class="bar"><i style="width:${pct}%"></i></div><div class="muted">${n} of ${c.total_members} slots filled</div>${slotGrid(c, null, true)}</div>`;
+      <div class="ringbox">${ringSVG(c, { filled, names })}</div>${ringLegend(false)}
+      <div class="bar"><i style="width:${pct}%"></i></div>
+      <div class="muted">${ms.length} of ${c.total_members} members${loose ? ' · <b>' + loose + ' without a turn</b>' : ''}</div>
+      <div class="actions" style="margin-top:12px"><button class="btn sm out" onclick="setTab('a_schedule')">Open schedule</button></div></div>`;
   }).join('');
-  return `<div class="hero"><div><div class="hl">Collected so far</div><div class="hv">${money(total)}</div>
+  return `<div class="hero"><div><div class="hl">Collected so far</div><div class="hv" data-count="${total}">${money(total)}</div>
       <div class="hs">${ver.length} verified payment${ver.length === 1 ? '' : 's'}</div></div>
     <dl class="hstrip"><div><dt>This month</dt><dd>${money(thisMonth)}</dd></div><div><dt>Members</dt><dd>${members}</dd></div><div><dt>Open committees</dt><dd>${open}</dd></div></dl></div>
     <div class="two">
@@ -460,33 +612,56 @@ function vMHome() {
   const wait = mems.filter(m => m.status === 'pending').length;
   const cards = appr.map(m => {
     const c = D.committees.find(x => x.id === m.committee_id); if (!c) return '';
+    const sm = slotMonth(c, m.slot_number);
+    const pay = D.payments.find(p => p.membership_id === m.id && p.month_label === nowKey() && p.status !== 'rejected');
     return `<div class="card"><div class="cc-h"><h3>${esc(c.name)}</h3>${badge('approved')}</div>
       <div class="amt">${money(c.monthly_amount)} <small>per month</small></div>
-      <p class="muted" style="margin:8px 0 0">Your turn is number <b>${m.slot_number ?? '-'}</b> of ${c.total_members}${slotMonth(c, m.slot_number) ? ' · you receive <b>' + money(pot(c)) + '</b> in <b>' + slotMonth(c, m.slot_number).label + '</b>' : ''}</p>${slotGrid(c, m.slot_number, false)}
-      <button class="btn sm" onclick="setTab('m_pay')">Make payment</button></div>`;
+      <div class="ringbox">${ringSVG(c, { mine: m.slot_number })}</div>${ringLegend(true)}
+      <p class="pay-line">${sm ? 'You receive <b>' + money(pot(c)) + '</b> in <b>' + sm.label + '</b> (turn ' + m.slot_number + ' of ' + c.total_members + ')' : (m.slot_number ? 'Your payout month appears once the admin sets a start date.' : 'The admin has not assigned your turn yet.')}</p>
+      <p class="pay-line">This month: ${pay ? badge(pay.status) : '<span class="badge pending"><i></i>Due</span>'}</p>
+      <div class="actions"><button class="btn sm" onclick="setTab('m_pay')">Make payment</button>${c.show_roster ? `<button class="btn sm out" onclick="openRoster('${c.id}')">All members</button>` : ''}</div></div>`;
   }).join('');
   return (rej ? `<div class="note">${rej} of your payments ${rej === 1 ? 'was' : 'were'} rejected. Open History to see why and submit again.</div>` : '') +
-    `<div class="hero"><div><div class="hl">Paid so far</div><div class="hv">${money(total)}</div>
+    `<div class="hero"><div><div class="hl">Paid so far</div><div class="hv" data-count="${total}">${money(total)}</div>
       <div class="hs">${ver.length} verified payment${ver.length === 1 ? '' : 's'}</div></div>
     <dl class="hstrip"><div><dt>Committees</dt><dd>${appr.length}</dd></div><div><dt>Awaiting verification</dt><dd>${pend}</dd></div><div><dt>Join requests pending</dt><dd>${wait}</dd></div></dl></div>
     <h2>Your committees</h2>` + (cards ? `<div class="grid">${cards}</div>` : empty('You are not in a committee yet. Pick one and send a join request.', 'layers', ['m_committees', 'Browse committees']));
 }
 
-// ================= MEMBER VIEWS =================
 function vMCommittees() {
   if (!D.committees.length) return empty('No committees yet. The admin will add them here.', 'layers');
   return '<div class="grid">' + D.committees.map(c => {
     const m = D.memberships.find(x => x.committee_id === c.id && x.user_id === me.id);
+    const ok = m && m.status === 'approved';
     let act;
     if (m) act = badge(m.status);
     else if (c.status !== 'open') act = badge('closed');
     else act = `<button class="btn" onclick="joinC('${c.id}')">Send join request</button>`;
-    const mine = m && m.status === 'approved' ? m.slot_number : null;
+    const sm = ok ? slotMonth(c, m.slot_number) : null;
     return `<div class="card"><div class="cc-h"><h3>${esc(c.name)}</h3>${m || c.status !== 'open' ? '' : badge('open')}</div>
       <div class="amt">${money(c.monthly_amount)} <small>per month</small></div>
       <p class="muted" style="margin:8px 0 0">${c.total_members} members${c.duration_months ? ' · ' + c.duration_months + ' months' : ''}${c.start_date ? ' · starts ' + fdate(c.start_date) : ''}</p>
-      ${mine ? `<p class="muted" style="margin:6px 0 0">Your turn is number <b>${mine}</b>${slotMonth(c, mine) ? ' · payout in <b>' + slotMonth(c, mine).label + '</b>' : ''}</p>${slotGrid(c, mine, false)}` : '<div style="height:12px"></div>'}${act}</div>`;
+      ${ok ? `<div class="ringbox">${ringSVG(c, { mine: m.slot_number })}</div>${ringLegend(true)}
+        <p class="pay-line">${sm ? 'Your payout: <b>' + sm.label + '</b> · ' + money(pot(c)) : (m.slot_number ? 'Payout month appears once the admin sets a start date.' : 'The admin has not assigned your turn yet.')}</p>
+        ${c.show_roster ? `<button class="btn sm out" onclick="openRoster('${c.id}')">See all members and payout months</button>` : ''}` : ''}
+      <div style="margin-top:12px">${act}</div></div>`;
   }).join('') + '</div>';
+}
+
+async function openRoster(cid) {
+  const c = D.committees.find(x => x.id === cid); if (!c) return;
+  openModal(`<h2>${esc(c.name)}</h2><p class="muted">Loading members...</p>`, true);
+  const { data, error } = await sb.rpc('get_roster', { cid });
+  if (error) { closeModal(); return toast(error.message, 1); }
+  const mm = D.memberships.find(x => x.committee_id === cid && x.user_id === me.id);
+  const rows = (data || []).map(r => {
+    const sm = slotMonth(c, r.r_slot), isMe = mm && mm.slot_number === r.r_slot;
+    const st = r.r_paid ? badge('paid') : (sm && sm.key === nowKey() ? '<span class="badge pending"><i></i>This month</span>' : '<span class="muted">Upcoming</span>');
+    return `<tr class="${isMe ? 'cur' : ''}"><td><b>${sm ? sm.label : '-'}</b></td><td>${r.r_slot}</td><td>${esc(r.r_name)}${isMe ? ' <span class="muted">(you)</span>' : ''}</td><td>${st}</td></tr>`;
+  }).join('');
+  openModal(`<h2>${esc(c.name)}</h2><p class="muted">${money(c.monthly_amount)} per member · pot ${money(pot(c))} per month</p>
+    <div class="tw" style="margin-top:10px">${rows ? `<table><tr><th>Payout month</th><th>Turn</th><th>Member</th><th>Status</th></tr>${rows}</table>` : '<p class="muted">The admin has not assigned turns yet.</p>'}</div>
+    <div class="mfoot"><button class="btn" onclick="closeModal()">Close</button></div>`, true);
 }
 
 async function joinC(id) {
@@ -550,17 +725,18 @@ async function submitPay() {
   const { error } = await sb.from('payments').insert({
     membership_id: mid, user_id: me.id, month_label: month, amount, method, proof_path: path, account_label: acc, note: note || null, status: 'pending'
   });
-  if (error) { $('pbtn').disabled = false; return toast('Payment could not be saved: ' + error.message, 1); }
+  if (error) { $('pbtn').disabled = false; return toast(/duplicate|unique/i.test(error.message) ? 'A payment for this month is already submitted' : 'Payment could not be saved: ' + error.message, 1); }
   toast('Payment submitted. Admin will verify it');
   tab = 'm_history'; await loadData(); renderNav(); renderTab();
 }
 
 function vMHistory() {
   const list = D.payments.filter(p => p.user_id === me.id);
-  if (!list.length) return empty('No payments yet');
-  return `<div class="card tw"><table><tr><th>Committee</th><th>Month</th><th>Amount</th><th>Method</th><th>Status</th><th>Date</th><th>Note</th></tr>` +
-    list.map(p => `<tr><td>${esc(p.memberships?.committees?.name)}</td><td>${esc(p.month_label)}</td><td>${money(p.amount)}</td>
-    <td>${esc(p.method)}${p.account_label ? '<br><span class="muted">' + esc(p.account_label) + '</span>' : ''}</td><td>${badge(p.status)}</td><td>${fdate(p.created_at)}</td><td>${esc(p.note)}</td></tr>`).join('') + '</table></div>';
+  if (!list.length) return empty('You have not made any payment yet', 'history', ['m_pay', 'Make a payment']);
+  return `<div class="card tw"><table><tr><th>Committee</th><th>Month</th><th>Amount</th><th>Method</th><th>Status</th><th>Date</th><th>Receipt</th></tr>` +
+    list.map(p => `<tr><td>${esc(p.memberships?.committees?.name)}</td><td>${fmtMonth(p.month_label)}</td><td>${money(p.amount)}</td>
+    <td>${methodCell(p)}</td><td>${badge(p.status)}</td><td>${fdate(p.created_at)}</td>
+    <td>${p.status === 'verified' && p.receipt_no ? `<button class="btn sm out" onclick="openReceipt('${p.id}')">${esc(p.receipt_no)}</button>` : (p.note ? '<span class="muted">' + esc(p.note) + '</span>' : '-')}</td></tr>`).join('') + '</table></div>';
 }
 
 function vMPayouts() {
@@ -580,49 +756,70 @@ function vARequests() {
   let h = '<h2>Waiting for approval</h2>';
   h += pend.length ? `<div class="card tw"><table><tr><th>Member</th><th>Phone</th><th>Committee</th><th>Date</th><th></th></tr>` +
     pend.map(m => `<tr><td>${esc(m.profiles?.name)}</td><td>${esc(m.profiles?.phone)}</td><td>${esc(m.committees?.name)}</td><td>${fdate(m.created_at)}</td>
-    <td class="actions"><button class="btn sm" onclick="approveMem('${m.id}')">Approve</button><button class="btn sm red" onclick="rejectMem('${m.id}')">Reject</button></td></tr>`).join('') + '</table></div>'
-    : empty('No pending requests');
+    <td class="actions"><button class="btn sm" onclick="openApprove('${m.id}')">Approve</button><button class="btn sm red" onclick="rejectMem('${m.id}')">Reject</button></td></tr>`).join('') + '</table></div>'
+    : empty('No pending requests', 'inbox');
   h += '<h2 class="sec">Previous requests</h2>';
-  h += done.length ? `<div class="card tw"><table><tr><th>Member</th><th>Committee</th><th>Number</th><th>Status</th><th></th></tr>` +
+  h += done.length ? `<div class="card tw"><table><tr><th>Member</th><th>Committee</th><th>Turn</th><th>Status</th><th></th></tr>` +
     done.map(m => `<tr><td>${esc(m.profiles?.name)}</td><td>${esc(m.committees?.name)}</td><td>${m.slot_number ?? '-'}</td><td>${badge(m.status)}</td>
     <td><button class="btn sm gray" onclick="removeMem('${m.id}')">Remove</button></td></tr>`).join('') + '</table></div>' : empty('Nothing here');
   return h;
 }
 
+function openApprove(id) {
+  const m = D.memberships.find(x => x.id === id); if (!m) return;
+  const c = D.committees.find(x => x.id === m.committee_id); if (!c) return;
+  const used = new Set(D.memberships.filter(x => x.committee_id === c.id && x.status === 'approved' && x.slot_number).map(x => x.slot_number));
+  let opts = '<option value="">Assign later</option>';
+  for (let n = 1; n <= c.total_members; n++) {
+    if (used.has(n)) continue;
+    const sm = slotMonth(c, n);
+    opts += `<option value="${n}">Turn ${n}${sm ? ' · gets paid in ' + sm.label : ''}</option>`;
+  }
+  openModal(`<h2>Approve ${esc(m.profiles?.name)}</h2>
+    <p class="muted">${esc(c.name)} · ${esc(m.profiles?.phone)}</p>
+    <label>Which turn does this member get?</label><select id="ap_slot">${opts}</select>
+    <p class="muted" style="margin-top:8px">You can change the turn later from the Schedule tab.</p>
+    <div class="mfoot"><button class="btn gray" onclick="closeModal()">Cancel</button><button class="btn" id="ap_ok" onclick="approveMem('${id}')">Approve</button></div>`);
+}
 async function approveMem(id) {
-  const m = D.memberships.find(x => x.id === id);
+  const m = D.memberships.find(x => x.id === id); if (!m) return;
   const c = D.committees.find(x => x.id === m.committee_id);
-  const appr = D.memberships.filter(x => x.committee_id === m.committee_id && x.status === 'approved');
-  if (c && appr.length >= c.total_members && !confirm('The committee is already full. Approve anyway?')) return;
-  const slot = Math.max(0, ...appr.map(x => x.slot_number || 0)) + 1;
+  const slot = $('ap_slot') && $('ap_slot').value ? Number($('ap_slot').value) : null;
+  const count = D.memberships.filter(x => x.committee_id === m.committee_id && x.status === 'approved').length;
+  if (c && count >= c.total_members && !confirm('This committee is already full. Approve anyway?')) return;
+  $('ap_ok') && ($('ap_ok').disabled = true);
   const { error } = await sb.from('memberships').update({ status: 'approved', slot_number: slot }).eq('id', id);
-  if (error) return toast(error.message, 1);
-  toast('Approved'); refresh();
+  if (error) { $('ap_ok') && ($('ap_ok').disabled = false); return toast(error.code === '23505' ? 'That turn was just taken. Pick another one' : error.message, 1); }
+  closeModal(); toast('Member approved'); await loadData(); renderTab(false); renderNav();
 }
 async function rejectMem(id) {
-  const { error } = await sb.from('memberships').update({ status: 'rejected' }).eq('id', id);
+  if (!confirm('Reject this request?')) return;
+  const { error } = await sb.from('memberships').update({ status: 'rejected', slot_number: null }).eq('id', id);
   if (error) return toast(error.message, 1); refresh();
 }
 async function removeMem(id) {
-  if (!confirm('Remove this record? This also deletes all payments of this member in this committee.')) return;
+  if (!confirm('Remove this record? This also deletes the member\'s payments in this committee.')) return;
   const { error } = await sb.from('memberships').delete().eq('id', id);
   if (error) return toast(error.message, 1); refresh();
 }
 
+function methodCell(p) {
+  return esc(p.method) + (p.account_label ? '<br><span class="muted">' + esc(p.account_label) + '</span>' : '');
+}
 function vAPayments() {
   const pend = D.payments.filter(p => p.status === 'pending');
-  const done = D.payments.filter(p => p.status !== 'pending').slice(0, 50);
+  const done = D.payments.filter(p => p.status !== 'pending').slice(0, 60);
   let h = '<h2>Waiting for verification</h2>';
   h += pend.length ? `<div class="card tw"><table><tr><th>Member</th><th>Committee</th><th>Month</th><th>Amount</th><th>Method</th><th>Proof</th><th>Note</th><th></th></tr>` +
     pend.map(p => `<tr><td>${esc(p.profiles?.name)}<br><span class="muted">${esc(p.profiles?.phone)}</span></td>
-    <td>${esc(p.memberships?.committees?.name)}</td><td>${esc(p.month_label)}</td><td>${money(p.amount)}</td><td>${esc(p.method)}${p.account_label ? '<br><span class="muted">' + esc(p.account_label) + '</span>' : ''}</td>
+    <td>${esc(p.memberships?.committees?.name)}</td><td>${fmtMonth(p.month_label)}</td><td><b>${money(p.amount)}</b></td><td>${methodCell(p)}</td>
     <td>${p.proof_path ? `<button class="btn sm out" onclick="viewProof('${esc(p.proof_path)}')">View</button>` : 'Cash'}</td><td>${esc(p.note)}</td>
-    <td class="actions"><button class="btn sm" onclick="verifyPay('${p.id}')">Verify</button><button class="btn sm red" onclick="rejectPay('${p.id}')">Reject</button></td></tr>`).join('') + '</table></div>'
-    : empty('No pending payments');
+    <td class="actions"><button class="btn sm" onclick="openVerify('${p.id}')">Review</button><button class="btn sm red" onclick="openReject('${p.id}')">Reject</button></td></tr>`).join('') + '</table></div>'
+    : empty('No pending payments', 'card');
   h += '<h2 class="sec">Previous payments</h2>';
-  h += done.length ? `<div class="card tw"><table><tr><th>Member</th><th>Committee</th><th>Month</th><th>Amount</th><th>Method</th><th>Status</th><th>Proof</th></tr>` +
-    done.map(p => `<tr><td>${esc(p.profiles?.name)}</td><td>${esc(p.memberships?.committees?.name)}</td><td>${esc(p.month_label)}</td><td>${money(p.amount)}</td>
-    <td>${esc(p.method)}${p.account_label ? '<br><span class="muted">' + esc(p.account_label) + '</span>' : ''}</td><td>${badge(p.status)}</td><td>${p.proof_path ? `<button class="btn sm out" onclick="viewProof('${esc(p.proof_path)}')">View</button>` : '-'}</td></tr>`).join('') + '</table></div>' : empty('Nothing here');
+  h += done.length ? `<div class="card tw"><table><tr><th>Member</th><th>Committee</th><th>Month</th><th>Amount</th><th>Method</th><th>Status</th><th>Receipt</th></tr>` +
+    done.map(p => `<tr><td>${esc(p.profiles?.name)}</td><td>${esc(p.memberships?.committees?.name)}</td><td>${fmtMonth(p.month_label)}</td><td>${money(p.amount)}</td>
+    <td>${methodCell(p)}</td><td>${badge(p.status)}</td><td>${p.status === 'verified' && p.receipt_no ? `<button class="btn sm out" onclick="openReceipt('${p.id}')">${esc(p.receipt_no)}</button>` : (p.status === 'rejected' ? '<span class="muted">' + esc(p.note) + '</span>' : '-')}</td></tr>`).join('') + '</table></div>' : empty('Nothing here');
   return h;
 }
 
@@ -632,52 +829,131 @@ async function viewProof(path) {
   if (error || !data) { if (w) w.close(); return toast('Could not open proof', 1); }
   if (w) w.location = data.signedUrl; else window.location = data.signedUrl;
 }
-async function verifyPay(id) {
-  const { error } = await sb.from('payments').update({ status: 'verified', verified_at: new Date().toISOString() }).eq('id', id);
-  if (error) return toast(error.message, 1); toast('Verified'); refresh();
-}
-async function rejectPay(id) {
-  const why = prompt('Reason for rejection (member will see it):');
-  if (why === null) return;
+
+function kv(rows) { return '<dl class="kv">' + rows.filter(Boolean).map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('') + '</dl>'; }
+
+function openVerify(id) {
   const p = D.payments.find(x => x.id === id);
-  const note = ((p.note ? p.note + ' | ' : '') + 'Rejected: ' + (why || 'invalid proof'));
+  if (!p || p.status !== 'pending') return toast('This payment is no longer pending', 1);
+  const cash = p.method === 'cash';
+  openModal(`<h2>${cash ? 'Confirm cash received' : 'Confirm payment received'}</h2>
+    ${kv([['Member', esc(p.profiles?.name) + ' · ' + esc(p.profiles?.phone)], ['Committee', esc(p.memberships?.committees?.name)], ['For month', fmtMonth(p.month_label)],
+      ['Amount', '<b>' + money(p.amount) + '</b>'], ['Method', cash ? 'Cash handed to you' : esc(p.account_label || 'Bank / wallet')], ['Submitted', fmtDT(p.created_at)], p.note ? ['Member note', esc(p.note)] : null])}
+    ${p.proof_path ? `<button class="btn sm out" style="margin-top:12px" onclick="viewProof('${esc(p.proof_path)}')">View proof screenshot</button>` : ''}
+    <div class="warnbox">${cash ? 'Verify only after the cash is in your hand.' : 'Open your bank or wallet app and check that the money has arrived. Do not trust the screenshot alone.'} A verified payment cannot be changed later.</div>
+    <label>Type the amount you received (Rs)</label>
+    <input id="v_amt" type="number" inputmode="numeric" placeholder="${p.amount}" oninput="vCheck(${Number(p.amount)})">
+    <label>Note for your records (optional)</label><input id="v_note" placeholder="e.g. Received by hand at the shop">
+    <div class="mfoot"><button class="btn gray" onclick="closeModal()">Cancel</button><button class="btn" id="v_ok" disabled onclick="confirmVerify('${id}')">Verify and issue receipt</button></div>`);
+}
+function vCheck(a) { const b = $('v_ok'); if (b) b.disabled = Number($('v_amt').value) !== a; }
+async function confirmVerify(id) {
+  const b = $('v_ok'); b.disabled = true; b.classList.add('busy');
+  const { data, error } = await sb.rpc('verify_payment', { pid: id, received: Number($('v_amt').value), vnote: $('v_note').value.trim() || null });
+  if (error) { b.disabled = false; b.classList.remove('busy'); return toast(error.message, 1); }
+  await loadData(); renderNav(); renderTab(false);
+  toast('Verified. Receipt ' + data);
+  openReceipt(id);
+}
+
+function receiptText(p) {
+  return ['PAYMENT RECEIPT', 'Receipt no: ' + p.receipt_no, 'Member: ' + (p.profiles?.name || ''), 'Committee: ' + (p.memberships?.committees?.name || ''),
+    'Month: ' + fmtMonth(p.month_label), 'Amount: ' + money(p.amount), 'Method: ' + (p.method === 'cash' ? 'Cash' : (p.account_label || 'Bank / wallet')), 'Verified: ' + fmtDT(p.verified_at)].join('\n');
+}
+function openReceipt(id) {
+  const p = D.payments.find(x => x.id === id); if (!p || p.status !== 'verified') return;
+  openModal(`<div class="rcpt"><div class="rh">${logoMark()}<div><b>Payment receipt</b><span>${esc(p.receipt_no || '')}</span></div>${badge('verified')}</div>
+    <div class="ramt">${money(p.amount)}</div>
+    ${kv([['Member', esc(p.profiles?.name)], ['Committee', esc(p.memberships?.committees?.name)], ['For month', fmtMonth(p.month_label)], ['Method', p.method === 'cash' ? 'Cash' : esc(p.account_label || 'Bank / wallet')], ['Verified on', fmtDT(p.verified_at)], p.verify_note && me.role === 'admin' ? ['Your note', esc(p.verify_note)] : null])}
+    <div class="mfoot"><button class="btn gray" onclick="copyText(receiptText(D.payments.find(x => x.id === '${id}')))">Copy text</button><button class="btn" onclick="closeModal()">Done</button></div></div>`);
+}
+
+function openReject(id) {
+  const p = D.payments.find(x => x.id === id); if (!p) return;
+  openModal(`<h2>Reject payment</h2><p class="muted">${esc(p.profiles?.name)} · ${money(p.amount)} · ${fmtMonth(p.month_label)}</p>
+    <label>Reason (the member will see this) *</label>
+    <input id="rj_why" list="rj_list" placeholder="Choose or type a reason">
+    <datalist id="rj_list"><option value="Money not received"><option value="Amount does not match"><option value="Screenshot is unclear"><option value="Wrong account or month"></datalist>
+    <div class="mfoot"><button class="btn gray" onclick="closeModal()">Cancel</button><button class="btn red" onclick="confirmReject('${id}')">Reject payment</button></div>`);
+}
+async function confirmReject(id) {
+  const why = $('rj_why').value.trim();
+  if (why.length < 3) return toast('Please give a reason', 1);
+  const p = D.payments.find(x => x.id === id);
+  const note = (p.note ? p.note + ' | ' : '') + 'Rejected: ' + why;
   const { error } = await sb.from('payments').update({ status: 'rejected', note }).eq('id', id);
-  if (error) return toast(error.message, 1); refresh();
+  if (error) return toast(error.message, 1);
+  closeModal(); toast('Payment rejected'); await loadData(); renderNav(); renderTab(false);
 }
 
 function vACommittees() {
-  return `<div class="card" style="max-width:600px"><h2>Create New Committee</h2>
-    <label>Committee Name *</label><input id="c_name">
-    <div class="row"><div><label>Monthly Amount (Rs) *</label><input id="c_amt" type="number" min="1"></div>
-    <div><label>Total Members *</label><input id="c_mem" type="number" min="1"></div></div>
-    <div class="row"><div><label>Start Date</label><input id="c_start" type="date"></div>
+  return `<div class="card" style="max-width:620px"><h2>Create a committee</h2>
+    <label>Committee name *</label><input id="c_name" placeholder="e.g. Friends Committee">
+    <div class="row"><div><label>Monthly amount per member (Rs) *</label><input id="c_amt" type="number" min="1"></div>
+    <div><label>Total members *</label><input id="c_mem" type="number" min="1" max="60"></div></div>
+    <div class="row"><div><label>Start date *</label><input id="c_start" type="date"></div>
     <div><label>Duration (months)</label><input id="c_dur" type="number" min="1"></div></div>
-    <br><button class="btn" onclick="addCommittee()">Create</button></div>
-    <h2 class="sec">Committees</h2>` +
-    (D.committees.length ? `<div class="card tw"><table><tr><th>Name</th><th>Starts</th><th>Monthly</th><th>Pot per month</th><th>Members</th><th>Approved</th><th>Status</th><th></th></tr>` +
+    <label class="chk"><input type="checkbox" id="c_roster"> Let members see everyone's name and payout month</label>
+    <br><button class="btn" onclick="addCommittee()">Create committee</button></div>
+    <h2 class="sec">Your committees</h2>` +
+    (D.committees.length ? `<div class="card tw"><table><tr><th>Name</th><th>Starts</th><th>Monthly</th><th>Pot</th><th>Members</th><th>Member list</th><th>Status</th><th></th></tr>` +
       D.committees.map(c => {
         const n = D.memberships.filter(m => m.committee_id === c.id && m.status === 'approved').length;
-        return `<tr><td>${esc(c.name)}</td><td>${c.start_date ? fdate(c.start_date) : '<span class="muted">not set</span>'}</td><td>${money(c.monthly_amount)}</td><td>${money(pot(c))}</td><td>${c.total_members}</td><td>${n}</td><td>${badge(c.status)}</td>
-        <td class="actions"><button class="btn sm gray" onclick="toggleC('${c.id}','${c.status}')">${c.status === 'open' ? 'Close' : 'Reopen'}</button>
+        return `<tr><td><b>${esc(c.name)}</b></td><td>${c.start_date ? fdate(c.start_date) : '<span class="muted">not set</span>'}</td><td>${money(c.monthly_amount)}</td><td>${money(pot(c))}</td><td>${n} / ${c.total_members}</td>
+        <td>${c.show_roster ? '<span class="badge open"><i></i>Shared</span>' : '<span class="badge closed"><i></i>Hidden</span>'}</td><td>${badge(c.status)}</td>
+        <td class="actions"><button class="btn sm out" onclick="openEditCommittee('${c.id}')">Edit</button>
+        <button class="btn sm gray" onclick="toggleRoster('${c.id}', ${!!c.show_roster})">${c.show_roster ? 'Hide list' : 'Share list'}</button>
+        <button class="btn sm gray" onclick="toggleC('${c.id}','${c.status}')">${c.status === 'open' ? 'Close' : 'Reopen'}</button>
         <button class="btn sm red" onclick="delC('${c.id}')">Delete</button></td></tr>`;
-      }).join('') + '</table></div>' : empty('No committees yet'));
+      }).join('') + '</table></div>' : empty('No committees yet', 'layers'));
 }
 async function addCommittee() {
   const name = $('c_name').value.trim(), amt = Number($('c_amt').value), mem = Number($('c_mem').value);
   if (!name || !amt || !mem) return toast('Name, amount and members are required', 1);
+  if (!$('c_start').value) return toast('Pick a start date. Payout months are calculated from it', 1);
+  if (mem > 60) return toast('Maximum 60 members per committee', 1);
   const { error } = await sb.from('committees').insert({
-    name, monthly_amount: amt, total_members: mem,
-    start_date: $('c_start').value || null, duration_months: Number($('c_dur').value) || null
+    name, monthly_amount: amt, total_members: mem, start_date: $('c_start').value,
+    duration_months: Number($('c_dur').value) || null, show_roster: $('c_roster').checked
   });
   if (error) return toast(error.message, 1);
-  toast('Committee created'); await loadData(); renderTab();
+  toast('Committee created'); await loadData(); renderTab(false);
+}
+function openEditCommittee(id) {
+  const c = D.committees.find(x => x.id === id); if (!c) return;
+  openModal(`<h2>Edit committee</h2>
+    <label>Name</label><input id="e_name" value="${esc(c.name)}">
+    <div class="row"><div><label>Monthly amount (Rs)</label><input id="e_amt" type="number" min="1" value="${c.monthly_amount}"></div>
+    <div><label>Total members</label><input id="e_mem" type="number" min="1" max="60" value="${c.total_members}"></div></div>
+    <div class="row"><div><label>Start date</label><input id="e_start" type="date" value="${c.start_date || ''}"></div>
+    <div><label>Duration (months)</label><input id="e_dur" type="number" min="1" value="${c.duration_months || ''}"></div></div>
+    <label class="chk"><input type="checkbox" id="e_roster" ${c.show_roster ? 'checked' : ''}> Let members see everyone's name and payout month</label>
+    <div class="mfoot"><button class="btn gray" onclick="closeModal()">Cancel</button><button class="btn" onclick="saveCommittee('${id}')">Save changes</button></div>`);
+}
+async function saveCommittee(id) {
+  const name = $('e_name').value.trim(), amt = Number($('e_amt').value), mem = Number($('e_mem').value);
+  if (!name || !amt || !mem) return toast('Name, amount and members are required', 1);
+  if (mem > 60) return toast('Maximum 60 members per committee', 1);
+  const maxSlot = Math.max(0, ...D.memberships.filter(m => m.committee_id === id && m.status === 'approved' && m.slot_number).map(m => m.slot_number));
+  if (mem < maxSlot) return toast('Turn ' + maxSlot + ' is already assigned. Total members cannot be less than that', 1);
+  const { error } = await sb.from('committees').update({
+    name, monthly_amount: amt, total_members: mem, start_date: $('e_start').value || null,
+    duration_months: Number($('e_dur').value) || null, show_roster: $('e_roster').checked
+  }).eq('id', id);
+  if (error) return toast(error.message, 1);
+  closeModal(); toast('Committee updated'); await loadData(); renderTab(false);
+}
+async function toggleRoster(id, on) {
+  const { error } = await sb.from('committees').update({ show_roster: !on }).eq('id', id);
+  if (error) return toast(error.message, 1);
+  toast(on ? 'Member list is now hidden from members' : 'Members can now see the member list'); refresh();
 }
 async function toggleC(id, st) {
   const { error } = await sb.from('committees').update({ status: st === 'open' ? 'closed' : 'open' }).eq('id', id);
   if (error) return toast(error.message, 1); refresh();
 }
 async function delC(id) {
-  if (!confirm('Deleting this committee will also delete all its members, payments and payouts. Are you sure?')) return;
+  if (!confirm('Deleting this committee also deletes all its members, payments and payouts. Are you sure?')) return;
   const { error } = await sb.from('committees').delete().eq('id', id);
   if (error) return toast(error.message, 1); refresh();
 }
@@ -756,21 +1032,61 @@ function vASchedule() {
   if (!D.committees.length) return empty('No committees yet. Create one to see its payout schedule.', 'layers', ['a_committees', 'Create a committee']);
   return D.committees.map(c => {
     const mems = D.memberships.filter(m => m.committee_id === c.id && m.status === 'approved');
-    const bySlot = {}; mems.forEach(m => { bySlot[m.slot_number] = m; });
+    const mids = new Set(D.memberships.filter(m => m.committee_id === c.id).map(m => m.id));
+    const bySlot = {}; mems.forEach(m => { if (m.slot_number) bySlot[m.slot_number] = m; });
+    const loose = mems.filter(m => !m.slot_number);
     let rows = '';
     for (let n = 1; n <= c.total_members; n++) {
       const m = bySlot[n], sm = slotMonth(c, n);
       const po = m ? D.payouts.find(p => p.committee_id === c.id && p.member_id === m.user_id && (!sm || p.month_label === sm.key)) : null;
-      const coll = sm ? D.payments.filter(p => p.status === 'verified' && p.month_label === sm.key && p.memberships?.committees?.name === c.name).reduce((a, p) => a + Number(p.amount), 0) : 0;
+      const coll = sm ? D.payments.filter(p => p.status === 'verified' && p.month_label === sm.key && mids.has(p.membership_id)).reduce((a, p) => a + Number(p.amount), 0) : 0;
+      const opts = '<option value="">Empty</option>' + mems.map(x => `<option value="${x.user_id}" ${m && x.id === m.id ? 'selected' : ''}>${esc(x.profiles?.name)}${x.slot_number && !(m && x.id === m.id) ? ' (turn ' + x.slot_number + ')' : ''}</option>`).join('');
       const status = po ? badge(po.status) : '<span class="muted">not paid yet</span>';
       const act = (m && sm && !po) ? `<button class="btn sm" onclick="markPayout('${c.id}','${m.user_id}','${sm.key}',${pot(c)})">Mark paid</button>` : (po && po.status !== 'paid' ? `<button class="btn sm" onclick="payoutPaid('${po.id}')">Mark paid</button>` : '');
-      rows += `<tr><td><b>${sm ? sm.label : '-'}</b></td><td>${n}</td><td>${m ? esc(m.profiles?.name) + '<br><span class="muted">' + esc(m.profiles?.phone) + '</span>' : '<span class="muted">Slot not filled</span>'}</td>
+      rows += `<tr class="${sm && sm.key === nowKey() ? 'cur' : ''}"><td><b>${sm ? sm.label : '-'}</b></td><td>${n}</td>
+        <td><select class="cell" onchange="assignSlot('${c.id}', ${n}, this.value)">${opts}</select></td>
         <td>${money(pot(c))}</td><td>${sm ? money(coll) : '-'}</td><td>${status}</td><td>${act}</td></tr>`;
     }
-    return `<h2 class="sec">${esc(c.name)} ${badge(c.status)}</h2>
-      <p class="muted" style="margin:-6px 0 10px">${c.start_date ? 'Starts ' + fdate(c.start_date) : 'No start date. Delete and recreate the committee with a start date to see months.'} · ${money(c.monthly_amount)} per member · pot ${money(pot(c))}</p>
-      <div class="card tw"><table><tr><th>Payout month</th><th>Slot</th><th>Receives the pot</th><th>Pot</th><th>Collected that month</th><th>Payout</th><th></th></tr>${rows}</table></div>`;
-  }).join('');
+    return `<div class="sh"><div><h2 style="margin:0">${esc(c.name)} ${badge(c.status)}</h2>
+      <p class="muted" style="margin:4px 0 0">${c.start_date ? 'Starts ' + fdate(c.start_date) : 'No start date yet. Use Edit on the Committees tab.'} · ${money(c.monthly_amount)} per member · pot ${money(pot(c))} · member list ${c.show_roster ? 'shared' : 'hidden'}</p></div>
+      <div class="actions"><button class="btn sm out" onclick="copySchedule('${c.id}')">Copy for WhatsApp</button></div></div>
+      ${loose.length ? `<div class="note">${loose.length} approved member${loose.length === 1 ? ' has' : 's have'} no turn yet: ${loose.map(x => esc(x.profiles?.name)).join(', ')}. Pick them in the table below.</div>` : ''}
+      <div class="card tw"><table><tr><th>Payout month</th><th>Turn</th><th>Receives the pot</th><th>Pot</th><th>Collected that month</th><th>Payout</th><th></th></tr>${rows}</table></div>`;
+  }).join('<div style="height:18px"></div>');
+}
+async function setSlot(id, slot) {
+  const { error } = await sb.from('memberships').update({ slot_number: slot }).eq('id', id);
+  return error;
+}
+async function assignSlot(cid, n, uid) {
+  const holder = D.memberships.find(m => m.committee_id === cid && m.status === 'approved' && m.slot_number === n);
+  const got = u => D.payouts.some(p => p.committee_id === cid && p.member_id === u && p.status === 'paid');
+  let err = null;
+  if (!uid) {
+    if (!holder) return;
+    if (got(holder.user_id)) { toast('This member has already received a payout, so the turn is locked', 1); return renderTab(false); }
+    err = await setSlot(holder.id, null);
+  } else {
+    const mm = D.memberships.find(m => m.committee_id === cid && m.user_id === uid && m.status === 'approved');
+    if (!mm || (holder && holder.id === mm.id)) return;
+    if (got(uid) || (holder && got(holder.user_id))) { toast('A member who already received a payout cannot be moved', 1); return renderTab(false); }
+    const prev = mm.slot_number || null;
+    if (holder) {
+      if (!confirm('Turn ' + n + ' belongs to ' + holder.profiles?.name + '. Swap the two members?')) return renderTab(false);
+      err = (await setSlot(holder.id, null)) || (await setSlot(mm.id, n)) || (await setSlot(holder.id, prev));
+    } else err = await setSlot(mm.id, n);
+  }
+  if (err) toast(err.code === '23505' ? 'That turn is already taken' : err.message, 1); else toast('Turn saved');
+  await loadData(); renderTab(false);
+}
+function copySchedule(cid) {
+  const c = D.committees.find(x => x.id === cid); if (!c) return;
+  const lines = [c.name, money(c.monthly_amount) + ' per member, pot ' + money(pot(c)) + ' per month', ''];
+  for (let n = 1; n <= c.total_members; n++) {
+    const m = D.memberships.find(x => x.committee_id === cid && x.status === 'approved' && x.slot_number === n), sm = slotMonth(c, n);
+    lines.push(n + '. ' + (sm ? sm.label : '-') + ' - ' + (m ? m.profiles?.name : '(open)'));
+  }
+  copyText(lines.join('\n'));
 }
 async function markPayout(cid, uid, key, amt) {
   if (!confirm('Mark this payout as paid? Only do this after you have handed over the money.')) return;
@@ -784,14 +1100,22 @@ function vABackup() {
     <p class="muted">One Excel file with separate sheets for members, committees, join requests, payments, payouts, the payout schedule and payment accounts. Payment proof images are not included.</p>
     <br><button class="btn" id="bkbtn" onclick="downloadBackup()">Download Excel backup</button></div>`;
 }
-function downloadBackup() {
-  if (typeof XLSX === 'undefined') return toast('Excel library did not load. Check your internet and refresh', 1);
+function loadXlsx() {
+  return new Promise((res, rej) => {
+    if (window.XLSX) return res();
+    const t = document.createElement('script');
+    t.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    t.onload = res; t.onerror = rej; document.head.appendChild(t);
+  });
+}
+async function downloadBackup() {
+  try { await loadXlsx(); } catch (e) { return toast('Could not load the Excel library. Check your internet and try again', 1); }
   const cn = id => (D.committees.find(c => c.id === id) || {}).name || '';
   const sheets = {
     Members: D.profiles.map(p => ({ Name: p.name, Phone: p.phone, CNIC: p.cnic || '', Role: p.role, Joined: fdate(p.created_at) })),
-    Committees: D.committees.map(c => ({ Name: c.name, 'Monthly amount': c.monthly_amount, 'Total members': c.total_members, 'Pot per month': pot(c), 'Start date': c.start_date || '', 'Duration (months)': c.duration_months || '', Status: c.status })),
+    Committees: D.committees.map(c => ({ Name: c.name, 'Member list shared': c.show_roster ? 'Yes' : 'No', 'Monthly amount': c.monthly_amount, 'Total members': c.total_members, 'Pot per month': pot(c), 'Start date': c.start_date || '', 'Duration (months)': c.duration_months || '', Status: c.status })),
     'Join requests': D.memberships.map(m => ({ Member: m.profiles?.name, Phone: m.profiles?.phone, Committee: m.committees?.name, Slot: m.slot_number || '', Status: m.status, Date: fdate(m.created_at) })),
-    Payments: D.payments.map(p => ({ Member: p.profiles?.name, Phone: p.profiles?.phone, Committee: p.memberships?.committees?.name, Month: p.month_label, Amount: p.amount, Method: p.method, Account: p.account_label || '', Status: p.status, Note: p.note || '', Submitted: fdate(p.created_at), Verified: fdate(p.verified_at) })),
+    Payments: D.payments.map(p => ({ Member: p.profiles?.name, Phone: p.profiles?.phone, Committee: p.memberships?.committees?.name, Month: p.month_label, Amount: p.amount, Method: p.method, Account: p.account_label || '', Status: p.status, Note: p.note || '', Receipt: p.receipt_no || '', Submitted: fdate(p.created_at), Verified: fdate(p.verified_at) })),
     Payouts: D.payouts.map(p => ({ Committee: p.committees?.name, Member: p.profiles?.name, Phone: p.profiles?.phone, Month: p.month_label, Amount: p.amount, Status: p.status })),
     Schedule: [],
     Accounts: D.accounts.map(a => ({ Type: a.type, Name: a.provider, Title: a.account_title, Number: a.account_number, IBAN: a.iban || '', Visible: a.active ? 'Yes' : 'No' }))
