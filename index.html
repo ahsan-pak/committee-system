@@ -444,12 +444,14 @@ async function loadData(uid) {
     sb.from('profiles').select('*').order('created_at', { ascending: false }),
     sb.from('committees').select('*').order('created_at', { ascending: false }),
     sb.from('memberships').select('*, profiles(name,phone), committees(name,monthly_amount)').order('created_at', { ascending: false }),
-    sb.from('payments').select('*, profiles(name,phone), memberships(committees(name))').order('created_at', { ascending: false }),
+    sb.from('payments').select('*, profiles!user_id(name,phone), memberships(committees(name))').order('created_at', { ascending: false }),
     sb.from('payouts').select('*, profiles(name,phone), committees(name)').order('created_at', { ascending: false }),
     sb.from('payment_accounts').select('*').order('created_at', { ascending: true })
   ]);
   const keys = ['profiles', 'committees', 'memberships', 'payments', 'payouts', 'accounts'];
-  keys.forEach((k, i) => { if (r[i].error) console.error(k, r[i].error); D[k] = r[i].data || []; });
+  keys.forEach((k, i) => { if (r[i].error) { console.error(k, r[i].error); if (!window.__lde) { window.__lde = 1; toast('Could not load ' + k + ': ' + r[i].error.message, 1); } } D[k] = r[i].data || []; });
+  const bad = r.find(x => x.error);
+  if (bad && !loadData.warned) { loadData.warned = true; toast('Could not load some data: ' + bad.error.message, 1); setTimeout(() => { loadData.warned = false; }, 15000); }
   const id = uid || (me && me.id);
   const mine = D.profiles.find(p => p.id === id);
   if (!mine) return false;
