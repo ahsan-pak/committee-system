@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Committee System</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -176,6 +177,15 @@ const money = n => 'Rs ' + Number(n || 0).toLocaleString('en-PK');
 const fdate = d => d ? new Date(d).toLocaleDateString('en-GB') : '-';
 const badge = s => `<span class="badge ${esc(s)}"><i></i>${esc(s)}</span>`;
 const empty = (t, icon, btn) => `<div class="empty">${ic(icon || 'inbox', 28)}<p>${esc(t)}</p>${btn ? `<button class="btn sm" onclick="setTab('${btn[0]}')">${esc(btn[1])}</button>` : ''}</div>`;
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function slotMonth(c, n) {
+  if (!c || !c.start_date || !n) return null;
+  const d = new Date(c.start_date + 'T00:00:00');
+  d.setMonth(d.getMonth() + (n - 1));
+  const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+  return { key, label: MON[d.getMonth()] + ' ' + d.getFullYear() };
+}
+const pot = c => Number(c.monthly_amount) * Number(c.total_members);
 const cleanPhone = p => String(p || '').replace(/[^0-9]/g, '');
 
 function toast(m, err) {
@@ -320,6 +330,8 @@ const ICONS = {
   bar: '<path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/>',
   bank: '<path d="M3 10 12 4l9 6"/><path d="M5 10v8"/><path d="M10 10v8"/><path d="M14 10v8"/><path d="M19 10v8"/><path d="M3 21h18"/>',
   history: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  cal: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="M8 3v4"/><path d="M16 3v4"/>',
+  save: '<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/>',
   logout: '<path d="M9 21H5V3h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>'
 };
 const ic = (n, s = 18) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n] || ''}</svg>`;
@@ -329,7 +341,7 @@ const TABS = {
            ['m_history', 'History', 'history'], ['m_payouts', 'Payouts', 'down']],
   admin: [['a_home', 'Overview', 'home'], ['a_requests', 'Requests', 'inbox'], ['a_payments', 'Payments', 'card'],
           ['a_committees', 'Committees', 'layers'], ['a_members', 'Members', 'users'], ['a_payouts', 'Payouts', 'down'],
-          ['a_reports', 'Reports', 'bar'], ['a_bank', 'Accounts', 'bank']]
+          ['a_schedule', 'Schedule', 'cal'], ['a_reports', 'Reports', 'bar'], ['a_bank', 'Accounts', 'bank'], ['a_backup', 'Backup', 'save']]
 };
 const SUBS = {
   m_home: 'Your payments and committees at a glance',
@@ -343,6 +355,8 @@ const SUBS = {
   a_committees: 'Create and manage committees',
   a_members: 'Everyone who has signed up',
   a_payouts: 'Record who received the monthly pot',
+  a_schedule: 'When each committee starts and who receives the pot each month',
+  a_backup: 'Download all your data as an Excel file',
   a_reports: 'Collections per committee and member',
   a_bank: 'Banks and wallets members can pay into'
 };
@@ -384,7 +398,7 @@ function renderTab() {
   const map = {
     m_home: vMHome, m_committees: vMCommittees, m_pay: vMPay, m_history: vMHistory, m_payouts: vMPayouts,
     a_home: vAHome, a_requests: vARequests, a_payments: vAPayments, a_committees: vACommittees, a_members: vAMembers,
-    a_payouts: vAPayouts, a_reports: vAReports, a_bank: vABank
+    a_payouts: vAPayouts, a_reports: vAReports, a_bank: vABank, a_schedule: vASchedule, a_backup: vABackup
   };
   const c = $('content'); if (!c) return;
   const cur = TABS[me.role === 'admin' ? 'admin' : 'member'].find(x => x[0] === tab);
@@ -448,7 +462,7 @@ function vMHome() {
     const c = D.committees.find(x => x.id === m.committee_id); if (!c) return '';
     return `<div class="card"><div class="cc-h"><h3>${esc(c.name)}</h3>${badge('approved')}</div>
       <div class="amt">${money(c.monthly_amount)} <small>per month</small></div>
-      <p class="muted" style="margin:8px 0 0">Your turn is number <b>${m.slot_number ?? '-'}</b> of ${c.total_members}</p>${slotGrid(c, m.slot_number, false)}
+      <p class="muted" style="margin:8px 0 0">Your turn is number <b>${m.slot_number ?? '-'}</b> of ${c.total_members}${slotMonth(c, m.slot_number) ? ' · you receive <b>' + money(pot(c)) + '</b> in <b>' + slotMonth(c, m.slot_number).label + '</b>' : ''}</p>${slotGrid(c, m.slot_number, false)}
       <button class="btn sm" onclick="setTab('m_pay')">Make payment</button></div>`;
   }).join('');
   return (rej ? `<div class="note">${rej} of your payments ${rej === 1 ? 'was' : 'were'} rejected. Open History to see why and submit again.</div>` : '') +
@@ -471,7 +485,7 @@ function vMCommittees() {
     return `<div class="card"><div class="cc-h"><h3>${esc(c.name)}</h3>${m || c.status !== 'open' ? '' : badge('open')}</div>
       <div class="amt">${money(c.monthly_amount)} <small>per month</small></div>
       <p class="muted" style="margin:8px 0 0">${c.total_members} members${c.duration_months ? ' · ' + c.duration_months + ' months' : ''}${c.start_date ? ' · starts ' + fdate(c.start_date) : ''}</p>
-      ${mine ? `<p class="muted" style="margin:6px 0 0">Your turn is number <b>${mine}</b></p>${slotGrid(c, mine, false)}` : '<div style="height:12px"></div>'}${act}</div>`;
+      ${mine ? `<p class="muted" style="margin:6px 0 0">Your turn is number <b>${mine}</b>${slotMonth(c, mine) ? ' · payout in <b>' + slotMonth(c, mine).label + '</b>' : ''}</p>${slotGrid(c, mine, false)}` : '<div style="height:12px"></div>'}${act}</div>`;
   }).join('') + '</div>';
 }
 
@@ -553,7 +567,7 @@ function vMPayouts() {
   const mine = D.memberships.filter(m => m.user_id === me.id && m.status === 'approved');
   const list = D.payouts.filter(p => p.member_id === me.id);
   return `<h2>Your turn in each committee</h2>` +
-    (mine.length ? `<div class="grid">${mine.map(m => `<div class="card"><h3>${esc(m.committees?.name)}</h3><p>Your number: <span class="stat">${m.slot_number ?? '-'}</span></p></div>`).join('')}</div>` : empty('No approved committees')) +
+    (mine.length ? `<div class="grid">${mine.map(m => `<div class="card"><h3>${esc(m.committees?.name)}</h3><p>Your number: <span class="stat">${m.slot_number ?? '-'}</span></p>${(() => { const c = D.committees.find(x => x.id === m.committee_id); const sm = slotMonth(c, m.slot_number); return sm ? `<p class="muted" style="margin:0">You receive <b>${money(pot(c))}</b> in <b>${sm.label}</b></p>` : '<p class="muted" style="margin:0">Payout month is set once the committee has a start date.</p>'; })()}</div>`).join('')}</div>` : empty('No approved committees')) +
     `<h2 class="sec">Payouts received</h2>` +
     (list.length ? `<div class="card tw"><table><tr><th>Committee</th><th>Month</th><th>Amount</th><th>Status</th></tr>` +
       list.map(p => `<tr><td>${esc(p.committees?.name)}</td><td>${esc(p.month_label)}</td><td>${money(p.amount)}</td><td>${badge(p.status)}</td></tr>`).join('') + '</table></div>' : empty('No payouts received yet'));
@@ -640,10 +654,10 @@ function vACommittees() {
     <div><label>Duration (months)</label><input id="c_dur" type="number" min="1"></div></div>
     <br><button class="btn" onclick="addCommittee()">Create</button></div>
     <h2 class="sec">Committees</h2>` +
-    (D.committees.length ? `<div class="card tw"><table><tr><th>Name</th><th>Monthly</th><th>Members</th><th>Approved</th><th>Status</th><th></th></tr>` +
+    (D.committees.length ? `<div class="card tw"><table><tr><th>Name</th><th>Starts</th><th>Monthly</th><th>Pot per month</th><th>Members</th><th>Approved</th><th>Status</th><th></th></tr>` +
       D.committees.map(c => {
         const n = D.memberships.filter(m => m.committee_id === c.id && m.status === 'approved').length;
-        return `<tr><td>${esc(c.name)}</td><td>${money(c.monthly_amount)}</td><td>${c.total_members}</td><td>${n}</td><td>${badge(c.status)}</td>
+        return `<tr><td>${esc(c.name)}</td><td>${c.start_date ? fdate(c.start_date) : '<span class="muted">not set</span>'}</td><td>${money(c.monthly_amount)}</td><td>${money(pot(c))}</td><td>${c.total_members}</td><td>${n}</td><td>${badge(c.status)}</td>
         <td class="actions"><button class="btn sm gray" onclick="toggleC('${c.id}','${c.status}')">${c.status === 'open' ? 'Close' : 'Reopen'}</button>
         <button class="btn sm red" onclick="delC('${c.id}')">Delete</button></td></tr>`;
       }).join('') + '</table></div>' : empty('No committees yet'));
@@ -736,6 +750,63 @@ function vAReports() {
       <p class="muted">Monthly ${money(c.monthly_amount)} | Members ${mems.length}/${c.total_members} | Total verified so far: <b>${money(total)}</b></p>
       ${mems.length ? `<div class="tw"><table><tr><th>No.</th><th>Name</th><th>Phone</th><th>Verified</th><th>Total</th><th>Pending</th><th>Months paid</th></tr>${rows}</table></div>` : '<p class="muted">No approved members</p>'}</div>`;
   }).join('');
+}
+
+function vASchedule() {
+  if (!D.committees.length) return empty('No committees yet. Create one to see its payout schedule.', 'layers', ['a_committees', 'Create a committee']);
+  return D.committees.map(c => {
+    const mems = D.memberships.filter(m => m.committee_id === c.id && m.status === 'approved');
+    const bySlot = {}; mems.forEach(m => { bySlot[m.slot_number] = m; });
+    let rows = '';
+    for (let n = 1; n <= c.total_members; n++) {
+      const m = bySlot[n], sm = slotMonth(c, n);
+      const po = m ? D.payouts.find(p => p.committee_id === c.id && p.member_id === m.user_id && (!sm || p.month_label === sm.key)) : null;
+      const coll = sm ? D.payments.filter(p => p.status === 'verified' && p.month_label === sm.key && p.memberships?.committees?.name === c.name).reduce((a, p) => a + Number(p.amount), 0) : 0;
+      const status = po ? badge(po.status) : '<span class="muted">not paid yet</span>';
+      const act = (m && sm && !po) ? `<button class="btn sm" onclick="markPayout('${c.id}','${m.user_id}','${sm.key}',${pot(c)})">Mark paid</button>` : (po && po.status !== 'paid' ? `<button class="btn sm" onclick="payoutPaid('${po.id}')">Mark paid</button>` : '');
+      rows += `<tr><td><b>${sm ? sm.label : '-'}</b></td><td>${n}</td><td>${m ? esc(m.profiles?.name) + '<br><span class="muted">' + esc(m.profiles?.phone) + '</span>' : '<span class="muted">Slot not filled</span>'}</td>
+        <td>${money(pot(c))}</td><td>${sm ? money(coll) : '-'}</td><td>${status}</td><td>${act}</td></tr>`;
+    }
+    return `<h2 class="sec">${esc(c.name)} ${badge(c.status)}</h2>
+      <p class="muted" style="margin:-6px 0 10px">${c.start_date ? 'Starts ' + fdate(c.start_date) : 'No start date. Delete and recreate the committee with a start date to see months.'} · ${money(c.monthly_amount)} per member · pot ${money(pot(c))}</p>
+      <div class="card tw"><table><tr><th>Payout month</th><th>Slot</th><th>Receives the pot</th><th>Pot</th><th>Collected that month</th><th>Payout</th><th></th></tr>${rows}</table></div>`;
+  }).join('');
+}
+async function markPayout(cid, uid, key, amt) {
+  if (!confirm('Mark this payout as paid? Only do this after you have handed over the money.')) return;
+  const { error } = await sb.from('payouts').insert({ committee_id: cid, member_id: uid, month_label: key, amount: amt, status: 'paid' });
+  if (error) return toast(error.message, 1);
+  toast('Payout marked as paid'); await loadData(); renderTab();
+}
+
+function vABackup() {
+  return `<div class="card" style="max-width:560px"><h2>Download a full backup</h2>
+    <p class="muted">One Excel file with separate sheets for members, committees, join requests, payments, payouts, the payout schedule and payment accounts. Payment proof images are not included.</p>
+    <br><button class="btn" id="bkbtn" onclick="downloadBackup()">Download Excel backup</button></div>`;
+}
+function downloadBackup() {
+  if (typeof XLSX === 'undefined') return toast('Excel library did not load. Check your internet and refresh', 1);
+  const cn = id => (D.committees.find(c => c.id === id) || {}).name || '';
+  const sheets = {
+    Members: D.profiles.map(p => ({ Name: p.name, Phone: p.phone, CNIC: p.cnic || '', Role: p.role, Joined: fdate(p.created_at) })),
+    Committees: D.committees.map(c => ({ Name: c.name, 'Monthly amount': c.monthly_amount, 'Total members': c.total_members, 'Pot per month': pot(c), 'Start date': c.start_date || '', 'Duration (months)': c.duration_months || '', Status: c.status })),
+    'Join requests': D.memberships.map(m => ({ Member: m.profiles?.name, Phone: m.profiles?.phone, Committee: m.committees?.name, Slot: m.slot_number || '', Status: m.status, Date: fdate(m.created_at) })),
+    Payments: D.payments.map(p => ({ Member: p.profiles?.name, Phone: p.profiles?.phone, Committee: p.memberships?.committees?.name, Month: p.month_label, Amount: p.amount, Method: p.method, Account: p.account_label || '', Status: p.status, Note: p.note || '', Submitted: fdate(p.created_at), Verified: fdate(p.verified_at) })),
+    Payouts: D.payouts.map(p => ({ Committee: p.committees?.name, Member: p.profiles?.name, Phone: p.profiles?.phone, Month: p.month_label, Amount: p.amount, Status: p.status })),
+    Schedule: [],
+    Accounts: D.accounts.map(a => ({ Type: a.type, Name: a.provider, Title: a.account_title, Number: a.account_number, IBAN: a.iban || '', Visible: a.active ? 'Yes' : 'No' }))
+  };
+  D.committees.forEach(c => {
+    for (let n = 1; n <= c.total_members; n++) {
+      const m = D.memberships.find(x => x.committee_id === c.id && x.status === 'approved' && x.slot_number === n), sm = slotMonth(c, n);
+      const po = m ? D.payouts.find(p => p.committee_id === c.id && p.member_id === m.user_id && (!sm || p.month_label === sm.key)) : null;
+      sheets.Schedule.push({ Committee: c.name, 'Payout month': sm ? sm.label : '', Slot: n, Member: m ? m.profiles?.name : '', Phone: m ? m.profiles?.phone : '', Pot: pot(c), Payout: po ? po.status : 'not paid yet' });
+    }
+  });
+  const wb = XLSX.utils.book_new();
+  Object.entries(sheets).forEach(([name, rows]) => XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows.length ? rows : [{ Info: 'No data' }]), name));
+  XLSX.writeFile(wb, 'committee-backup-' + new Date().toISOString().slice(0, 10) + '.xlsx');
+  toast('Backup downloaded');
 }
 
 function vABank() {
