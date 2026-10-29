@@ -224,6 +224,15 @@ label.chk input{width:auto}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 .dot.now.empty circle{fill:#FFF3D1}
 #lbtn,#sbtn{margin-top:18px}
+.card{transition:transform .2s,box-shadow .2s}
+.grid .card{animation:riseIn .45s both}
+.grid .card:nth-child(2){animation-delay:.06s}.grid .card:nth-child(3){animation-delay:.12s}.grid .card:nth-child(n+4){animation-delay:.18s}
+.grid .card:hover{transform:translateY(-3px);box-shadow:0 12px 26px rgba(18,32,58,.09)}
+tr:hover td{background:#F8FAFC}td,.badge,.btn,.nav button{transition:background .2s,color .2s,transform .15s}
+.slot,.dot circle{transition:all .4s}
+.wheelbox{display:grid;place-items:center}.wheelbox svg{width:100%;max-width:360px;overflow:visible}
+#w_c{margin-bottom:10px}
+
 </style>
 </head>
 <body>
@@ -308,9 +317,9 @@ function ringSVG(c, o = {}) {
     const x = (mid + R * Math.cos(a)).toFixed(1), y = (mid + R * Math.sin(a)).toFixed(1);
     const sm = slotMonth(c, i);
     const st = i < cur ? 'done' : i === cur ? 'now' : 'up';
-    const cls = 'dot ' + st + (i === mine ? ' me' : '') + (filled && !filled.has(i) ? ' empty' : '');
+    const cls = 'dot ' + st + (isMine(mine, i) ? ' me' : '') + (filled && !filled.has(i) ? ' empty' : '');
     const tip = 'Turn ' + i + (sm ? ' - ' + sm.label : '') + (names[i] ? ' - ' + names[i] : '');
-    dots += `<g class="${cls}" data-n="${i}"${i === mine ? ' data-me="1"' : ''}><title>${esc(tip)}</title><circle cx="${x}" cy="${y}" r="${dr}"/>${total <= 16 ? `<text x="${x}" y="${y}" dy=".35em">${i}</text>` : ''}</g>`;
+    dots += `<g class="${cls}" data-n="${i}"${isMine(mine, i) ? ' data-me="1"' : ''}><title>${esc(tip)}</title><circle cx="${x}" cy="${y}" r="${dr}"/>${total <= 16 ? `<text x="${x}" y="${y}" dy=".35em">${i}</text>` : ''}</g>`;
   }
   let l1, l2 = '';
   if (cur >= 1 && cur <= total) { l1 = 'Month ' + cur; l2 = 'of ' + total; }
@@ -446,9 +455,11 @@ async function loadData(uid) {
     sb.from('memberships').select('*, profiles(name,phone), committees(name,monthly_amount)').order('created_at', { ascending: false }),
     sb.from('payments').select('*, profiles!user_id(name,phone), memberships(committees(name))').order('created_at', { ascending: false }),
     sb.from('payouts').select('*, profiles(name,phone), committees(name)').order('created_at', { ascending: false }),
-    sb.from('payment_accounts').select('*').order('created_at', { ascending: true })
+    sb.from('payment_accounts').select('*').order('created_at', { ascending: true }),
+    sb.from('membership_shares').select('*'),
+    sb.from('committee_draws').select('*').order('created_at', { ascending: false })
   ]);
-  const keys = ['profiles', 'committees', 'memberships', 'payments', 'payouts', 'accounts'];
+  const keys = ['profiles', 'committees', 'memberships', 'payments', 'payouts', 'accounts', 'shares', 'draws'];
   keys.forEach((k, i) => { if (r[i].error) { console.error(k, r[i].error); if (!window.__lde) { window.__lde = 1; toast('Could not load ' + k + ': ' + r[i].error.message, 1); } } D[k] = r[i].data || []; });
   const bad = r.find(x => x.error);
   if (bad && !loadData.warned) { loadData.warned = true; toast('Could not load some data: ' + bad.error.message, 1); setTimeout(() => { loadData.warned = false; }, 15000); }
@@ -470,6 +481,7 @@ async function refresh() {
   if (!me) return;
   if (!(await loadData())) return;
   renderNav();
+  if (window.wheelBusy) return;
   if ($('modal')) return;
   const a = document.activeElement, c = $('content');
   if (a && c && c.contains(a) && ['INPUT', 'SELECT', 'TEXTAREA'].includes(a.tagName)) return;
@@ -489,16 +501,17 @@ const ICONS = {
   history: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
   cal: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="M8 3v4"/><path d="M16 3v4"/>',
   save: '<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/>',
+  wheel: '<circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4"/>',
   logout: '<path d="M9 21H5V3h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>'
 };
 const ic = (n, s = 18) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n] || ''}</svg>`;
 
 const TABS = {
   member: [['m_home', 'Overview', 'home'], ['m_committees', 'Committees', 'layers'], ['m_pay', 'Make payment', 'card'],
-           ['m_history', 'History', 'history'], ['m_payouts', 'Payouts', 'down']],
+           ['m_history', 'History', 'history'], ['m_payouts', 'Payouts', 'down'], ['m_wheel', 'Lucky draw', 'wheel']],
   admin: [['a_home', 'Overview', 'home'], ['a_requests', 'Requests', 'inbox'], ['a_payments', 'Payments', 'card'],
           ['a_committees', 'Committees', 'layers'], ['a_members', 'Members', 'users'], ['a_payouts', 'Payouts', 'down'],
-          ['a_schedule', 'Schedule', 'cal'], ['a_reports', 'Reports', 'bar'], ['a_bank', 'Accounts', 'bank'], ['a_backup', 'Backup', 'save']]
+          ['a_schedule', 'Schedule', 'cal'], ['a_wheel', 'Lucky draw', 'wheel'], ['m_committees', 'Join as member', 'layers'], ['m_pay', 'Pay as member', 'card'], ['m_history', 'My payments', 'history'], ['a_reports', 'Reports', 'bar'], ['a_bank', 'Accounts', 'bank'], ['a_backup', 'Backup', 'save']]
 };
 const SUBS = {
   m_home: 'Your payments and committees at a glance',
@@ -515,7 +528,9 @@ const SUBS = {
   a_schedule: 'Choose who gets each month and track payouts',
   a_backup: 'Download all your data as an Excel file',
   a_reports: 'Collections per committee and member',
-  a_bank: 'Banks and wallets members can pay into'
+  a_bank: 'Banks and wallets members can pay into',
+  a_wheel: 'Spin the wheel live. Everyone watches the same result',
+  m_wheel: 'Watch the live draw for your committee'
 };
 
 function renderShell(first) {
@@ -555,7 +570,7 @@ function renderTab(fade) {
   const map = {
     m_home: vMHome, m_committees: vMCommittees, m_pay: vMPay, m_history: vMHistory, m_payouts: vMPayouts,
     a_home: vAHome, a_requests: vARequests, a_payments: vAPayments, a_committees: vACommittees, a_members: vAMembers,
-    a_payouts: vAPayouts, a_reports: vAReports, a_bank: vABank, a_schedule: vASchedule, a_backup: vABackup
+    a_payouts: vAPayouts, a_wheel: vWheel, m_wheel: vWheel, a_reports: vAReports, a_bank: vABank, a_schedule: vASchedule, a_backup: vABackup
   };
   const c = $('content'); if (!c) return;
   const cur = TABS[me.role === 'admin' ? 'admin' : 'member'].find(x => x[0] === tab);
@@ -563,6 +578,7 @@ function renderTab(fade) {
   c.innerHTML = `<header class="ph"><h1>${esc(cur ? cur[1] : '')}</h1><p>${esc(SUBS[tab] || '')}</p></header>` + map[tab]();
   if (tab === 'm_pay') payMemChange();
   if (tab === 'a_payouts') payoutCommChange();
+  if (tab.endsWith('_wheel')) wheelInit();
 }
 
 function vAHome() {
@@ -580,9 +596,9 @@ function vAHome() {
     <div class="actions"><button class="btn sm" onclick="openApprove('${m.id}')">Approve</button><button class="btn sm red" onclick="rejectMem('${m.id}')">Reject</button></div></div>`).join('');
   const comms = D.committees.map(c => {
     const ms = D.memberships.filter(m => m.committee_id === c.id && m.status === 'approved');
-    const filled = new Set(ms.filter(m => m.slot_number).map(m => m.slot_number));
-    const names = {}; ms.forEach(m => { if (m.slot_number) names[m.slot_number] = m.profiles?.name; });
-    const loose = ms.filter(m => !m.slot_number).length;
+    const cs = D.shares.filter(s => s.committee_id === c.id && s.slot_number); const filled = new Set(cs.map(s => s.slot_number));
+    const names = {}; cs.forEach(s => { const mm = ms.find(x => x.id === s.membership_id); if (mm) names[s.slot_number] = mm.profiles?.name; });
+    const loose = D.shares.filter(s => s.committee_id === c.id && !s.slot_number).length;
     const pct = Math.min(100, Math.round(ms.length / c.total_members * 100));
     return `<div class="card"><div class="cc-h"><h3>${esc(c.name)}</h3>${badge(c.status)}</div>
       <div class="amt">${money(c.monthly_amount)} <small>per month</small></div>
@@ -618,8 +634,8 @@ function vMHome() {
     const pay = D.payments.find(p => p.membership_id === m.id && p.month_label === nowKey() && p.status !== 'rejected');
     return `<div class="card"><div class="cc-h"><h3>${esc(c.name)}</h3>${badge('approved')}</div>
       <div class="amt">${money(c.monthly_amount)} <small>per month</small></div>
-      <div class="ringbox">${ringSVG(c, { mine: m.slot_number })}</div>${ringLegend(true)}
-      <p class="pay-line">${sm ? 'You receive <b>' + money(pot(c)) + '</b> in <b>' + sm.label + '</b> (turn ' + m.slot_number + ' of ' + c.total_members + ')' : (m.slot_number ? 'Your payout month appears once the admin sets a start date.' : 'The admin has not assigned your turn yet.')}</p>
+      <div class="ringbox">${ringSVG(c, { mine: mySlots(m) })}</div>${ringLegend(true)}
+      ${shareLines(c, m)}
       <p class="pay-line">This month: ${pay ? badge(pay.status) : '<span class="badge pending"><i></i>Due</span>'}</p>
       <div class="actions"><button class="btn sm" onclick="setTab('m_pay')">Make payment</button>${c.show_roster ? `<button class="btn sm out" onclick="openRoster('${c.id}')">All members</button>` : ''}</div></div>`;
   }).join('');
@@ -643,10 +659,10 @@ function vMCommittees() {
     return `<div class="card"><div class="cc-h"><h3>${esc(c.name)}</h3>${m || c.status !== 'open' ? '' : badge('open')}</div>
       <div class="amt">${money(c.monthly_amount)} <small>per month</small></div>
       <p class="muted" style="margin:8px 0 0">${c.total_members} members${c.duration_months ? ' · ' + c.duration_months + ' months' : ''}${c.start_date ? ' · starts ' + fdate(c.start_date) : ''}</p>
-      ${ok ? `<div class="ringbox">${ringSVG(c, { mine: m.slot_number })}</div>${ringLegend(true)}
-        <p class="pay-line">${sm ? 'Your payout: <b>' + sm.label + '</b> · ' + money(pot(c)) : (m.slot_number ? 'Payout month appears once the admin sets a start date.' : 'The admin has not assigned your turn yet.')}</p>
+      ${ok ? `<div class="ringbox">${ringSVG(c, { mine: mySlots(m) })}</div>${ringLegend(true)}
+        ${shareLines(c, m)}
         ${c.show_roster ? `<button class="btn sm out" onclick="openRoster('${c.id}')">See all members and payout months</button>` : ''}` : ''}
-      <div style="margin-top:12px">${act}</div></div>`;
+      <div style="margin-top:12px">${act}${ok && c.status === 'open' && (m.share_count || 1) < 20 ? ` <button class="btn sm out" onclick="addShare('${m.id}')">Add another share</button>` : ''}</div></div>`;
   }).join('') + '</div>';
 }
 
@@ -666,12 +682,6 @@ async function openRoster(cid) {
     <div class="mfoot"><button class="btn" onclick="closeModal()">Close</button></div>`, true);
 }
 
-async function joinC(id) {
-  const { error } = await sb.from('memberships').insert({ user_id: me.id, committee_id: id, status: 'pending' });
-  if (error) return toast('Request failed: ' + error.message, 1);
-  toast('Request sent. Please wait for admin approval');
-  refresh();
-}
 
 function vMPay() {
   const mine = D.memberships.filter(m => m.user_id === me.id && m.status === 'approved');
@@ -697,7 +707,7 @@ function vMPay() {
 function payMemChange() {
   const sel = $('p_mem'); if (!sel) return;
   const m = D.memberships.find(x => x.id === sel.value);
-  if (m && m.committees) $('p_amt').value = m.committees.monthly_amount;
+  if (m && m.committees) $('p_amt').value = m.committees.monthly_amount * (m.share_count || 1);
 }
 function payMethodChange() {
   const bank = document.querySelector('input[name=pm]:checked').value === 'bank';
@@ -745,7 +755,7 @@ function vMPayouts() {
   const mine = D.memberships.filter(m => m.user_id === me.id && m.status === 'approved');
   const list = D.payouts.filter(p => p.member_id === me.id);
   return `<h2>Your turn in each committee</h2>` +
-    (mine.length ? `<div class="grid">${mine.map(m => `<div class="card"><h3>${esc(m.committees?.name)}</h3><p>Your number: <span class="stat">${m.slot_number ?? '-'}</span></p>${(() => { const c = D.committees.find(x => x.id === m.committee_id); const sm = slotMonth(c, m.slot_number); return sm ? `<p class="muted" style="margin:0">You receive <b>${money(pot(c))}</b> in <b>${sm.label}</b></p>` : '<p class="muted" style="margin:0">Payout month is set once the committee has a start date.</p>'; })()}</div>`).join('')}</div>` : empty('No approved committees')) +
+    (mine.length ? `<div class="grid">${mine.map(m => `<div class="card"><h3>${esc(m.committees?.name)}</h3>${shareLines(D.committees.find(x => x.id === m.committee_id), m)}</div>`).join('')}</div>` : empty('No approved committees')) +
     `<h2 class="sec">Payouts received</h2>` +
     (list.length ? `<div class="card tw"><table><tr><th>Committee</th><th>Month</th><th>Amount</th><th>Status</th></tr>` +
       list.map(p => `<tr><td>${esc(p.committees?.name)}</td><td>${esc(p.month_label)}</td><td>${money(p.amount)}</td><td>${badge(p.status)}</td></tr>`).join('') + '</table></div>' : empty('No payouts received yet'));
@@ -779,8 +789,8 @@ function openApprove(id) {
   }
   openModal(`<h2>Approve ${esc(m.profiles?.name)}</h2>
     <p class="muted">${esc(c.name)} · ${esc(m.profiles?.phone)}</p>
-    <label>Which turn does this member get?</label><select id="ap_slot">${opts}</select>
-    <p class="muted" style="margin-top:8px">You can change the turn later from the Schedule tab.</p>
+    <input type="hidden" id="ap_slot" value="">
+    <p class="muted" style="margin-top:8px">Turns are given from the Schedule tab or the Lucky draw.</p>
     <div class="mfoot"><button class="btn gray" onclick="closeModal()">Cancel</button><button class="btn" id="ap_ok" onclick="approveMem('${id}')">Approve</button></div>`);
 }
 async function approveMem(id) {
@@ -936,7 +946,7 @@ async function saveCommittee(id) {
   const name = $('e_name').value.trim(), amt = Number($('e_amt').value), mem = Number($('e_mem').value);
   if (!name || !amt || !mem) return toast('Name, amount and members are required', 1);
   if (mem > 60) return toast('Maximum 60 members per committee', 1);
-  const maxSlot = Math.max(0, ...D.memberships.filter(m => m.committee_id === id && m.status === 'approved' && m.slot_number).map(m => m.slot_number));
+  const maxSlot = Math.max(0, ...D.shares.filter(s => s.committee_id === id && s.slot_number).map(s => s.slot_number));
   if (mem < maxSlot) return toast('Turn ' + maxSlot + ' is already assigned. Total members cannot be less than that', 1);
   const { error } = await sb.from('committees').update({
     name, monthly_amount: amt, total_members: mem, start_date: $('e_start').value || null,
@@ -963,7 +973,7 @@ async function delC(id) {
 function vAMembers() {
   return `<h2>${D.profiles.length} registered</h2><div class="card tw"><table><tr><th>Name</th><th>Phone</th><th>CNIC</th><th>Role</th><th>Date</th><th></th></tr>` +
     D.profiles.map(p => `<tr><td>${esc(p.name)}</td><td>${esc(p.phone)}</td><td>${esc(p.cnic) || '-'}</td><td>${esc(p.role)}</td><td>${fdate(p.created_at)}</td>
-    <td>${p.role === 'admin' ? '' : `<button class="btn sm red" onclick="delMember('${p.id}')">Delete</button>`}</td></tr>`).join('') + '</table></div>';
+    <td>${adminCell(p)}</td></tr>`).join('') + '</table></div>';
 }
 async function delMember(id) {
   const p = D.profiles.find(x => x.id === id); if (!p) return;
@@ -1035,64 +1045,58 @@ function vASchedule() {
   return D.committees.map(c => {
     const mems = D.memberships.filter(m => m.committee_id === c.id && m.status === 'approved');
     const mids = new Set(D.memberships.filter(m => m.committee_id === c.id).map(m => m.id));
-    const bySlot = {}; mems.forEach(m => { if (m.slot_number) bySlot[m.slot_number] = m; });
-    const loose = mems.filter(m => !m.slot_number);
+    const shs = D.shares.filter(s => s.committee_id === c.id && mems.some(m => m.id === s.membership_id));
+    const mof = s => mems.find(m => m.id === s.membership_id);
+    const lab = s => (mof(s).profiles?.name || '?') + (mof(s).share_count > 1 ? ' (share ' + s.share_number + ')' : '');
+    const loose = shs.filter(s => !s.slot_number);
     let rows = '';
     for (let n = 1; n <= c.total_members; n++) {
-      const m = bySlot[n], sm = slotMonth(c, n);
-      const po = m ? D.payouts.find(p => p.committee_id === c.id && p.member_id === m.user_id && (!sm || p.month_label === sm.key)) : null;
+      const h = shs.find(s => s.slot_number === n), sm = slotMonth(c, n);
+      const po = h ? D.payouts.find(p => p.committee_id === c.id && (p.share_id ? p.share_id === h.id : p.member_id === mof(h).user_id) && (!sm || p.month_label === sm.key)) : null;
       const coll = sm ? D.payments.filter(p => p.status === 'verified' && p.month_label === sm.key && mids.has(p.membership_id)).reduce((a, p) => a + Number(p.amount), 0) : 0;
-      const opts = '<option value="">Empty</option>' + mems.map(x => `<option value="${x.user_id}" ${m && x.id === m.id ? 'selected' : ''}>${esc(x.profiles?.name)}${x.slot_number && !(m && x.id === m.id) ? ' (turn ' + x.slot_number + ')' : ''}</option>`).join('');
+      const opts = '<option value="">Empty</option>' + shs.map(s => `<option value="${s.id}" ${h && s.id === h.id ? 'selected' : ''}>${esc(lab(s))}${s.slot_number && !(h && s.id === h.id) ? ' (turn ' + s.slot_number + ')' : ''}</option>`).join('');
       const status = po ? badge(po.status) : '<span class="muted">not paid yet</span>';
-      const act = (m && sm && !po) ? `<button class="btn sm" onclick="markPayout('${c.id}','${m.user_id}','${sm.key}',${pot(c)})">Mark paid</button>` : (po && po.status !== 'paid' ? `<button class="btn sm" onclick="payoutPaid('${po.id}')">Mark paid</button>` : '');
+      const act = (h && sm && !po) ? `<button class="btn sm" onclick="markPayout('${c.id}','${h.id}','${sm.key}',${pot(c)})">Mark paid</button>` : (po && po.status !== 'paid' ? `<button class="btn sm" onclick="payoutPaid('${po.id}')">Mark paid</button>` : '');
       rows += `<tr class="${sm && sm.key === nowKey() ? 'cur' : ''}"><td><b>${sm ? sm.label : '-'}</b></td><td>${n}</td>
         <td><select class="cell" onchange="assignSlot('${c.id}', ${n}, this.value)">${opts}</select></td>
         <td>${money(pot(c))}</td><td>${sm ? money(coll) : '-'}</td><td>${status}</td><td>${act}</td></tr>`;
     }
     return `<div class="sh"><div><h2 style="margin:0">${esc(c.name)} ${badge(c.status)}</h2>
-      <p class="muted" style="margin:4px 0 0">${c.start_date ? 'Starts ' + fdate(c.start_date) : 'No start date yet. Use Edit on the Committees tab.'} · ${money(c.monthly_amount)} per member · pot ${money(pot(c))} · member list ${c.show_roster ? 'shared' : 'hidden'}</p></div>
+      <p class="muted" style="margin:4px 0 0">${c.start_date ? 'Starts ' + fdate(c.start_date) : 'No start date yet. Use Edit on the Committees tab.'} · ${money(c.monthly_amount)} per share · pot ${money(pot(c))} per turn</p></div>
       <div class="actions"><button class="btn sm out" onclick="copySchedule('${c.id}')">Copy for WhatsApp</button></div></div>
-      ${loose.length ? `<div class="note">${loose.length} approved member${loose.length === 1 ? ' has' : 's have'} no turn yet: ${loose.map(x => esc(x.profiles?.name)).join(', ')}. Pick them in the table below.</div>` : ''}
+      ${loose.length ? `<div class="note">${loose.length} share${loose.length === 1 ? ' has' : 's have'} no turn yet: ${loose.map(x => esc(lab(x))).join(', ')}. Pick them below or use the Lucky draw.</div>` : ''}
       <div class="card tw"><table><tr><th>Payout month</th><th>Turn</th><th>Receives the pot</th><th>Pot</th><th>Collected that month</th><th>Payout</th><th></th></tr>${rows}</table></div>`;
   }).join('<div style="height:18px"></div>');
 }
-async function setSlot(id, slot) {
-  const { error } = await sb.from('memberships').update({ slot_number: slot }).eq('id', id);
-  return error;
-}
-async function assignSlot(cid, n, uid) {
-  const holder = D.memberships.find(m => m.committee_id === cid && m.status === 'approved' && m.slot_number === n);
-  const got = u => D.payouts.some(p => p.committee_id === cid && p.member_id === u && p.status === 'paid');
-  let err = null;
-  if (!uid) {
-    if (!holder) return;
-    if (got(holder.user_id)) { toast('This member has already received a payout, so the turn is locked', 1); return renderTab(false); }
-    err = await setSlot(holder.id, null);
-  } else {
-    const mm = D.memberships.find(m => m.committee_id === cid && m.user_id === uid && m.status === 'approved');
-    if (!mm || (holder && holder.id === mm.id)) return;
-    if (got(uid) || (holder && got(holder.user_id))) { toast('A member who already received a payout cannot be moved', 1); return renderTab(false); }
-    const prev = mm.slot_number || null;
+async function assignSlot(cid, n, sid) {
+  const rpc = (id, slot) => sb.rpc('assign_membership_share_slot', { p_share_id: id, p_slot_number: slot });
+  const holder = D.shares.find(s => s.committee_id === cid && s.slot_number === n);
+  let r = {};
+  if (!sid) { if (!holder) return; r = await rpc(holder.id, null); }
+  else {
+    const t = D.shares.find(s => s.id === sid); if (!t || (holder && holder.id === t.id)) return;
+    const prev = t.slot_number || null;
     if (holder) {
-      if (!confirm('Turn ' + n + ' belongs to ' + holder.profiles?.name + '. Swap the two members?')) return renderTab(false);
-      err = (await setSlot(holder.id, null)) || (await setSlot(mm.id, n)) || (await setSlot(holder.id, prev));
-    } else err = await setSlot(mm.id, n);
+      if (!confirm('Turn ' + n + ' is already taken. Swap the two?')) return renderTab(false);
+      r = await rpc(holder.id, null); if (!r.error) r = await rpc(t.id, n); if (!r.error && prev) r = await rpc(holder.id, prev);
+    } else r = await rpc(t.id, n);
   }
-  if (err) toast(err.code === '23505' ? 'That turn is already taken' : err.message, 1); else toast('Turn saved');
-  await loadData(); renderTab(false);
+  toast(r.error ? r.error.message : 'Turn saved', !!r.error); await loadData(); renderTab(false);
 }
 function copySchedule(cid) {
   const c = D.committees.find(x => x.id === cid); if (!c) return;
-  const lines = [c.name, money(c.monthly_amount) + ' per member, pot ' + money(pot(c)) + ' per month', ''];
+  const lines = [c.name, money(c.monthly_amount) + ' per share, pot ' + money(pot(c)) + ' per month', ''];
   for (let n = 1; n <= c.total_members; n++) {
-    const m = D.memberships.find(x => x.committee_id === cid && x.status === 'approved' && x.slot_number === n), sm = slotMonth(c, n);
+    const sh = D.shares.find(x => x.committee_id === cid && x.slot_number === n), m = sh && D.memberships.find(x => x.id === sh.membership_id), sm = slotMonth(c, n);
     lines.push(n + '. ' + (sm ? sm.label : '-') + ' - ' + (m ? m.profiles?.name : '(open)'));
   }
   copyText(lines.join('\n'));
 }
-async function markPayout(cid, uid, key, amt) {
+async function markPayout(cid, sid, key, amt) {
   if (!confirm('Mark this payout as paid? Only do this after you have handed over the money.')) return;
-  const { error } = await sb.from('payouts').insert({ committee_id: cid, member_id: uid, month_label: key, amount: amt, status: 'paid' });
+  const sh = D.shares.find(x => x.id === sid), m = sh && D.memberships.find(x => x.id === sh.membership_id);
+  if (!m) return toast('Share not found', 1);
+  const { error } = await sb.from('payouts').insert({ committee_id: cid, member_id: m.user_id, share_id: sid, month_label: key, amount: amt, status: 'paid' });
   if (error) return toast(error.message, 1);
   toast('Payout marked as paid'); await loadData(); renderTab();
 }
@@ -1170,6 +1174,141 @@ async function delAcc(id) {
   if (!confirm('Delete this account?')) return;
   const { error } = await sb.from('payment_accounts').delete().eq('id', id);
   if (error) return toast(error.message, 1); refresh();
+}
+
+// ================= SHARES / ADMINS / WHEEL =================
+const isMine = (m, i) => m && m.has ? m.has(i) : m === i;
+function mySlots(m) { return new Set(D.shares.filter(s => s.membership_id === m.id && s.slot_number).map(s => s.slot_number)); }
+function shareLines(c, m) {
+  const sh = D.shares.filter(s => s.membership_id === m.id).sort((a, b) => a.share_number - b.share_number);
+  const n = m.share_count || 1;
+  let h = `<p class="pay-line"><b>${n} share${n > 1 ? 's' : ''}</b> · you pay ${money(c.monthly_amount * n)} per month</p>`;
+  (sh.length ? sh : [{ share_number: 1, slot_number: m.slot_number }]).forEach(s => {
+    const sm = slotMonth(c, s.slot_number);
+    h += `<p class="pay-line">${n > 1 ? 'Share ' + s.share_number + ': ' : ''}${s.slot_number ? (sm ? 'You receive <b>' + money(pot(c)) + '</b> in <b>' + sm.label + '</b> (turn ' + s.slot_number + ')' : 'Turn ' + s.slot_number + ', month appears once the start date is set') : '<span class="muted">Turn not assigned yet</span>'}</p>`;
+  });
+  return h;
+}
+function joinC(id) {
+  const c = D.committees.find(x => x.id === id); if (!c) return;
+  const mx = Math.min(20, c.total_members);
+  openModal(`<h2>Join ${esc(c.name)}</h2><p class="muted">${money(c.monthly_amount)} per share per month · pot ${money(pot(c))} per share</p>
+    <label>How many shares do you want?</label>
+    <select id="j_sh">${Array.from({ length: mx }, (_, i) => `<option value="${i + 1}">${i + 1} share${i ? 's' : ''} · pay ${money(c.monthly_amount * (i + 1))}/month · ${i + 1} payout${i ? 's' : ''} of ${money(pot(c))}</option>`).join('')}</select>
+    <p class="muted" style="margin-top:8px">Each share gets its own payout turn, chosen by the admin or the lucky draw.</p>
+    <div class="mfoot"><button class="btn gray" onclick="closeModal()">Cancel</button><button class="btn" id="j_ok" onclick="sendJoin('${id}')">Send request</button></div>`);
+}
+async function sendJoin(id) {
+  const n = Number($('j_sh').value) || 1; $('j_ok').disabled = true;
+  const { error } = await sb.from('memberships').insert({ user_id: me.id, committee_id: id, status: 'pending', share_count: n });
+  if (error) { $('j_ok').disabled = false; return toast('Request failed: ' + error.message, 1); }
+  closeModal(); toast('Request sent. Please wait for admin approval'); refresh();
+}
+async function addShare(mid) {
+  if (!confirm('Add one more share? Your monthly payment goes up by one share.')) return;
+  const { error } = await sb.rpc('request_add_membership_share', { p_membership_id: mid });
+  if (error) return toast(error.message, 1);
+  toast('Share added. The admin will give it a turn'); await loadData(); renderTab(false);
+}
+function adminCell(p) {
+  let h = '';
+  if (p.role === 'admin') {
+    if (p.is_owner) return '<span class="badge approved"><i></i>Owner</span>';
+    if (me.is_owner) h = `<button class="btn sm gray" onclick="setAdmin('${p.id}', false)">Remove admin</button>`;
+  } else {
+    if (me.is_owner) h = `<button class="btn sm out" onclick="setAdmin('${p.id}', true)">Make admin</button> `;
+    h += `<button class="btn sm red" onclick="delMember('${p.id}')">Delete</button>`;
+  }
+  return '<div class="actions">' + h + '</div>';
+}
+async function setAdmin(id, on) {
+  const p = D.profiles.find(x => x.id === id); if (!p) return;
+  if (!confirm(on ? 'Make ' + p.name + ' an admin? They can manage everything except owner settings.' : 'Remove admin access from ' + p.name + '?')) return;
+  const { error } = await sb.rpc('set_admin', { target: id, make_admin: on });
+  if (error) return toast(error.message, 1);
+  toast(on ? 'Admin added' : 'Admin removed'); await loadData(); renderTab(false);
+}
+
+let wheelCid = null; const wheelDone = new Set(); window.wheelBusy = false;
+const wheelComms = () => me.role === 'admin' ? D.committees : D.committees.filter(c => D.memberships.some(m => m.committee_id === c.id && m.user_id === me.id && m.status === 'approved'));
+function monthSlot(c, key) {
+  if (!c.start_date || !key) return null;
+  const s = new Date(c.start_date + 'T00:00:00'), [y, m] = key.split('-').map(Number);
+  const n = (y - s.getFullYear()) * 12 + (m - 1 - s.getMonth()) + 1;
+  return n >= 1 && n <= c.total_members ? n : null;
+}
+function wheelSVG(names) {
+  const n = names.length || 1, cols = ['#0A7C66', '#E3A72F', '#1C2E52', '#C2362B', '#34D3A8', '#7A5AF8'];
+  let s = '';
+  names.forEach((w, i) => {
+    const a0 = i / n * 2 * Math.PI, a1 = (i + 1) / n * 2 * Math.PI, P = a => (120 + 112 * Math.sin(a)).toFixed(1) + ' ' + (120 - 112 * Math.cos(a)).toFixed(1);
+    const mid = (i + .5) * 360 / n;
+    s += `<path d="M120 120 L${P(a0)} A112 112 0 0 1 ${P(a1)} Z" fill="${cols[i % cols.length]}" stroke="#fff" stroke-width="1.5"/>` +
+      `<text transform="rotate(${mid - 90} 120 120)" x="226" y="123.5" text-anchor="end" font-size="${n > 20 ? 7 : n > 12 ? 9 : 11}" font-weight="700" fill="#fff">${esc(String(w.name || '').slice(0, 13))}</text>`;
+  });
+  return `<svg viewBox="0 -16 240 256"><g id="whg" style="transform-origin:120px 120px">${s}</g><circle cx="120" cy="120" r="14" fill="#fff" stroke="#E3E7EE"/><path d="M108 -14 L132 -14 L120 8 Z" fill="#12203A"/></svg>`;
+}
+function vWheel() {
+  const cs = wheelComms();
+  if (!cs.length) return empty('No committee yet for the lucky draw', 'layers');
+  if (!cs.find(c => c.id === wheelCid)) wheelCid = cs[0].id;
+  const c = cs.find(x => x.id === wheelCid), adm = me.role === 'admin';
+  const ds = D.draws.filter(d => d.committee_id === c.id), d = ds[0];
+  const free = D.shares.filter(s => s.committee_id === c.id && !s.slot_number).length;
+  let ctl = '';
+  if (adm) {
+    if (!d || d.status === 'completed') ctl = `<label>Draw for month</label><input id="w_month" type="month" value="${nowKey()}"><p class="muted" style="margin-top:8px">${free} share${free === 1 ? '' : 's'} without a turn will be on the wheel.</p><br><button class="btn" onclick="createDraw('${c.id}')">Create draw</button>`;
+    else if (d.status === 'scheduled') ctl = `<p class="muted">Draw for ${fmtMonth(d.month_label)} is ready. Members can already see the wheel.</p><div class="actions"><button class="btn" onclick="startSpin('${d.id}')">Spin the wheel</button><button class="btn gray" onclick="cancelDraw('${d.id}')">Cancel</button></div>`;
+    else ctl = '<p class="muted">Spinning...</p>';
+  } else ctl = d && d.status !== 'completed' ? `<p>Draw for <b>${fmtMonth(d.month_label)}</b>. Stay on this page to watch it live.</p>` : '<p class="muted">The admin will start the next draw here.</p>';
+  const done = ds.filter(x => x.status === 'completed');
+  return `<div class="two"><div class="card"><select id="w_c" onchange="wheelCid=this.value;renderTab(false)">${cs.map(x => `<option value="${x.id}" ${x.id === c.id ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select>
+    <div class="wheelbox">${d ? wheelSVG(d.wheel_names) : '<p class="muted">No draw yet.</p>'}</div><h3 id="wstat" style="text-align:center;margin:8px 0 0"></h3></div>
+    <div class="card">${ctl}<h3 style="margin-top:20px">Past draws</h3>${done.length ? `<table><tr><th>Month</th><th>Winner</th></tr>${done.map(x => `<tr><td>${fmtMonth(x.month_label)}</td><td>${esc(x.winner_name)}</td></tr>`).join('')}</table>` : '<p class="muted">Nothing yet.</p>'}</div></div>`;
+}
+async function createDraw(cid) {
+  const month = $('w_month').value; if (!month) return toast('Pick a month', 1);
+  const items = [];
+  D.shares.filter(s => s.committee_id === cid && !s.slot_number).forEach(s => {
+    const m = D.memberships.find(x => x.id === s.membership_id && x.status === 'approved');
+    if (m) items.push({ membership_id: m.id, name: (m.profiles?.name || '?') + (m.share_count > 1 ? ' #' + s.share_number : '') });
+  });
+  if (items.length < 2) return toast('At least 2 shares without a turn are needed', 1);
+  items.sort(() => Math.random() - .5);
+  const { error } = await sb.from('committee_draws').insert({ committee_id: cid, month_label: month, wheel_names: items, created_by: me.id });
+  if (error) return toast(error.message, 1);
+  toast('Draw created'); await loadData(); renderTab(false);
+}
+async function cancelDraw(id) {
+  if (!confirm('Cancel this draw?')) return;
+  const { error } = await sb.from('committee_draws').delete().eq('id', id);
+  if (error) return toast(error.message, 1); await loadData(); renderTab(false);
+}
+async function startSpin(id) {
+  const { error } = await sb.rpc('prepare_committee_draw', { p_draw_id: id });
+  if (error) return toast(error.message, 1);
+  await loadData(); renderTab(false);
+}
+async function wheelAssign(d, c) {
+  const sh = D.shares.filter(s => s.membership_id === d.winner_membership_id && !s.slot_number).sort((a, b) => a.share_number - b.share_number)[0], sl = monthSlot(c, d.month_label);
+  if (!sh || !sl) return toast('Winner chosen. Give the turn manually from Schedule', 1);
+  const { error } = await sb.rpc('assign_membership_share_slot', { p_share_id: sh.id, p_slot_number: sl });
+  toast(error ? error.message : d.winner_name + ' gets ' + fmtMonth(d.month_label), !!error);
+}
+function wheelInit() {
+  const g = $('whg'), st = $('wstat'); if (!g) return;
+  const c = D.committees.find(x => x.id === wheelCid), d = D.draws.filter(x => x.committee_id === wheelCid)[0]; if (!d) return;
+  const n = d.wheel_names.length || 1, center = ((d.winner_index || 0) + .5) * 360 / n;
+  const show = () => { st.textContent = 'Winner: ' + d.winner_name; };
+  if (d.status === 'scheduled') { st.textContent = 'Waiting for the admin to spin'; return; }
+  if (d.status === 'completed' || wheelDone.has(d.id)) { g.style.transform = `rotate(${-center}deg)`; show(); return; }
+  window.wheelBusy = true; st.textContent = 'Spinning...';
+  requestAnimationFrame(() => requestAnimationFrame(() => { g.style.transition = 'transform 7s cubic-bezier(.12,.6,.1,1)'; g.style.transform = `rotate(${360 * 7 - center}deg)`; }));
+  setTimeout(async () => {
+    wheelDone.add(d.id); window.wheelBusy = false; show();
+    if (me.role === 'admin') { const { error } = await sb.rpc('complete_committee_draw', { p_draw_id: d.id }); if (error) toast(error.message, 1); else await wheelAssign(d, c); }
+    await loadData(); renderTab(false);
+  }, 7400);
 }
 
 // ================= START =================
