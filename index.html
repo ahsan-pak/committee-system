@@ -596,6 +596,23 @@ body.menu-open #sg button{animation:riseIn .5s cubic-bezier(.2,.8,.2,1) forwards
 .har i{width:9px;height:9px;border-radius:50%;margin-top:5px;flex:none;background:var(--brand);position:relative}
 .har b{display:block;font-size:13.5px}.har small{color:var(--mu);font-size:11.5px}
 @media(prefers-reduced-motion:reduce){.rv{opacity:1}}
+
+/* ---- paid status + names ---- */
+.ow{width:min(100%,520px)}
+.hnd.late circle{fill:rgba(230,165,92,.14);stroke:var(--amber);stroke-width:2}.hnd.late text{fill:var(--amber)}
+.hlb{fill:var(--tx);font-family:Manrope,sans-serif;font-weight:700}.hlb.open{fill:var(--mu);font-weight:500;font-style:italic}.hlb.me{fill:var(--brandd)}
+.htm.late{border-color:rgba(230,165,92,.55)}.htm.late .st{color:var(--amber)}
+.htm.done{border-color:rgba(201,164,76,.4)}
+.hord-l{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.hord{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:16px;background:var(--card)}
+.hord .no{width:30px;height:30px;border-radius:50%;background:var(--c2);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:var(--mu);flex:none}
+.hord.done .no{background:var(--brand);color:var(--on)}.hord.late .no{background:rgba(230,165,92,.16);color:var(--amber)}
+.hord.next{border-color:var(--tx)}.hord.mine{border-color:var(--brandd)}
+.hord b{display:block;font-size:14px}.hord small{color:var(--mu);font-size:11.5px}
+.hord .hst{margin-left:auto;font-size:11px;font-weight:800;letter-spacing:.04em;color:var(--mu);text-align:right}
+.hord.done .hst{color:var(--brandd)}.hord.late .hst{color:var(--amber)}
+.noanim .rv{animation:none;opacity:1}
+.noanim .harc,.noanim .hndi,.noanim .hbars span,.noanim .hpb i,.noanim .hring .p{animation:none}
 </style>
 </head>
 <body>
@@ -937,7 +954,7 @@ let railPinned = false;
 function togglePin() { railPinned = !railPinned; const r = $('rail'); if (r) r.classList.toggle('open', railPinned); const t = $('pint'); if (t) t.textContent = railPinned ? 'Unpin sidebar' : 'Pin sidebar'; }
 document.addEventListener('pointermove', e => { const c = e.target.closest && e.target.closest('.card,.bt'); if (c) { const r = c.getBoundingClientRect(); c.style.setProperty('--mx', (e.clientX - r.left) + 'px'); c.style.setProperty('--my', (e.clientY - r.top) + 'px'); } });
 
-function setTab(k) { tab = k; closeSheet(); renderNav(); renderTab(true); animateCounts(); window.scrollTo(0, 0); }
+function setTab(k) { tab = k; closeSheet(); const _c = $('content'); if (_c) _c.classList.remove('noanim'); renderNav(); renderTab(true); animateCounts(); window.scrollTo(0, 0); }
 
 function renderTab(fade) {
   const map = {
@@ -992,40 +1009,59 @@ function monthSums(list) {
   }
   return out;
 }
-const hLab = { done: 'Paid out', next: 'This month', up: 'Upcoming' };
+const hLab = { done: 'Paid', next: 'This month', late: 'Not paid yet', up: 'Upcoming' };
+const rosterC = {};
+function ensureRoster(cid) {
+  const r = rosterC[cid]; if (r && (r.busy || Date.now() - r.t < 10000)) return;
+  rosterC[cid] = { rows: r ? r.rows : [], t: Date.now(), busy: true };
+  sb.rpc('get_roster', { cid }).then(({ data, error }) => {
+    const prev = JSON.stringify(rosterC[cid].rows), rows = error ? [] : (data || []);
+    rosterC[cid] = { rows, t: Date.now(), busy: false };
+    if (prev !== JSON.stringify(rows) && (tab === 'a_home' || tab === 'm_home') && !document.getElementById('modal')) { const el = $('content'); if (el) el.classList.add('noanim'); renderTab(false); }
+  }).catch(() => { rosterC[cid].busy = false; });
+}
 function orbitData(c) {
   const adm = me.role === 'admin', total = Math.max(1, Math.min(Number(c.total_members) || 1, 36)), cur = c.start_date ? curIdx(c) : 0;
-  const mm = D.memberships.find(m => m.committee_id === c.id && m.user_id === me.id && m.status === 'approved');
-  const mine = mm ? mySlots(mm) : new Set(), names = slotNames(c), nodes = [];
+  const mems = D.memberships.filter(m => m.committee_id === c.id && m.status === 'approved');
+  const mm = mems.find(m => m.user_id === me.id), mine = mm ? mySlots(mm) : new Set(), names = slotNames(c);
+  const ro = (rosterC[c.id] && rosterC[c.id].rows) || [], nodes = []; let paidN = 0;
   for (let i = 1; i <= total; i++) {
-    const own = isMine(mine, i), vis = adm || c.show_roster || own;
-    const nm = own ? (me.name || 'You') : (vis ? (names[i] || '') : '');
-    const sm = slotMonth(c, i);
-    nodes.push({ i, own, name: nm, month: sm ? sm.label : '', st: i < cur ? 'done' : i === cur ? 'next' : 'up' });
+    const own = isMine(mine, i), r = ro.find(x => x.r_slot === i), vis = adm || c.show_roster || own;
+    const nm = own ? (me.name || 'You') : (vis ? (names[i] || (r && r.r_name) || '') : '');
+    const h = D.shares.find(s => s.committee_id === c.id && s.slot_number === i), hm = h && mems.find(m => m.id === h.membership_id), sm = slotMonth(c, i);
+    const po = h && D.payouts.find(p => p.committee_id === c.id && (p.share_id ? p.share_id === h.id : (hm && p.member_id === hm.user_id)) && (!sm || p.month_label === sm.key));
+    const paid = !!((po && po.status === 'paid') || (r && r.r_paid));
+    if (paid) paidN++;
+    nodes.push({ i, own, name: nm, month: sm ? sm.label : '', paid, st: paid ? 'done' : i === cur ? 'next' : i < cur ? 'late' : 'up' });
   }
-  return { total, cur, nodes };
+  return { total, cur, nodes, paidN };
 }
 function orbitHTML(c) {
-  const d = orbitData(c), r = d.total <= 12 ? 17 : d.total <= 24 ? 13 : 9;
-  const frac = d.cur <= 0 ? 0 : Math.min(1, (d.cur - 1) / d.total), off = (942.5 * (1 - frac)).toFixed(1);
-  const cn = d.nodes.find(n => n.i === d.cur);
+  const d = orbitData(c), r = d.total <= 12 ? 17 : d.total <= 24 ? 13 : 9, P = money(pot(c));
+  const off = (942.5 * (1 - d.paidN / d.total)).toFixed(1), cn = d.nodes.find(n => n.i === d.cur);
+  const fn = n => n.name ? n.name.trim().split(' ')[0] : 'Open turn';
   let e, b, s;
   if (!c.start_date) { e = 'Not started'; b = 'No start date'; s = 'Set it in committee settings'; }
-  else if (d.cur > d.total) { e = 'Cycle complete'; b = 'Finished'; s = 'All ' + d.total + ' payouts done'; }
-  else if (d.cur < 1) { e = 'Starts'; b = slotMonth(c, 1).label; s = money(pot(c)) + ' pot'; }
-  else { e = 'Payout this month'; b = money(pot(c)); s = (cn && cn.name ? cn.name : 'Turn ' + d.cur) + (cn && cn.month ? ' · ' + cn.month : ''); }
+  else if (d.cur > d.total) { e = d.paidN >= d.total ? 'Cycle complete' : 'Cycle ended'; b = d.paidN + ' of ' + d.total; s = 'payouts paid'; }
+  else if (d.cur < 1) { e = 'Starts'; b = slotMonth(c, 1).label; s = P + ' pot'; }
+  else { e = 'This month · ' + (cn.paid ? 'Paid' : 'Not paid yet'); b = fn(cn); s = 'Turn ' + cn.i + (cn.month ? ' · ' + cn.month : '') + ' · ' + P; }
+  const lab = d.total <= 24, fs = d.total <= 16 ? 12 : 9.5;
   const nodes = d.nodes.map((n, k) => {
-    const a = -Math.PI / 2 + k * 2 * Math.PI / d.total, x = (210 + 150 * Math.cos(a)).toFixed(1), y = (210 + 150 * Math.sin(a)).toFixed(1);
-    const ltr = n.name ? n.name.trim().charAt(0).toUpperCase() : (d.total <= 24 ? String(n.i) : '');
-    return `<g class="hnd ${n.st}${n.own ? ' mine' : ''}" data-e="${hLab[n.st]}" data-b="${esc(n.name ? n.name.split(' ')[0] : 'Turn ' + n.i)}" data-s="${esc((n.name || 'Turn ' + n.i) + (n.month ? ' · ' + n.month : ''))}" transform="translate(${x} ${y})"><g class="hndi" style="--d:${600 + k * 60}ms">${n.st === 'next' ? `<circle class="hpl" r="${r}"/>` : ''}<circle r="${r}"/>${d.total <= 24 ? `<text y="4">${esc(ltr)}</text>` : ''}</g></g>`;
+    const a = -Math.PI / 2 + k * 2 * Math.PI / d.total, co = Math.cos(a), si = Math.sin(a);
+    const x = (210 + 150 * co).toFixed(1), y = (210 + 150 * si).toFixed(1);
+    const ltr = n.name ? n.name.trim().charAt(0).toUpperCase() : String(n.i);
+    const ax = co > .3 ? 'start' : co < -.3 ? 'end' : 'middle', lx = (210 + 206 * co).toFixed(1), ly = (210 + 206 * si + (si < -.6 ? -6 : si > .6 ? 14 : 4)).toFixed(1);
+    const nm = n.name ? n.name.trim().split(' ')[0].slice(0, d.total <= 16 ? 11 : 7) : 'Open';
+    return `<g class="hnd ${n.st}${n.own ? ' mine' : ''}" data-e="${esc(hLab[n.st])}" data-b="${esc(fn(n))}" data-s="${esc('Turn ' + n.i + (n.month ? ' · ' + n.month : '') + ' · ' + P)}" transform="translate(${x} ${y})"><g class="hndi" style="--d:${600 + k * 60}ms">${n.st === 'next' ? `<circle class="hpl" r="${r}"/>` : ''}<circle r="${r}"/>${d.total <= 24 ? `<text y="4">${esc(ltr)}</text>` : ''}</g></g>` +
+      (lab ? `<text class="hlb${n.name ? '' : ' open'}${n.own ? ' me' : ''}" x="${lx}" y="${ly}" text-anchor="${ax}" font-size="${fs}">${esc(nm)}</text>` : '');
   }).join('');
-  return `<div class="ow"><svg viewBox="0 0 420 420" role="img" aria-label="Payout orbit">
+  return `<div class="ow"><svg viewBox="-80 -80 580 580" role="img" aria-label="Payout orbit">
       <circle cx="210" cy="210" r="150" fill="none" stroke="var(--line)" stroke-width="2"/>
       <circle class="harc" cx="210" cy="210" r="150" fill="none" stroke="var(--brand)" stroke-width="2.5" stroke-linecap="round" transform="rotate(-90 210 210)" style="stroke-dashoffset:${off}"/>
       <g class="hrot"><circle cx="210" cy="210" r="188" fill="none" stroke="var(--line)" stroke-width="1.5" stroke-dasharray="2 9"/></g>
       <g class="hrot b"><circle cx="210" cy="210" r="112" fill="none" stroke="var(--line)" stroke-width="1.5" stroke-dasharray="1 7"/></g>${nodes}</svg>
     <div class="oc" data-e="${esc(e)}" data-b="${esc(b)}" data-s="${esc(s)}"><div class="eb oe">${esc(e)}</div><div class="hbig ser ob">${esc(b)}</div><div class="os">${esc(s)}</div></div></div>
-    <div class="hleg"><span><i style="background:var(--brand)"></i>Paid out</span><span><i style="border:2px solid var(--tx)"></i>This month</span><span><i style="background:var(--c2);border:1px solid var(--line)"></i>Upcoming</span></div>`;
+    <div class="hleg"><span><i style="background:var(--brand)"></i>Paid</span><span><i style="border:2px solid var(--tx)"></i>This month</span><span><i style="border:2px solid var(--amber)"></i>Not paid yet</span><span><i style="background:var(--c2);border:1px solid var(--line)"></i>Upcoming</span></div>`;
 }
 document.addEventListener('mouseover', e => { const g = e.target.closest && e.target.closest('.hnd'); if (!g) return; const o = g.closest('.horbit').querySelector('.oc'); o.querySelector('.oe').textContent = g.dataset.e; o.querySelector('.ob').textContent = g.dataset.b; o.querySelector('.os').textContent = g.dataset.s; });
 document.addEventListener('mouseout', e => { const g = e.target.closest && e.target.closest('.hnd'); if (!g || (e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('.hnd'))) return; const o = g.closest('.horbit').querySelector('.oc'); o.querySelector('.oe').textContent = o.dataset.e; o.querySelector('.ob').textContent = o.dataset.b; o.querySelector('.os').textContent = o.dataset.s; });
@@ -1037,6 +1073,7 @@ function homeView() {
   const note = rejN ? `<div class="note">${rejN} of your payments ${rejN === 1 ? 'was' : 'were'} rejected. Open History to see why and submit again.</div>` : '';
   if (!comms.length) return `<header class="hhead"><div><div class="eb">${esc(todayLong())}</div><h1 class="ser">Assalam o Alaikum, <em>${first}</em></h1></div></header>` + (adm ? empty('No committees yet. Create your first one to start taking members.', 'layers', ['a_committees', 'Create a committee']) : empty('You are not in a committee yet. Pick one and send a join request.', 'layers', ['m_committees', 'Browse committees']));
   const c = comms.find(x => x.id === homeCid) || comms.find(x => x.start_date) || comms[0];
+  ensureRoster(c.id);
   const d = orbitData(c), pl = commPays(c), ver = pl.filter(p => p.status === 'verified');
   const nk = nowKey(), pd = new Date(); pd.setMonth(pd.getMonth() - 1);
   const pk = pd.getFullYear() + '-' + String(pd.getMonth() + 1).padStart(2, '0');
@@ -1063,11 +1100,11 @@ function homeView() {
   }
   const qEmpty = adm ? 'Nothing waiting. New payments and join requests appear here.' : 'You are not in a committee yet.';
   const sw = comms.length > 1 ? `<div class="hsw">${comms.map(x => `<button class="${x.id === c.id ? 'on' : ''}" onclick="pickHome('${x.id}')">${esc(x.name)}</button>`).join('')}</div>` : '';
-  const tl = d.nodes.map(n => `<div class="htm ${n.st}${n.own ? ' mine' : ''}"><div class="m ser">${esc(n.month ? n.month.split(' ')[0] : 'Turn ' + n.i)}</div><div class="n">${esc(n.name || 'Turn ' + n.i)}</div><div class="st">${n.own && n.st === 'up' ? 'Your turn' : hLab[n.st]}</div></div>`).join('');
+  const tl = d.nodes.map(n => `<div class="htm ${n.st}${n.own ? ' mine' : ''}"><div class="m ser">${esc(n.month ? n.month.split(' ')[0] : 'Turn ' + n.i)}</div><div class="n">${esc(n.name || 'Turn ' + n.i)}</div><div class="st">${n.own && n.st !== 'done' ? 'Your turn · ' + hLab[n.st] : hLab[n.st]}</div></div>`).join('');
   // ---------- mobile pieces ----------
   const allVer = adm ? D.payments.filter(p => p.status === 'verified' && p.month_label === nk) : D.payments.filter(p => p.user_id === me.id && p.status === 'verified');
   const mTotal = allVer.reduce((a, p) => a + Number(p.amount), 0);
-  const curShow = Math.max(0, Math.min(d.cur, d.total)), ringOff = (226.2 * (1 - (d.cur <= 0 ? 0 : Math.min(1, (d.cur - 1) / d.total)))).toFixed(1);
+  const curShow = d.paidN, ringOff = (226.2 * (1 - d.paidN / d.total)).toFixed(1);
   const cards = comms.map(cc => {
     const cu = cc.start_date ? curIdx(cc) : 0, tt = Number(cc.total_members) || 1, pct = Math.max(0, Math.min(100, Math.round(Math.max(0, cu - 1) / tt * 100)));
     const m = D.memberships.find(x => x.committee_id === cc.id && x.user_id === me.id && x.status === 'approved');
@@ -1083,18 +1120,19 @@ function homeView() {
   return note + `<div class="hpc">
     <header class="hhead rv" style="--i:0"><div><div class="eb">${esc(todayLong())}</div><h1 class="ser">Assalam o Alaikum, <em>${first}</em></h1></div><div class="hchip">${esc(c.name)} <span class="av">${esc(ini)}</span></div></header>${sw}
     <section class="hgrid">
-      <article class="card horbit rv" style="--i:1"><div class="eb" style="align-self:flex-start">Payout orbit · ${d.cur >= 1 && d.cur <= d.total ? 'month ' + d.cur + ' of ' + d.total : d.total + ' turns'}</div>${orbitHTML(c)}</article>
+      <article class="card horbit rv" style="--i:1"><div class="eb" style="align-self:flex-start">Payout orbit · ${d.paidN} of ${d.total} paid</div>${orbitHTML(c)}</article>
       <article class="card hstat rv" style="--i:2"><div class="eb">${bigLabel}</div><div class="hbig ser" data-count="${big}">${money(big)}</div><div style="font-size:12.5px;font-weight:600;color:var(--mu)">${delta}</div><div class="hbars">${bars}</div></article>
       <article class="card hq rv" style="--i:3"><div style="display:flex;justify-content:space-between"><div class="eb">${qTitle}</div><span class="eb" style="color:var(--brandd)">${qCount} ${adm ? 'pending' : 'due'}</span></div>${qItems || `<p class="muted" style="margin:14px 0 0">${qEmpty}</p>`}</article>
       <article class="card htl rv" style="--i:4"><div class="eb">Payout timeline · ${esc(c.name)}</div><div class="htr">${tl}</div></article>
     </section></div>
   <div class="hmb">
-    <section class="hmh rv" style="--i:0"><div><div class="eb">${adm ? 'Collected this month' : 'Total paid so far'}</div><div class="hbig ser" data-count="${mTotal}">${money(mTotal)}</div><div class="hsub">${d.cur >= 1 && d.cur <= d.total ? 'Month ' + d.cur + ' of ' + d.total : esc(c.name)} · ${esc(c.name)}</div></div>
+    <section class="hmh rv" style="--i:0"><div><div class="eb">${adm ? 'Collected this month' : 'Total paid so far'}</div><div class="hbig ser" data-count="${mTotal}">${money(mTotal)}</div><div class="hsub">${d.paidN} of ${d.total} payouts paid · ${esc(c.name)}</div></div>
       <svg class="hring" width="88" height="88" viewBox="0 0 88 88" aria-label="Progress"><circle class="t" cx="44" cy="44" r="36"/><circle class="p" cx="44" cy="44" r="36" style="stroke-dashoffset:${ringOff}"/><text x="44" y="50">${curShow}/${d.total}</text></svg></section>
     <section class="hsl rv" style="--i:1">${cards}</section>
     <section class="hqa rv" style="--i:2">${qa}</section>
     <section class="hsec rv" style="--i:3"><span class="eb">${qTitle} · ${adm ? qm + ' pending' : qCount + ' due'}</span><div class="hmq">${qItems ? qItems.replace(/class="hqr"/g, 'class="hqr card"') : `<p class="muted">${qEmpty}</p>`}</div></section>
-    ${act ? `<section class="hsec rv" style="--i:4"><span class="eb" style="margin-bottom:16px">Recent activity</span>${act}</section>` : ''}
+    <section class="hsec rv" style="--i:4"><span class="eb">Payout order · ${esc(c.name)}</span><div class="hord-l">${d.nodes.map(n => `<div class="hord ${n.st}${n.own ? ' mine' : ''}"><span class="no">${n.i}</span><div><b>${esc(n.name || 'Not assigned')}${n.own ? ' (you)' : ''}</b><small>${esc(n.month)}</small></div><span class="hst">${hLab[n.st]}</span></div>`).join('')}</div></section>
+    ${act ? `<section class="hsec rv" style="--i:5"><span class="eb" style="margin-bottom:16px">Recent activity</span>${act}</section>` : ''}
   </div>`;
 }
 function vAHome() { return homeView(); }
