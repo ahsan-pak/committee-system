@@ -355,6 +355,26 @@ tr.cur td{background:#F3FBDD}
   .ap{padding:22px 20px}
   .ap h1{font-size:26px;max-width:none}
 }
+
+/* ---- form polish ---- */
+.card h2{margin:0 0 4px}
+label{margin:18px 0 7px;font-size:13px}
+select,input:not([type=checkbox]):not([type=radio]){min-height:50px}
+.pm{display:flex;gap:4px;background:#ECEAE2;padding:4px;border-radius:999px;margin-top:2px}
+label.pmo{flex:1;margin:0;position:relative;text-align:center;padding:12px 8px;border-radius:999px;cursor:pointer;font-size:14px;font-weight:600;color:#3D3D38;display:block}
+label.pmo input{position:absolute;opacity:0;pointer-events:none;width:1px;min-height:0}
+label.pmo:has(input:checked){background:#111;color:var(--lime)}
+.sendhd{margin:20px 0 6px;font-size:14px;font-weight:700;color:#111}
+.bank{background:#F5F9E8;border:1.5px solid #D5EBA0;border-radius:18px;padding:14px 16px;line-height:1.7;font-size:14px}
+input[type=file]{padding:10px;background:#F7F6F0;border-style:dashed;font-size:13px}
+input[type=file]::file-selector-button{background:#111;color:#fff;border:0;border-radius:999px;padding:8px 14px;margin-right:12px;font:inherit;font-weight:600;cursor:pointer}
+#pbtn{width:100%;padding:15px;font-size:15px;margin-top:6px}
+.ls{display:none}
+@media(max-width:899px){
+  .nav>button .ls{display:inline}
+  .nav>button .lf.hs{display:none}
+  .card{padding:20px 18px}
+}
 </style>
 </head>
 <body>
@@ -670,6 +690,7 @@ function renderShell(first) {
   renderNav(); renderTab(false); animateCounts();
 }
 
+const SHORT = { 'Make payment': 'Pay' };
 function renderNav() {
   const list = TABS[me.role === 'admin' ? 'admin' : 'member'];
   const pr = D.memberships.filter(m => m.status === 'pending').length;
@@ -679,7 +700,7 @@ function renderNav() {
     let c = '';
     if (me.role === 'admin' && k === 'a_requests' && pr) c = `<span class="cnt">${pr}</span>`;
     if (me.role === 'admin' && k === 'a_payments' && pp) c = `<span class="cnt">${pp}</span>`;
-    return `<button class="${tab === k ? 'on' : ''} ${extra || ''}" onclick="setTab('${k}')">${ic(i)}<span>${l}</span>${c}</button>`;
+    return `<button class="${tab === k ? 'on' : ''} ${extra || ''}" onclick="setTab('${k}')">${ic(i)}<span class="lf ${SHORT[l] ? 'hs' : ''}">${l}</span>${SHORT[l] ? `<span class="ls">${SHORT[l]}</span>` : ''}${c}</button>`;
   };
   const pill = list.slice(0, 6).map(([k, l, i], x) => btn(k, l, i, x >= 4 ? 'dsk' : '')).join('');
   const rest = list.slice(4).map(([k, l, i], x) => btn(k, l, i, x < 2 ? 'mob' : '')).join('');
@@ -832,16 +853,15 @@ function vMPay() {
   const mine = D.memberships.filter(m => m.user_id === me.id && m.status === 'approved');
   if (!mine.length) return empty('You must be approved in a committee before making a payment');
   const accts = D.accounts.filter(a => a.active);
-  return `<div class="card" style="max-width:560px"><h2>Make Payment</h2>
+  return `<div class="card" style="max-width:560px"><h2>Payment details</h2>
     <label>Committee</label>
     <select id="p_mem" onchange="payMemChange()">${mine.map(m => `<option value="${m.id}">${esc(m.committees?.name)}</option>`).join('')}</select>
     <div class="row"><div><label>Month</label><input id="p_month" type="month" value="${new Date().toISOString().slice(0, 7)}"></div>
     <div><label>Amount (Rs)</label><input id="p_amt" type="number" min="1"></div></div>
     <label>Payment method</label>
-    <div><label style="display:inline;color:var(--tx)"><input type="radio" name="pm" value="bank" checked onchange="payMethodChange()"> Online (Bank / Wallet)</label>
-    &nbsp;&nbsp;<label style="display:inline;color:var(--tx)"><input type="radio" name="pm" value="cash" onchange="payMethodChange()"> Cash</label></div>
+    <div class="pm"><label class="pmo"><input type="radio" name="pm" value="bank" checked onchange="payMethodChange()"><span>Online (Bank / Wallet)</span></label><label class="pmo"><input type="radio" name="pm" value="cash" onchange="payMethodChange()"><span>Cash</span></label></div>
     <div id="bankbox">
-      ${accts.length ? '<b>Send payment to any one of these accounts:</b>' + accts.map(a => `<div class="bank"><b>${esc(a.provider)}</b> <span class="muted">(${esc(a.type)})</span><br>Title: ${esc(a.account_title)}<br>Number: ${esc(a.account_number)}${a.iban ? '<br>IBAN: ' + esc(a.iban) : ''}${a.note ? '<br><span class="muted">' + esc(a.note) + '</span>' : ''}</div>`).join('') + `<label>Which account did you pay to? *</label><select id="p_acc">${accts.map(a => `<option value="${esc(a.provider)} - ${esc(a.account_number)}">${esc(a.provider)} - ${esc(a.account_number)}</option>`).join('')}</select>` : '<div class="bank">Admin has not added any payment account yet.</div>'}
+      ${accts.length ? '<div class="sendhd">Send payment to any one of these accounts</div>' + accts.map(a => `<div class="bank"><b>${esc(a.provider)}</b> <span class="muted">(${esc(a.type)})</span><br>Title: ${esc(a.account_title)}<br>Number: ${esc(a.account_number)}${a.iban ? '<br>IBAN: ' + esc(a.iban) : ''}${a.note ? '<br><span class="muted">' + esc(a.note) + '</span>' : ''}</div>`).join('') + `<label>Which account did you pay to? *</label><select id="p_acc">${accts.map(a => `<option value="${esc(a.provider)} - ${esc(a.account_number)}">${esc(a.provider)} - ${esc(a.account_number)}</option>`).join('')}</select>` : '<div class="bank">Admin has not added any payment account yet.</div>'}
       <label>Payment screenshot / proof *</label><input id="p_file" type="file" accept="image/*,application/pdf">
     </div>
     <div id="cashbox" style="display:none" class="bank">After you hand over the cash, the admin will verify and approve the payment.</div>
