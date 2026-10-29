@@ -176,7 +176,6 @@ tr:last-child td{border-bottom:0}
 .lg{width:10px;height:10px;border-radius:50%;display:inline-block;border:1.5px solid #C4CCDA}
 .lg.done{background:var(--brand);border-color:var(--brand)}.lg.now{background:var(--gold);border-color:var(--gold)}.lg.me{border:2.5px solid var(--ink)}
 .pay-line{margin:6px 0;font-size:14px}
-.draw-wheel-wrap{display:grid;justify-items:center;gap:8px;padding:12px 0}.draw-wheel-stage{position:relative;width:min(82vw,360px);aspect-ratio:1}.draw-wheel-stage canvas{width:100%;height:100%;display:block;border-radius:50%;box-shadow:0 10px 30px rgba(18,32,58,.18);transform:rotate(0deg);will-change:transform}.draw-pointer{position:absolute;z-index:2;top:-3px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:15px solid transparent;border-right:15px solid transparent;border-top:30px solid #F0B44C;filter:drop-shadow(0 2px 2px #0003)}.draw-wheel-status{font-weight:800;text-align:center}.draw-winner{font-size:20px;font-weight:800;text-align:center;color:var(--brandd);padding:10px}
 @keyframes halo{0%{stroke-width:1.5;stroke-opacity:1}100%{stroke-width:11;stroke-opacity:0}}
 @keyframes rot{to{transform:rotate(360deg)}}
 @keyframes pop{from{opacity:0;transform:translateY(10px) scale(.96)}to{opacity:1;transform:none}}
@@ -240,7 +239,7 @@ const EMAIL_DOMAIN = '@committee-app.com';
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let me = null, tab = '', ch = null, tmr = null;
-let D = {committees:[],memberships:[],shares:[],payments:[],payouts:[],accounts:[],profiles:[]};
+let D = {committees:[],memberships:[],payments:[],payouts:[],accounts:[],profiles:[]};
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -251,12 +250,10 @@ const empty = (t, icon, btn) => `<div class="empty">${ic(icon || 'inbox', 28)}<p
 const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 function slotMonth(c, n) {
   if (!c || !c.start_date || !n) return null;
-  // Normalize to the first of the month to avoid Jan-31 -> March overflow.
-  const parts = c.start_date.split('-').map(Number);
-  const total = parts[0] * 12 + (parts[1] - 1) + (n - 1);
-  const year = Math.floor(total / 12), month = total % 12;
-  const key = year + '-' + String(month + 1).padStart(2, '0');
-  return { key, label: MON[month] + ' ' + year };
+  const d = new Date(c.start_date + 'T00:00:00');
+  d.setMonth(d.getMonth() + (n - 1));
+  const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+  return { key, label: MON[d.getMonth()] + ' ' + d.getFullYear() };
 }
 const pot = c => Number(c.monthly_amount) * Number(c.total_members);
 const cleanPhone = p => String(p || '').replace(/[^0-9]/g, '');
@@ -422,7 +419,7 @@ async function logout() {
   const s = document.querySelector('.shell'); if (s) s.classList.add('out');
   if (ch) { sb.removeChannel(ch); ch = null; }
   await Promise.all([sb.auth.signOut(), new Promise(r => setTimeout(r, 320))]);
-  me = null; D = { committees: [], memberships: [], shares: [], payments: [], payouts: [], accounts: [], profiles: [] };
+  me = null; D = { committees: [], memberships: [], payments: [], payouts: [], accounts: [], profiles: [] };
   closeModal(); showAuth('login'); toast('You have been logged out');
 }
 
@@ -449,10 +446,9 @@ async function loadData(uid) {
     sb.from('memberships').select('*, profiles(name,phone), committees(name,monthly_amount)').order('created_at', { ascending: false }),
     sb.from('payments').select('*, profiles!user_id(name,phone), memberships(committees(name))').order('created_at', { ascending: false }),
     sb.from('payouts').select('*, profiles(name,phone), committees(name)').order('created_at', { ascending: false }),
-    sb.from('payment_accounts').select('*').order('created_at', { ascending: true }),
-    sb.from('membership_shares').select('*, memberships(user_id,committee_id,status,profiles(name,phone),committees(name,monthly_amount,total_members,start_date))').order('created_at', { ascending: true })
+    sb.from('payment_accounts').select('*').order('created_at', { ascending: true })
   ]);
-  const keys = ['profiles', 'committees', 'memberships', 'payments', 'payouts', 'accounts', 'shares'];
+  const keys = ['profiles', 'committees', 'memberships', 'payments', 'payouts', 'accounts'];
   keys.forEach((k, i) => { if (r[i].error) { console.error(k, r[i].error); if (!window.__lde) { window.__lde = 1; toast('Could not load ' + k + ': ' + r[i].error.message, 1); } } D[k] = r[i].data || []; });
   const bad = r.find(x => x.error);
   if (bad && !loadData.warned) { loadData.warned = true; toast('Could not load some data: ' + bad.error.message, 1); setTimeout(() => { loadData.warned = false; }, 15000); }
@@ -502,8 +498,7 @@ const TABS = {
            ['m_history', 'History', 'history'], ['m_payouts', 'Payouts', 'down']],
   admin: [['a_home', 'Overview', 'home'], ['a_requests', 'Requests', 'inbox'], ['a_payments', 'Payments', 'card'],
           ['a_committees', 'Committees', 'layers'], ['a_members', 'Members', 'users'], ['a_payouts', 'Payouts', 'down'],
-          ['a_schedule', 'Schedule', 'cal'], ['a_reports', 'Reports', 'bar'], ['a_bank', 'Accounts', 'bank'], ['a_backup', 'Backup', 'save'],
-          ['m_committees', 'My Committees', 'layers'], ['m_pay', 'My Payments', 'card'], ['m_payouts', 'My Payouts', 'down']]
+          ['a_schedule', 'Schedule', 'cal'], ['a_reports', 'Reports', 'bar'], ['a_bank', 'Accounts', 'bank'], ['a_backup', 'Backup', 'save']]
 };
 const SUBS = {
   m_home: 'Your payments and committees at a glance',
@@ -590,7 +585,7 @@ function vAHome() {
     const loose = ms.filter(m => !m.slot_number).length;
     const pct = Math.min(100, Math.round(ms.length / c.total_members * 100));
     return `<div class="card"><div class="cc-h"><h3>${esc(c.name)}</h3>${badge(c.status)}</div>
-      <div class="amt">${money(c.monthly_amount)} <small>per share / month</small></div>
+      <div class="amt">${money(c.monthly_amount)} <small>per month</small></div>
       <div class="ringbox">${ringSVG(c, { filled, names })}</div>${ringLegend(false)}
       <div class="bar"><i style="width:${pct}%"></i></div>
       <div class="muted">${ms.length} of ${c.total_members} members${loose ? ' · <b>' + loose + ' without a turn</b>' : ''}</div>
@@ -622,7 +617,7 @@ function vMHome() {
     const sm = slotMonth(c, m.slot_number);
     const pay = D.payments.find(p => p.membership_id === m.id && p.month_label === nowKey() && p.status !== 'rejected');
     return `<div class="card"><div class="cc-h"><h3>${esc(c.name)}</h3>${badge('approved')}</div>
-      <div class="amt">${money(c.monthly_amount)} <small>per share / month</small></div>
+      <div class="amt">${money(c.monthly_amount)} <small>per month</small></div>
       <div class="ringbox">${ringSVG(c, { mine: m.slot_number })}</div>${ringLegend(true)}
       <p class="pay-line">${sm ? 'You receive <b>' + money(pot(c)) + '</b> in <b>' + sm.label + '</b> (turn ' + m.slot_number + ' of ' + c.total_members + ')' : (m.slot_number ? 'Your payout month appears once the admin sets a start date.' : 'The admin has not assigned your turn yet.')}</p>
       <p class="pay-line">This month: ${pay ? badge(pay.status) : '<span class="badge pending"><i></i>Due</span>'}</p>
@@ -646,11 +641,11 @@ function vMCommittees() {
     else act = `<button class="btn" onclick="joinC('${c.id}')">Send join request</button>`;
     const sm = ok ? slotMonth(c, m.slot_number) : null;
     return `<div class="card"><div class="cc-h"><h3>${esc(c.name)}</h3>${m || c.status !== 'open' ? '' : badge('open')}</div>
-      <div class="amt">${money(c.monthly_amount)} <small>per share / month</small></div>
-      <p class="muted" style="margin:8px 0 0">${c.total_members} wheel slots${m?.share_count ? ' · Your shares: ' + m.share_count : ''}${c.duration_months ? ' · ' + c.duration_months + ' months' : ''}${c.start_date ? ' · starts ' + fdate(c.start_date) : ''}</p>
-      ${ok ? `<p class="pay-line"><b>Your shares:</b> ${Math.max(1,Number(m.share_count||1))} · Monthly total: <b>${money(Number(c.monthly_amount)*Math.max(1,Number(m.share_count||1)))}</b></p>${(D.shares||[]).filter(sh=>sh.membership_id===m.id).map(sh=>`<p class="pay-line">${esc(me.name)}${Number(sh.share_number)>1?' - '+sh.share_number:''} · No. ${sh.slot_number||'-'} · Payout: <b>${sh.payout_month?fmtMonth(sh.payout_month):'Not assigned'}</b></p>`).join('')}<div class="ringbox">${ringSVG(c, { mine: m.slot_number })}</div>${ringLegend(true)}
-        <p class="pay-line">${sm ? 'Legacy turn: <b>' + sm.label + '</b> · ' + money(pot(c)) : 'Share-wise payout months are shown above once assigned.'}</p>
-        ${c.show_roster ? `<button class="btn sm out" onclick="openRoster('${c.id}')">See all members and payout months</button>` : ''}<button class="btn sm out" style="margin-top:8px" onclick="addShare('${m.id}')">+ Add Another Share</button>` : ''}
+      <div class="amt">${money(c.monthly_amount)} <small>per month</small></div>
+      <p class="muted" style="margin:8px 0 0">${c.total_members} members${c.duration_months ? ' · ' + c.duration_months + ' months' : ''}${c.start_date ? ' · starts ' + fdate(c.start_date) : ''}</p>
+      ${ok ? `<div class="ringbox">${ringSVG(c, { mine: m.slot_number })}</div>${ringLegend(true)}
+        <p class="pay-line">${sm ? 'Your payout: <b>' + sm.label + '</b> · ' + money(pot(c)) : (m.slot_number ? 'Payout month appears once the admin sets a start date.' : 'The admin has not assigned your turn yet.')}</p>
+        ${c.show_roster ? `<button class="btn sm out" onclick="openRoster('${c.id}')">See all members and payout months</button>` : ''}` : ''}
       <div style="margin-top:12px">${act}</div></div>`;
   }).join('') + '</div>';
 }
@@ -671,29 +666,8 @@ async function openRoster(cid) {
     <div class="mfoot"><button class="btn" onclick="closeModal()">Close</button></div>`, true);
 }
 
-async function addShare(membershipId) {
-  const m = D.memberships.find(x => x.id === membershipId && x.user_id === me.id && x.status === 'approved');
-  if (!m) return toast('Approved committee membership not found', 1);
-  const c = D.committees.find(x => x.id === m.committee_id);
-  if (!c) return toast('Committee not found', 1);
-  const next = Math.max(1, Number(m.share_count || 1)) + 1;
-  if (next > 20) return toast('Maximum 20 shares per committee membership', 1);
-  if (!confirm('Add one more share in ' + c.name + '? Your monthly installment will become ' + money(Number(c.monthly_amount) * next) + '. The new share has its own Rs ' + money(Number(c.monthly_amount)) + ' payout turn.')) return;
-  const { error } = await sb.rpc('request_add_membership_share', { p_membership_id: membershipId });
-  if (error) return toast('Could not add share: ' + error.message, 1);
-  await loadData();
-  renderNav();
-  renderTab(false);
-  toast('Another share added. Admin can assign its payout month in Schedule.');
-}
-
 async function joinC(id) {
-  const c = D.committees.find(x => x.id === id);
-  const raw = prompt('Kitne shares/hissay chahiye? Har share ki monthly installment ' + money(c?.monthly_amount || 0) + ' hai. Example: 2 shares = double payment.', '1');
-  if (raw === null) return;
-  const share_count = Number(raw);
-  if (!Number.isInteger(share_count) || share_count < 1 || share_count > 20) return toast('Shares 1 se 20 ke darmiyan hon', 1);
-  const { error } = await sb.from('memberships').insert({ user_id: me.id, committee_id: id, status: 'pending', share_count });
+  const { error } = await sb.from('memberships').insert({ user_id: me.id, committee_id: id, status: 'pending' });
   if (error) return toast('Request failed: ' + error.message, 1);
   toast('Request sent. Please wait for admin approval');
   refresh();
@@ -706,9 +680,8 @@ function vMPay() {
   return `<div class="card" style="max-width:560px"><h2>Make Payment</h2>
     <label>Committee</label>
     <select id="p_mem" onchange="payMemChange()">${mine.map(m => `<option value="${m.id}">${esc(m.committees?.name)}</option>`).join('')}</select>
-    <div class="row"><div><label>Month</label><input id="p_month" type="month" value="${new Date().toISOString().slice(0, 7)}" onchange="payMemChange()"></div>
-    <div><label>This payment (Rs)</label><input id="p_amt" type="number" min="1" step="1"></div></div>
-    <div id="p_balance" class="note" style="margin-top:10px">Choose a committee to see the balance.</div>
+    <div class="row"><div><label>Month</label><input id="p_month" type="month" value="${new Date().toISOString().slice(0, 7)}"></div>
+    <div><label>Amount (Rs)</label><input id="p_amt" type="number" min="1"></div></div>
     <label>Payment method</label>
     <div><label style="display:inline;color:var(--tx)"><input type="radio" name="pm" value="bank" checked onchange="payMethodChange()"> Online (Bank / Wallet)</label>
     &nbsp;&nbsp;<label style="display:inline;color:var(--tx)"><input type="radio" name="pm" value="cash" onchange="payMethodChange()"> Cash</label></div>
@@ -724,18 +697,7 @@ function vMPay() {
 function payMemChange() {
   const sel = $('p_mem'); if (!sel) return;
   const m = D.memberships.find(x => x.id === sel.value);
-  if (!m || !m.committees) return;
-  const month = $('p_month')?.value;
-  const rows = D.payments.filter(p => p.membership_id === m.id && p.month_label === month && p.status !== 'rejected');
-  const paid = rows.filter(p => p.status === 'verified').reduce((a,p) => a + Number(p.amount || 0), 0);
-  const pending = rows.filter(p => p.status === 'pending').reduce((a,p) => a + Number(p.amount || 0), 0);
-  const installment = Number(m.committees.monthly_amount || 0) * Math.max(1, Number(m.share_count || 1));
-  const due = Math.max(0, installment - paid - pending);
-  $('p_amt').max = String(due);
-  $('p_amt').value = due ? String(due) : '';
-  const box = $('p_balance');
-  if (box) box.innerHTML = `<b>Installment (${m.share_count || 1} share${Number(m.share_count||1)===1?'':'s'}):</b> ${money(installment)} &nbsp; <b>Paid:</b> ${money(paid)} &nbsp; <b>Pending verification:</b> ${money(pending)} &nbsp; <b>Remaining:</b> ${money(due)}`;
-  if ($('pbtn')) $('pbtn').disabled = due <= 0;
+  if (m && m.committees) $('p_amt').value = m.committees.monthly_amount;
 }
 function payMethodChange() {
   const bank = document.querySelector('input[name=pm]:checked').value === 'bank';
@@ -748,12 +710,8 @@ async function submitPay() {
         method = document.querySelector('input[name=pm]:checked').value, note = $('p_note').value.trim();
   if (!month) return toast('Select a month', 1);
   if (!amount || amount <= 0) return toast('Enter a valid amount', 1);
-  const membership = D.memberships.find(m => m.id === mid);
-  if (!membership) return toast('Choose a valid committee membership', 1);
-  const prior = D.payments.filter(p => p.membership_id === mid && p.month_label === month && p.status !== 'rejected');
-  const committed = prior.reduce((sum,p) => sum + Number(p.amount || 0), 0);
-  const remaining = Math.max(0, Number(membership.committees?.monthly_amount || 0) * Math.max(1, Number(membership.share_count || 1)) - committed);
-  if (amount > remaining) return toast('Amount exceeds the remaining installment of ' + money(remaining), 1);
+  if (D.payments.find(p => p.membership_id === mid && p.month_label === month && p.status !== 'rejected'))
+    return toast('A payment for this month is already submitted', 1);
   if (method === 'bank' && !$('p_acc')) return toast('No payment account available. Contact the admin', 1);
   const acc = (method === 'bank' && $('p_acc')) ? $('p_acc').value : null;
   let path = null;
@@ -769,7 +727,7 @@ async function submitPay() {
   const { error } = await sb.from('payments').insert({
     membership_id: mid, user_id: me.id, month_label: month, amount, method, proof_path: path, account_label: acc, note: note || null, status: 'pending'
   });
-  if (error) { $('pbtn').disabled = false; return toast(/remaining installment|exceeds/i.test(error.message) ? error.message : 'Payment could not be saved: ' + error.message, 1); }
+  if (error) { $('pbtn').disabled = false; return toast(/duplicate|unique/i.test(error.message) ? 'A payment for this month is already submitted' : 'Payment could not be saved: ' + error.message, 1); }
   toast('Payment submitted. Admin will verify it');
   tab = 'm_history'; await loadData(); renderNav(); renderTab();
 }
@@ -788,25 +746,9 @@ function vMPayouts() {
   const list = D.payouts.filter(p => p.member_id === me.id);
   return `<h2>Your turn in each committee</h2>` +
     (mine.length ? `<div class="grid">${mine.map(m => `<div class="card"><h3>${esc(m.committees?.name)}</h3><p>Your number: <span class="stat">${m.slot_number ?? '-'}</span></p>${(() => { const c = D.committees.find(x => x.id === m.committee_id); const sm = slotMonth(c, m.slot_number); return sm ? `<p class="muted" style="margin:0">You receive <b>${money(pot(c))}</b> in <b>${sm.label}</b></p>` : '<p class="muted" style="margin:0">Payout month is set once the committee has a start date.</p>'; })()}</div>`).join('')}</div>` : empty('No approved committees')) +
-    `<div class="card" style="max-width:620px;margin-top:18px"><h2>How would you like to receive your payout?</h2><p class="muted">Your preference is shown to the admin when arranging your payout. Only enter an account you control.</p>
-    <label>Preferred method</label><select id="pref_method"><option value="cash" ${me.payout_preference==='cash'?'selected':''}>Cash</option><option value="bank" ${me.payout_preference==='bank'?'selected':''}>Bank / wallet transfer</option></select>
-    <label>Bank / wallet provider</label><input id="pref_bank" value="${esc(me.payout_bank_name||'')}" placeholder="e.g. Meezan Bank / Easypaisa">
-    <label>Account title</label><input id="pref_title" value="${esc(me.payout_account_title||'')}" placeholder="Account holder name">
-    <label>Account number</label><input id="pref_number" value="${esc(me.payout_account_number||'')}" placeholder="Account or wallet number">
-    <label>IBAN (optional)</label><input id="pref_iban" value="${esc(me.payout_iban||'')}" placeholder="PK...">
-    <br><button class="btn" onclick="savePayoutPreference()">Save payout preference</button></div>` +
     `<h2 class="sec">Payouts received</h2>` +
-    (list.length ? `<div class="card tw"><table><tr><th>Committee</th><th>Month</th><th>Amount</th><th>Status</th><th>Proof</th></tr>` +
-      list.map(p => `<tr><td>${esc(p.committees?.name)}</td><td>${esc(p.month_label)}</td><td>${money(p.amount)}</td><td>${badge(p.status)}</td><td>${p.proof_path ? `<button class="btn sm out" onclick="viewPayoutProof('${esc(p.proof_path)}')">View proof</button>`:'-'}</td></tr>`).join('') + '</table></div>' : empty('No payouts received yet'));
-}
-async function savePayoutPreference() {
-  const payout_preference=$('pref_method').value, payout_bank_name=$('pref_bank').value.trim()||null,
-    payout_account_title=$('pref_title').value.trim()||null, payout_account_number=$('pref_number').value.trim()||null,
-    payout_iban=$('pref_iban').value.trim()||null;
-  if(payout_preference==='bank'&&(!payout_bank_name||!payout_account_title||!payout_account_number)) return toast('Enter provider, account title and account number for bank/wallet payout',1);
-  const {error}=await sb.from('profiles').update({payout_preference,payout_bank_name,payout_account_title,payout_account_number,payout_iban}).eq('id',me.id);
-  if(error) return toast('Could not save preference: '+error.message,1);
-  await loadData(); toast('Payout preference saved'); renderTab(false);
+    (list.length ? `<div class="card tw"><table><tr><th>Committee</th><th>Month</th><th>Amount</th><th>Status</th></tr>` +
+      list.map(p => `<tr><td>${esc(p.committees?.name)}</td><td>${esc(p.month_label)}</td><td>${money(p.amount)}</td><td>${badge(p.status)}</td></tr>`).join('') + '</table></div>' : empty('No payouts received yet'));
 }
 
 // ================= ADMIN VIEWS =================
@@ -814,13 +756,13 @@ function vARequests() {
   const pend = D.memberships.filter(m => m.status === 'pending');
   const done = D.memberships.filter(m => m.status !== 'pending').slice(0, 30);
   let h = '<h2>Waiting for approval</h2>';
-  h += pend.length ? `<div class="card tw"><table><tr><th>Member</th><th>Phone</th><th>Committee / shares</th><th>Date</th><th></th></tr>` +
-    pend.map(m => `<tr><td>${esc(m.profiles?.name)}</td><td>${esc(m.profiles?.phone)}</td><td>${esc(m.committees?.name)} · ${Number(m.share_count||1)} share(s)</td><td>${fdate(m.created_at)}</td>
+  h += pend.length ? `<div class="card tw"><table><tr><th>Member</th><th>Phone</th><th>Committee</th><th>Date</th><th></th></tr>` +
+    pend.map(m => `<tr><td>${esc(m.profiles?.name)}</td><td>${esc(m.profiles?.phone)}</td><td>${esc(m.committees?.name)}</td><td>${fdate(m.created_at)}</td>
     <td class="actions"><button class="btn sm" onclick="openApprove('${m.id}')">Approve</button><button class="btn sm red" onclick="rejectMem('${m.id}')">Reject</button></td></tr>`).join('') + '</table></div>'
     : empty('No pending requests', 'inbox');
   h += '<h2 class="sec">Previous requests</h2>';
-  h += done.length ? `<div class="card tw"><table><tr><th>Member</th><th>Committee</th><th>Turn / shares</th><th>Status</th><th></th></tr>` +
-    done.map(m => `<tr><td>${esc(m.profiles?.name)}</td><td>${esc(m.committees?.name)}</td><td>${m.slot_number ?? '-'} · ${Number(m.share_count||1)} share(s)</td><td>${badge(m.status)}</td>
+  h += done.length ? `<div class="card tw"><table><tr><th>Member</th><th>Committee</th><th>Turn</th><th>Status</th><th></th></tr>` +
+    done.map(m => `<tr><td>${esc(m.profiles?.name)}</td><td>${esc(m.committees?.name)}</td><td>${m.slot_number ?? '-'}</td><td>${badge(m.status)}</td>
     <td><button class="btn sm gray" onclick="removeMem('${m.id}')">Remove</button></td></tr>`).join('') + '</table></div>' : empty('Nothing here');
   return h;
 }
@@ -828,7 +770,7 @@ function vARequests() {
 function openApprove(id) {
   const m = D.memberships.find(x => x.id === id); if (!m) return;
   const c = D.committees.find(x => x.id === m.committee_id); if (!c) return;
-  const used = new Set([...(D.memberships.filter(x => x.committee_id === c.id && x.status === 'approved' && x.slot_number).map(x => Number(x.slot_number))), ...(D.shares||[]).filter(x=>x.committee_id===c.id&&x.slot_number).map(x=>Number(x.slot_number))]);
+  const used = new Set(D.memberships.filter(x => x.committee_id === c.id && x.status === 'approved' && x.slot_number).map(x => x.slot_number));
   let opts = '<option value="">Assign later</option>';
   for (let n = 1; n <= c.total_members; n++) {
     if (used.has(n)) continue;
@@ -845,8 +787,8 @@ async function approveMem(id) {
   const m = D.memberships.find(x => x.id === id); if (!m) return;
   const c = D.committees.find(x => x.id === m.committee_id);
   const slot = $('ap_slot') && $('ap_slot').value ? Number($('ap_slot').value) : null;
-  const count = D.memberships.filter(x => x.committee_id === m.committee_id && x.id !== m.id && ['approved','pending'].includes(x.status)).reduce((n,x)=>n+Math.max(1,Number(x.share_count||1)),0);
-  if (c && count + Math.max(1,Number(m.share_count||1)) > c.total_members) return toast('Committee capacity is too small for these shares. Increase total wheel slots first.',1);
+  const count = D.memberships.filter(x => x.committee_id === m.committee_id && x.status === 'approved').length;
+  if (c && count >= c.total_members && !confirm('This committee is already full. Approve anyway?')) return;
   $('ap_ok') && ($('ap_ok').disabled = true);
   const { error } = await sb.from('memberships').update({ status: 'approved', slot_number: slot }).eq('id', id);
   if (error) { $('ap_ok') && ($('ap_ok').disabled = false); return toast(error.code === '23505' ? 'That turn was just taken. Pick another one' : error.message, 1); }
@@ -964,7 +906,7 @@ function vACommittees() {
         <td class="actions"><button class="btn sm out" onclick="openEditCommittee('${c.id}')">Edit</button>
         <button class="btn sm gray" onclick="toggleRoster('${c.id}', ${!!c.show_roster})">${c.show_roster ? 'Hide list' : 'Share list'}</button>
         <button class="btn sm gray" onclick="toggleC('${c.id}','${c.status}')">${c.status === 'open' ? 'Close' : 'Reopen'}</button>
-        <button class="btn sm red" onclick="delC('${c.id}')">Delete</button>${c.status==='open'&&!D.memberships.some(m=>m.committee_id===c.id&&m.user_id===me.id)?`<button class="btn sm" onclick="joinC('${c.id}')">Join as member</button>`:''}</td></tr>`;
+        <button class="btn sm red" onclick="delC('${c.id}')">Delete</button></td></tr>`;
       }).join('') + '</table></div>' : empty('No committees yet', 'layers'));
 }
 async function addCommittee() {
@@ -1021,16 +963,7 @@ async function delC(id) {
 function vAMembers() {
   return `<h2>${D.profiles.length} registered</h2><div class="card tw"><table><tr><th>Name</th><th>Phone</th><th>CNIC</th><th>Role</th><th>Date</th><th></th></tr>` +
     D.profiles.map(p => `<tr><td>${esc(p.name)}</td><td>${esc(p.phone)}</td><td>${esc(p.cnic) || '-'}</td><td>${esc(p.role)}</td><td>${fdate(p.created_at)}</td>
-    <td class="actions">${p.id !== me.id ? `<button class="btn sm ${p.role === 'admin' ? 'gray' : 'out'}" onclick="changeRole('${p.id}','${p.role === 'admin' ? 'member' : 'admin'}')">${p.role === 'admin' ? 'Remove admin' : 'Make admin'}</button>` : '<span class="muted">You</span>'} ${p.id !== me.id && p.role !== 'admin' ? `<button class="btn sm red" onclick="delMember('${p.id}')">Delete</button>` : ''}</td></tr>`).join('') + '</table></div>';
-}
-async function changeRole(id, role) {
-  const p = D.profiles.find(x => x.id === id); if (!p || id === me.id) return toast('You cannot change your own role here', 1);
-  const action = role === 'admin' ? 'grant administrator access to' : 'remove administrator access from';
-  if (!confirm(`Are you sure you want to ${action} ${p.name}? They must already have a registered account.`)) return;
-  const { error } = await sb.from('profiles').update({ role }).eq('id', id);
-  if (error) return toast('Role change failed: ' + error.message, 1);
-  toast(role === 'admin' ? 'Admin access granted' : 'Admin access removed');
-  await loadData(); renderNav(); renderTab(false);
+    <td>${p.role === 'admin' ? '' : `<button class="btn sm red" onclick="delMember('${p.id}')">Delete</button>`}</td></tr>`).join('') + '</table></div>';
 }
 async function delMember(id) {
   const p = D.profiles.find(x => x.id === id); if (!p) return;
@@ -1043,72 +976,33 @@ async function delMember(id) {
 function vAPayouts() {
   return `<div class="card" style="max-width:600px"><h2>Record Payout</h2>
     <label>Committee</label><select id="po_c" onchange="payoutCommChange()">${D.committees.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('')}</select>
-    <label>Share / member</label><select id="po_m" onchange="payoutShareChange()"></select>
+    <label>Member</label><select id="po_m"></select>
     <div class="row"><div><label>Month</label><input id="po_month" type="month" value="${new Date().toISOString().slice(0, 7)}"></div>
     <div><label>Amount (Rs)</label><input id="po_amt" type="number" min="1"></div></div>
     <label>Status</label><select id="po_st"><option value="pending">pending</option><option value="paid">paid</option></select>
     <br><button class="btn" onclick="addPayout()">Save</button></div>
     <h2 class="sec">Payouts</h2>` +
-    (D.payouts.length ? `<div class="card tw"><table><tr><th>Committee</th><th>Member</th><th>Share</th><th>Month</th><th>Amount</th><th>Status</th><th>Member payout preference / account</th><th></th></tr>` +
-      D.payouts.map(p => { const prof = D.profiles.find(x => x.id === p.member_id); const pref = prof?.payout_preference || 'not set'; const account = pref === 'bank' ? [prof?.payout_bank_name, prof?.payout_account_title, prof?.payout_account_number, prof?.payout_iban ? 'IBAN: '+prof.payout_iban : null].filter(Boolean).map(esc).join('<br>') : (pref === 'cash' ? 'Cash' : 'Member has not saved a preference'); return `<tr><td>${esc(p.committees?.name)}</td><td>${esc(p.profiles?.name)}</td><td>${(D.shares||[]).find(sh=>sh.id===p.share_id)?.share_number||'-'}</td><td>${esc(p.month_label)}</td><td>${money(p.amount)}</td><td>${badge(p.status)}</td><td>${pref==='bank' ? '<b>Bank / wallet</b><br>' : ''}${account}</td>
-      <td class="actions">${p.status !== 'paid' ? `<button class="btn sm" onclick="payoutPaid('${p.id}')">Mark Paid</button>` : ''}<button class="btn sm red" onclick="delPayout('${p.id}')">X</button></td></tr>`; }).join('') + '</table></div>' : empty('No payouts yet'));
+    (D.payouts.length ? `<div class="card tw"><table><tr><th>Committee</th><th>Member</th><th>Month</th><th>Amount</th><th>Status</th><th></th></tr>` +
+      D.payouts.map(p => `<tr><td>${esc(p.committees?.name)}</td><td>${esc(p.profiles?.name)}</td><td>${esc(p.month_label)}</td><td>${money(p.amount)}</td><td>${badge(p.status)}</td>
+      <td class="actions">${p.status !== 'paid' ? `<button class="btn sm" onclick="payoutPaid('${p.id}')">Mark Paid</button>` : ''}<button class="btn sm red" onclick="delPayout('${p.id}')">X</button></td></tr>`).join('') + '</table></div>' : empty('No payouts yet'));
 }
 function payoutCommChange() {
   const sel = $('po_c'); if (!sel) return;
   const c = D.committees.find(x => x.id === sel.value);
-  const shares=(D.shares||[]).filter(sh=>sh.committee_id===sel.value);
-  $('po_m').innerHTML = shares.map(sh=>{const m=D.memberships.find(x=>x.id===sh.membership_id);return `<option value="${sh.id}">${esc(m?.profiles?.name)} · Share ${sh.share_number} · No. ${sh.slot_number??'-'}</option>`}).join('') || '<option value="">No approved shares</option>';
+  const mems = D.memberships.filter(m => m.committee_id === sel.value && m.status === 'approved');
+  $('po_m').innerHTML = mems.map(m => `<option value="${m.user_id}">${esc(m.profiles?.name)} (No. ${m.slot_number ?? '-'})</option>`).join('') || '<option value="">No approved members</option>';
   if (c) $('po_amt').value = c.monthly_amount * c.total_members;
-  payoutShareChange();
-}
-function payoutShareChange(){
-  const sh=(D.shares||[]).find(x=>x.id===$('po_m')?.value);if(!sh)return;
-  const c=D.committees.find(x=>x.id===sh.committee_id);
-  if(sh.payout_month)$('po_month').value=sh.payout_month;
-  if(c)$('po_amt').value=Number(c.monthly_amount)*Number(c.total_members);
 }
 async function addPayout() {
-  const cid = $('po_c').value, shareId = $('po_m').value, month = $('po_month').value, amt = Number($('po_amt').value);
-  if (!cid || !shareId || !month || !amt) return toast('Fill in all fields', 1);
-  const sh=(D.shares||[]).find(x=>x.id===shareId); const m=sh?D.memberships.find(x=>x.id===sh.membership_id):null;
-  if(!sh||!m)return toast('Choose a valid share',1);
-  const { error } = await sb.from('payouts').insert({ committee_id: cid, member_id: m.user_id, share_id: shareId, month_label: month, amount: amt, status: $('po_st').value });
+  const cid = $('po_c').value, mid = $('po_m').value, month = $('po_month').value, amt = Number($('po_amt').value);
+  if (!cid || !mid || !month || !amt) return toast('Fill in all fields', 1);
+  const { error } = await sb.from('payouts').insert({ committee_id: cid, member_id: mid, month_label: month, amount: amt, status: $('po_st').value });
   if (error) return toast(error.message, 1);
   toast('Payout saved'); await loadData(); renderTab();
 }
-async function viewPayoutProof(path) {
-  const w=window.open('', '_blank');
-  const {data,error}=await sb.storage.from('payout-proofs').createSignedUrl(path,300);
-  if(error||!data){if(w)w.close();return toast('Could not open payout proof',1);}
-  if(w) w.location=data.signedUrl; else window.location=data.signedUrl;
-}
 async function payoutPaid(id) {
-  const p=D.payouts.find(x=>x.id===id); if(!p) return;
-  const member=D.profiles.find(x=>x.id===p.member_id);
-  const pref=member?.payout_preference||'cash';
-  openModal(`<h2>Confirm payout sent</h2><p class="muted">${esc(member?.name||'Member')} · ${esc(p.month_label)} · ${money(p.amount)}</p>
-    <p class="note">Member preference: <b>${pref==='bank'?'Bank / wallet':'Cash'}</b>${pref==='bank'&&member?.payout_account_number?`<br>${esc(member.payout_bank_name||'')} · ${esc(member.payout_account_title||'')} · ${esc(member.payout_account_number)}${member.payout_iban?'<br>IBAN: '+esc(member.payout_iban):''}`:''}</p>
-    <label>Actual payout method</label><select id="po_paid_method"><option value="cash" ${pref==='cash'?'selected':''}>Cash</option><option value="bank" ${pref==='bank'?'selected':''}>Bank / wallet transfer</option></select>
-    <label>Bank / wallet provider (if applicable)</label><input id="po_paid_bank" value="${esc(member?.payout_bank_name||'')}" placeholder="Provider">
-    <label>Account title (if applicable)</label><input id="po_paid_title" value="${esc(member?.payout_account_title||'')}" placeholder="Account title">
-    <label>Account number (if applicable)</label><input id="po_paid_number" value="${esc(member?.payout_account_number||'')}" placeholder="Account number">
-    <label>Payment proof (image or PDF; required for bank transfer)</label><input id="po_paid_file" type="file" accept="image/*,application/pdf">
-    <label>Note</label><input id="po_paid_note" placeholder="Transaction reference / cash received by">
-    <div class="mfoot"><button class="btn gray" onclick="closeModal()">Cancel</button><button class="btn" onclick="confirmPayoutPaid('${id}')">Save paid record</button></div>`,true);
-}
-async function confirmPayoutPaid(id) {
-  const p=D.payouts.find(x=>x.id===id); if(!p) return;
-  const method=$('po_paid_method').value, f=$('po_paid_file').files[0];
-  if(method==='bank'&&!f) return toast('Upload the bank/wallet transfer proof first',1);
-  if(f&&f.size>10*1024*1024) return toast('Proof must be under 10MB',1);
-  let proof_path=p.proof_path||null;
-  if(f){ proof_path=`${p.committee_id}/${p.id}_${Date.now()}_${f.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;
-    const up=await sb.storage.from('payout-proofs').upload(proof_path,f); if(up.error) return toast('Proof upload failed: '+up.error.message,1); }
-  const {error}=await sb.from('payouts').update({status:'paid',payment_method:method,bank_name:$('po_paid_bank').value.trim()||null,
-    account_title:$('po_paid_title').value.trim()||null,account_number:$('po_paid_number').value.trim()||null,
-    proof_path,payment_note:$('po_paid_note').value.trim()||null,paid_at:new Date().toISOString(),paid_by:me.id}).eq('id',id);
-  if(error) return toast('Could not save payout: '+error.message,1);
-  closeModal(); toast('Payout marked paid with details'); await loadData(); renderTab(false);
+  const { error } = await sb.from('payouts').update({ status: 'paid' }).eq('id', id);
+  if (error) return toast(error.message, 1); refresh();
 }
 async function delPayout(id) {
   if (!confirm('Delete?')) return;
@@ -1139,27 +1033,28 @@ function vAReports() {
 function vASchedule() {
   if (!D.committees.length) return empty('No committees yet. Create one to see its payout schedule.', 'layers', ['a_committees', 'Create a committee']);
   return D.committees.map(c => {
-    const shares=(D.shares||[]).filter(sh=>sh.committee_id===c.id);
-    const mems=D.memberships.filter(m=>m.committee_id===c.id&&m.status==='approved');
-    const rows=shares.map(sh=>{
-      const m=mems.find(x=>x.id===sh.membership_id);
-      const opts='<option value="">Not assigned</option>'+Array.from({length:Number(c.total_members)||1},(_,i)=>{const n=i+1;return `<option value="${n}" ${Number(sh.slot_number)===n?'selected':''}>No. ${n}</option>`}).join('');
-      const month=sh.payout_month||'';
-      return `<tr><td>${esc(m?.profiles?.name||'Member')}${Number(sh.share_number)>1?' - '+sh.share_number:''}</td><td>Share ${sh.share_number}</td><td><select class="cell" onchange="assignShareSlot('${sh.id}',this.value)">${opts}</select></td><td><input type="month" class="cell" value="${esc(month)}" onchange="assignShareMonth('${sh.id}',this.value)"></td><td>${money(c.monthly_amount)}</td></tr>`;
-    }).join('');
-    const loose=mems.filter(m=>!(D.shares||[]).some(sh=>sh.membership_id===m.id));
-    return `<div class="sh"><div><h2 style="margin:0">${esc(c.name)} ${badge(c.status)}</h2><p class="muted" style="margin:4px 0 0">${money(c.monthly_amount)} per share/month · ${shares.length} total shares · ${mems.length} approved members</p></div><div class="actions"><button class="btn sm out" onclick="copySchedule('${c.id}')">Copy for WhatsApp</button></div></div><div class="card tw"><table><tr><th>Member</th><th>Share</th><th>Wheel number</th><th>Payout month</th><th>Monthly payment</th></tr>${rows||'<tr><td colspan="5">No approved shares yet</td></tr>'}</table></div>${loose.length?`<p class="note">${loose.length} approved member(s) have no share records yet. Re-run the migration share-sync section after checking the SQL result.</p>`:''}`;
+    const mems = D.memberships.filter(m => m.committee_id === c.id && m.status === 'approved');
+    const mids = new Set(D.memberships.filter(m => m.committee_id === c.id).map(m => m.id));
+    const bySlot = {}; mems.forEach(m => { if (m.slot_number) bySlot[m.slot_number] = m; });
+    const loose = mems.filter(m => !m.slot_number);
+    let rows = '';
+    for (let n = 1; n <= c.total_members; n++) {
+      const m = bySlot[n], sm = slotMonth(c, n);
+      const po = m ? D.payouts.find(p => p.committee_id === c.id && p.member_id === m.user_id && (!sm || p.month_label === sm.key)) : null;
+      const coll = sm ? D.payments.filter(p => p.status === 'verified' && p.month_label === sm.key && mids.has(p.membership_id)).reduce((a, p) => a + Number(p.amount), 0) : 0;
+      const opts = '<option value="">Empty</option>' + mems.map(x => `<option value="${x.user_id}" ${m && x.id === m.id ? 'selected' : ''}>${esc(x.profiles?.name)}${x.slot_number && !(m && x.id === m.id) ? ' (turn ' + x.slot_number + ')' : ''}</option>`).join('');
+      const status = po ? badge(po.status) : '<span class="muted">not paid yet</span>';
+      const act = (m && sm && !po) ? `<button class="btn sm" onclick="markPayout('${c.id}','${m.user_id}','${sm.key}',${pot(c)})">Mark paid</button>` : (po && po.status !== 'paid' ? `<button class="btn sm" onclick="payoutPaid('${po.id}')">Mark paid</button>` : '');
+      rows += `<tr class="${sm && sm.key === nowKey() ? 'cur' : ''}"><td><b>${sm ? sm.label : '-'}</b></td><td>${n}</td>
+        <td><select class="cell" onchange="assignSlot('${c.id}', ${n}, this.value)">${opts}</select></td>
+        <td>${money(pot(c))}</td><td>${sm ? money(coll) : '-'}</td><td>${status}</td><td>${act}</td></tr>`;
+    }
+    return `<div class="sh"><div><h2 style="margin:0">${esc(c.name)} ${badge(c.status)}</h2>
+      <p class="muted" style="margin:4px 0 0">${c.start_date ? 'Starts ' + fdate(c.start_date) : 'No start date yet. Use Edit on the Committees tab.'} · ${money(c.monthly_amount)} per member · pot ${money(pot(c))} · member list ${c.show_roster ? 'shared' : 'hidden'}</p></div>
+      <div class="actions"><button class="btn sm out" onclick="copySchedule('${c.id}')">Copy for WhatsApp</button></div></div>
+      ${loose.length ? `<div class="note">${loose.length} approved member${loose.length === 1 ? ' has' : 's have'} no turn yet: ${loose.map(x => esc(x.profiles?.name)).join(', ')}. Pick them in the table below.</div>` : ''}
+      <div class="card tw"><table><tr><th>Payout month</th><th>Turn</th><th>Receives the pot</th><th>Pot</th><th>Collected that month</th><th>Payout</th><th></th></tr>${rows}</table></div>`;
   }).join('<div style="height:18px"></div>');
-}
-async function assignShareSlot(id, slot){
-  const {error}=await sb.rpc('assign_membership_share_slot',{p_share_id:id,p_slot_number:slot?Number(slot):null});
-  if(error)return toast('Could not assign wheel number: '+error.message,1);
-  toast('Share wheel number saved');await loadData();renderTab(false);
-}
-async function assignShareMonth(id, month){
-  const {error}=await sb.rpc('assign_membership_share_month',{p_share_id:id,p_payout_month:month||null});
-  if(error)return toast('Could not save payout month: '+error.message,1);
-  toast('Share payout month saved');await loadData();renderTab(false);
 }
 async function setSlot(id, slot) {
   const { error } = await sb.from('memberships').update({ slot_number: slot }).eq('id', id);
@@ -1167,26 +1062,39 @@ async function setSlot(id, slot) {
 }
 async function assignSlot(cid, n, uid) {
   const holder = D.memberships.find(m => m.committee_id === cid && m.status === 'approved' && m.slot_number === n);
-  const chosen = uid ? D.memberships.find(m => m.committee_id === cid && m.user_id === uid && m.status === 'approved') : null;
-  if (uid && (!chosen || (holder && holder.id === chosen.id))) return;
-  if (holder && !uid && !confirm('Remove ' + (holder.profiles?.name || 'this member') + ' from turn ' + n + '?')) return renderTab(false);
-  if (holder && chosen && !confirm('Swap turn ' + n + ' with ' + (chosen.profiles?.name || 'the selected member') + '?')) return renderTab(false);
-  const {error}=await sb.rpc('assign_committee_slot',{p_committee_id:cid,p_slot_number:n,p_membership_id:chosen?.id||null});
-  if(error) toast(error.message,1); else toast('Payout turn saved');
+  const got = u => D.payouts.some(p => p.committee_id === cid && p.member_id === u && p.status === 'paid');
+  let err = null;
+  if (!uid) {
+    if (!holder) return;
+    if (got(holder.user_id)) { toast('This member has already received a payout, so the turn is locked', 1); return renderTab(false); }
+    err = await setSlot(holder.id, null);
+  } else {
+    const mm = D.memberships.find(m => m.committee_id === cid && m.user_id === uid && m.status === 'approved');
+    if (!mm || (holder && holder.id === mm.id)) return;
+    if (got(uid) || (holder && got(holder.user_id))) { toast('A member who already received a payout cannot be moved', 1); return renderTab(false); }
+    const prev = mm.slot_number || null;
+    if (holder) {
+      if (!confirm('Turn ' + n + ' belongs to ' + holder.profiles?.name + '. Swap the two members?')) return renderTab(false);
+      err = (await setSlot(holder.id, null)) || (await setSlot(mm.id, n)) || (await setSlot(holder.id, prev));
+    } else err = await setSlot(mm.id, n);
+  }
+  if (err) toast(err.code === '23505' ? 'That turn is already taken' : err.message, 1); else toast('Turn saved');
   await loadData(); renderTab(false);
 }
-
 function copySchedule(cid) {
-  const c=D.committees.find(x=>x.id===cid);if(!c)return;
-  const lines=[c.name,money(c.monthly_amount)+' per share / month',''];
-  (D.shares||[]).filter(sh=>sh.committee_id===cid).sort((a,b)=>(a.slot_number||999)-(b.slot_number||999)).forEach(sh=>{const m=D.memberships.find(x=>x.id===sh.membership_id);lines.push((sh.slot_number?'No. '+sh.slot_number:'No. -')+' · '+(m?.profiles?.name||'Member')+(Number(sh.share_number)>1?' - '+sh.share_number:'')+' · Share '+sh.share_number+' · '+(sh.payout_month?fmtMonth(sh.payout_month):'Payout not assigned'));});
+  const c = D.committees.find(x => x.id === cid); if (!c) return;
+  const lines = [c.name, money(c.monthly_amount) + ' per member, pot ' + money(pot(c)) + ' per month', ''];
+  for (let n = 1; n <= c.total_members; n++) {
+    const m = D.memberships.find(x => x.committee_id === cid && x.status === 'approved' && x.slot_number === n), sm = slotMonth(c, n);
+    lines.push(n + '. ' + (sm ? sm.label : '-') + ' - ' + (m ? m.profiles?.name : '(open)'));
+  }
   copyText(lines.join('\n'));
 }
 async function markPayout(cid, uid, key, amt) {
-  const { data, error } = await sb.from('payouts').insert({ committee_id: cid, member_id: uid, month_label: key, amount: amt, status: 'pending' }).select().single();
+  if (!confirm('Mark this payout as paid? Only do this after you have handed over the money.')) return;
+  const { error } = await sb.from('payouts').insert({ committee_id: cid, member_id: uid, month_label: key, amount: amt, status: 'paid' });
   if (error) return toast(error.message, 1);
-  await loadData();
-  payoutPaid(data.id);
+  toast('Payout marked as paid'); await loadData(); renderTab();
 }
 
 function vABackup() {
