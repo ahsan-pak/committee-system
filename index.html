@@ -613,6 +613,10 @@ body.menu-open #sg button{animation:riseIn .5s cubic-bezier(.2,.8,.2,1) forwards
 .hord.done .hst{color:var(--brandd)}.hord.late .hst{color:var(--amber)}
 .noanim .rv{animation:none;opacity:1}
 .noanim .harc,.noanim .hndi,.noanim .hbars span,.noanim .hpb i,.noanim .hring .p{animation:none}
+
+.phint{margin:10px 0 0;padding:10px 12px;border-radius:12px;background:var(--brandl);color:var(--tx);font-size:13px;border:1px solid rgba(201,164,76,.3)}
+.phint.part{background:var(--amberl);border-color:rgba(230,165,92,.4)}.phint.ok{background:rgba(127,203,155,.12);border-color:rgba(127,203,155,.4)}
+.phint:empty{display:none}
 </style>
 </head>
 <body>
@@ -1095,8 +1099,10 @@ function homeView() {
   } else {
     qTitle = 'This month';
     const mine = D.memberships.filter(m => m.user_id === me.id && m.status === 'approved');
-    qItems = mine.map(m => { const cc = D.committees.find(x => x.id === m.committee_id); if (!cc) return ''; const pay = D.payments.find(p => p.membership_id === m.id && p.month_label === nk && p.status !== 'rejected'); if (!pay) qCount++;
-      return `<div class="hqr"><span class="av d">${esc(cc.name.charAt(0).toUpperCase())}</span><div><b>${esc(cc.name)}</b><small>${money(cc.monthly_amount * (m.share_count || 1))} due</small></div><span class="a">${pay ? badge(pay.status) : ''}</span>${pay ? '' : `<button class="btn sm out" onclick="setTab('m_pay')">Pay</button>`}</div>`; }).join('');
+    qItems = mine.map(m => { const cc = D.committees.find(x => x.id === m.committee_id); const du = memberDue(m); if (!cc || !du) return '';
+      if (du.state === 'due') qCount++;
+      const sub = du.state === 'due' ? `${esc(fmtMonth(du.key))} · ${du.paid > 0 ? money(du.paid) + ' paid, ' : ''}${money(du.rem)} due${du.overdue ? ' (overdue)' : ''}` : (du.key ? `${esc(fmtMonth(nk))} paid · next ${esc(fmtMonth(du.key))}` : 'All months paid');
+      return `<div class="hqr"><span class="av d">${esc(cc.name.charAt(0).toUpperCase())}</span><div><b>${esc(cc.name)}</b><small>${sub}</small></div><span class="a">${du.state === 'due' ? money(du.rem) : '<span class="badge verified"><i></i>Paid</span>'}</span>${du.state === 'due' ? `<button class="btn sm out" onclick="setTab('m_pay')">Pay</button>` : ''}</div>`; }).join('');
   }
   const qEmpty = adm ? 'Nothing waiting. New payments and join requests appear here.' : 'You are not in a committee yet.';
   const sw = comms.length > 1 ? `<div class="hsw">${comms.map(x => `<button class="${x.id === c.id ? 'on' : ''}" onclick="pickHome('${x.id}')">${esc(x.name)}</button>`).join('')}</div>` : '';
@@ -1108,10 +1114,10 @@ function homeView() {
   const cards = comms.map(cc => {
     const cu = cc.start_date ? curIdx(cc) : 0, tt = Number(cc.total_members) || 1, pct = Math.max(0, Math.min(100, Math.round(Math.max(0, cu - 1) / tt * 100)));
     const m = D.memberships.find(x => x.committee_id === cc.id && x.user_id === me.id && x.status === 'approved');
-    const pay = m && D.payments.find(p => p.membership_id === m.id && p.month_label === nk && p.status !== 'rejected');
-    const act = adm ? `<button class="btn sm fill" onclick="setTab('a_schedule')">Schedule</button>` : (pay ? badge(pay.status) : `<button class="btn sm fill" onclick="setTab('m_pay')">Pay now</button>`);
+    const du = m && memberDue(m);
+    const act = adm ? `<button class="btn sm fill" onclick="setTab('a_schedule')">Schedule</button>` : (!du ? '' : du.state === 'due' ? `<button class="btn sm fill" onclick="setTab('m_pay')">Pay ${money(du.rem)}</button>` : '<span class="badge verified"><i></i>Paid</span>');
     const sm = cc.start_date && cu >= 1 && cu <= tt ? slotMonth(cc, cu) : null;
-    return `<article class="card hmc"><div class="eb">${esc(sm ? sm.label : (cc.start_date ? 'Finished' : 'Not started'))}</div><h3 class="ser">${esc(cc.name)}</h3><div class="am">${money(cc.monthly_amount)} per month</div><div class="hpb"><i style="width:${pct}%"></i></div><div class="hrow"><span>${cu >= 1 && cu <= tt ? 'Month ' + cu + ' of ' + tt : tt + ' members'}</span>${act}</div></article>`;
+    return `<article class="card hmc"><div class="eb">${du ? (du.state === 'due' ? (du.overdue ? 'Overdue · ' : 'Due · ') + esc(fmtMonth(du.key)) : (du.key ? esc(fmtMonth(nk)) + ' paid · next ' + esc(fmtMonth(du.key)) : 'All months paid')) : esc(sm ? sm.label : (cc.start_date ? 'Finished' : 'Not started'))}</div><h3 class="ser">${esc(cc.name)}</h3><div class="am">${money(cc.monthly_amount)} per month</div><div class="hpb"><i style="width:${pct}%"></i></div><div class="hrow"><span>${du && du.state === 'due' && du.paid > 0 ? money(du.paid) + ' paid of ' + money(du.due) : (cu >= 1 && cu <= tt ? 'Month ' + cu + ' of ' + tt : tt + ' members')}</span>${act}</div></article>`;
   }).join('') + `<article class="card hmc hadd" onclick="setTab('${adm ? 'a_committees' : 'm_committees'}')" role="button" tabindex="0"><div class="ser" style="font-size:44px;color:var(--brand)">+</div><div style="font-size:13px;color:var(--mu)">${adm ? 'Manage committees' : 'Join another committee'}</div></article>`;
   const qa = (adm ? [['a_requests', 'Requests', 'inbox'], ['a_payments', 'Payments', 'card'], ['a_payouts', 'Payouts', 'down'], ['a_members', 'Members', 'users']] : [['m_pay', 'Pay', 'card'], ['m_history', 'History', 'history'], ['m_payouts', 'Payouts', 'down'], ['m_committees', 'Join', 'layers']])
     .map(([k, l, i]) => `<button onclick="setTab('${k}')"><i>${ic(i, 22)}</i>${l}</button>`).join('');
@@ -1166,7 +1172,7 @@ async function openRoster(cid) {
   const mm = D.memberships.find(x => x.committee_id === cid && x.user_id === me.id);
   const rows = (data || []).map(r => {
     const sm = slotMonth(c, r.r_slot), isMe = mm && mm.slot_number === r.r_slot;
-    const st = r.r_paid ? badge('paid') : (sm && sm.key === nowKey() ? '<span class="badge pending"><i></i>This month</span>' : '<span class="muted">Upcoming</span>');
+    const st = r.r_paid ? '<span class="badge verified"><i></i>Paid</span>' : (sm && sm.key === nowKey() ? '<span class="badge pending"><i></i>This month</span>' : '<span class="muted">Upcoming</span>');
     return `<tr class="${isMe ? 'cur' : ''}"><td><b>${sm ? sm.label : '-'}</b></td><td>${r.r_slot}</td><td>${esc(r.r_name)}${isMe ? ' <span class="muted">(you)</span>' : ''}</td><td>${st}</td></tr>`;
   }).join('');
   openModal(`<h2>${esc(c.name)}</h2><p class="muted">${money(c.monthly_amount)} per member · pot ${money(pot(c))} per month</p>
@@ -1175,6 +1181,29 @@ async function openRoster(cid) {
 }
 
 
+// ---------- dues: amount-aware (partial payments, next month) ----------
+const dueOf = m => { const c = D.committees.find(x => x.id === m.committee_id); return c ? Number(c.monthly_amount) * (m.share_count || 1) : 0; };
+const paidOf = (m, key) => D.payments.filter(p => p.membership_id === m.id && p.month_label === key && p.status !== 'rejected').reduce((a, p) => a + Number(p.amount), 0);
+const mKey = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+function memberDue(m) {
+  const c = D.committees.find(x => x.id === m.committee_id); if (!c) return null;
+  const due = dueOf(m), nk = nowKey();
+  let sd = m.created_at ? new Date(m.created_at) : new Date(); sd = new Date(sd.getFullYear(), sd.getMonth(), 1);
+  let end = null;
+  if (c.start_date) {
+    const s0 = new Date(c.start_date + 'T00:00:00'), st = new Date(s0.getFullYear(), s0.getMonth(), 1);
+    if (st > sd) sd = st;
+    const n = Number(c.duration_months) || Number(c.total_members) || 12;
+    end = mKey(new Date(st.getFullYear(), st.getMonth() + n - 1, 1));
+  }
+  for (let i = 0; i < 60; i++) {
+    const key = mKey(new Date(sd.getFullYear(), sd.getMonth() + i, 1));
+    if (end && key > end) break;
+    const paid = paidOf(m, key);
+    if (paid < due) return { key, due, paid, rem: due - paid, state: key <= nk ? 'due' : 'ok', overdue: key < nk };
+  }
+  return { key: null, due, paid: due, rem: 0, state: 'ok', overdue: false };
+}
 function vMPay() {
   const mine = D.memberships.filter(m => m.user_id === me.id && m.status === 'approved');
   if (!mine.length) return empty('You must be approved in a committee before making a payment');
@@ -1182,8 +1211,9 @@ function vMPay() {
   return `<div class="card" style="max-width:560px"><h2>Payment details</h2>
     <label>Committee</label>
     <select id="p_mem" onchange="payMemChange()">${mine.map(m => `<option value="${m.id}">${esc(m.committees?.name)}</option>`).join('')}</select>
-    <div class="row"><div><label>Month</label><input id="p_month" type="month" value="${new Date().toISOString().slice(0, 7)}"></div>
+    <div class="row"><div><label>Month</label><input id="p_month" type="month" value="${(() => { const d0 = memberDue(mine[0]); return (d0 && d0.key) || nowKey(); })()}" onchange="payMonthChange()"></div>
     <div><label>Amount (Rs)</label><input id="p_amt" type="number" min="1"></div></div>
+    <div id="p_hint" class="phint"></div>
     <label>Payment method</label>
     <div class="pm"><label class="pmo"><input type="radio" name="pm" value="bank" checked onchange="payMethodChange()"><span>Online (Bank / Wallet)</span></label><label class="pmo"><input type="radio" name="pm" value="cash" onchange="payMethodChange()"><span>Cash</span></label></div>
     <div id="bankbox">
@@ -1197,8 +1227,19 @@ function vMPay() {
 
 function payMemChange() {
   const sel = $('p_mem'); if (!sel) return;
-  const m = D.memberships.find(x => x.id === sel.value);
-  if (m && m.committees) $('p_amt').value = m.committees.monthly_amount * (m.share_count || 1);
+  const m = D.memberships.find(x => x.id === sel.value); if (!m) return;
+  const du = memberDue(m); $('p_month').value = (du && du.key) || nowKey();
+  payMonthChange();
+}
+function payMonthChange() {
+  const sel = $('p_mem'), mo = $('p_month'); if (!sel || !mo) return;
+  const m = D.memberships.find(x => x.id === sel.value); if (!m || !mo.value) return;
+  const due = dueOf(m), paid = paidOf(m, mo.value), rem = Math.max(0, due - paid), h = $('p_hint');
+  $('p_amt').value = rem > 0 ? rem : '';
+  if (h) h.innerHTML = rem <= 0 ? `<b>${fmtMonth(mo.value)}</b> is already fully paid (${money(due)}). Choose another month.`
+    : paid > 0 ? `<b>${fmtMonth(mo.value)}</b>: ${money(paid)} paid of ${money(due)}. <b>${money(rem)}</b> is still due.`
+    : `<b>${fmtMonth(mo.value)}</b>: ${money(due)} due.`;
+  if (h) h.className = 'phint' + (rem <= 0 ? ' ok' : paid > 0 ? ' part' : '');
 }
 function payMethodChange() {
   const bank = document.querySelector('input[name=pm]:checked').value === 'bank';
@@ -1211,8 +1252,9 @@ async function submitPay() {
         method = document.querySelector('input[name=pm]:checked').value, note = $('p_note').value.trim();
   if (!month) return toast('Select a month', 1);
   if (!amount || amount <= 0) return toast('Enter a valid amount', 1);
-  if (D.payments.find(p => p.membership_id === mid && p.month_label === month && p.status !== 'rejected'))
-    return toast('A payment for this month is already submitted', 1);
+  const mm0 = D.memberships.find(x => x.id === mid), rem0 = mm0 ? Math.max(0, dueOf(mm0) - paidOf(mm0, month)) : 0;
+  if (rem0 <= 0) return toast(fmtMonth(month) + ' is already fully paid. Choose the next month', 1);
+  if (amount > rem0) return toast('Only ' + money(rem0) + ' is still due for ' + fmtMonth(month), 1);
   if (method === 'bank' && !$('p_acc')) return toast('No payment account available. Contact the admin', 1);
   const acc = (method === 'bank' && $('p_acc')) ? $('p_acc').value : null;
   let path = null;
@@ -1228,7 +1270,7 @@ async function submitPay() {
   const { error } = await sb.from('payments').insert({
     membership_id: mid, user_id: me.id, month_label: month, amount, method, proof_path: path, account_label: acc, note: note || null, status: 'pending'
   });
-  if (error) { $('pbtn').disabled = false; return toast(/duplicate|unique/i.test(error.message) ? 'A payment for this month is already submitted' : 'Payment could not be saved: ' + error.message, 1); }
+  if (error) { $('pbtn').disabled = false; return toast(/duplicate|unique/i.test(error.message) ? 'The database allows one payment per month. Ask the admin to enable part payments' : 'Payment could not be saved: ' + error.message, 1); }
   toast('Payment submitted. Admin will verify it');
   tab = 'm_history'; await loadData(); renderNav(); renderTab();
 }
@@ -1306,6 +1348,17 @@ async function removeMem(id) {
   if (error) return toast(error.message, 1); refresh();
 }
 
+async function delPayment(id) {
+  const p = D.payments.find(x => x.id === id); if (!p) return;
+  const msg = (p.status === 'verified' ? 'This payment is already VERIFIED. Deleting it removes the receipt and the member will owe ' + money(p.amount) + ' again.\n\n' : '') +
+    'Delete ' + money(p.amount) + ' from ' + (p.profiles?.name || 'member') + ' for ' + fmtMonth(p.month_label) + '? This cannot be undone.';
+  if (!confirm(msg)) return;
+  const { error, count } = await sb.from('payments').delete({ count: 'exact' }).eq('id', id);
+  if (error) return toast(error.message, 1);
+  if (count === 0) return toast('Delete was blocked by database permissions. Run the delete-policy SQL in Supabase first.', 1);
+  if (p.proof_path) { try { await sb.storage.from('proofs').remove([p.proof_path]); } catch (e) {} }
+  toast('Payment deleted'); await loadData(); renderNav(); renderTab(false);
+}
 function methodCell(p) {
   return esc(p.method) + (p.account_label ? '<br><span class="muted">' + esc(p.account_label) + '</span>' : '');
 }
@@ -1317,12 +1370,12 @@ function vAPayments() {
     pend.map(p => `<tr><td>${esc(p.profiles?.name)}<br><span class="muted">${esc(p.profiles?.phone)}</span></td>
     <td>${esc(p.memberships?.committees?.name)}</td><td>${fmtMonth(p.month_label)}</td><td><b>${money(p.amount)}</b></td><td>${methodCell(p)}</td>
     <td>${p.proof_path ? `<button class="btn sm out" onclick="viewProof('${esc(p.proof_path)}')">View</button>` : 'Cash'}</td><td>${esc(p.note)}</td>
-    <td class="actions"><button class="btn sm" onclick="openVerify('${p.id}')">Review</button><button class="btn sm red" onclick="openReject('${p.id}')">Reject</button></td></tr>`).join('') + '</table></div>'
+    <td class="actions"><button class="btn sm" onclick="openVerify('${p.id}')">Review</button><button class="btn sm red" onclick="openReject('${p.id}')">Reject</button><button class="btn sm gray" onclick="delPayment('${p.id}')" aria-label="Delete payment">Delete</button></td></tr>`).join('') + '</table></div>'
     : empty('No pending payments', 'card');
   h += '<h2 class="sec">Previous payments</h2>';
-  h += done.length ? `<div class="card tw"><table><tr><th>Member</th><th>Committee</th><th>Month</th><th>Amount</th><th>Method</th><th>Status</th><th>Receipt</th></tr>` +
+  h += done.length ? `<div class="card tw"><table><tr><th>Member</th><th>Committee</th><th>Month</th><th>Amount</th><th>Method</th><th>Status</th><th>Receipt</th><th></th></tr>` +
     done.map(p => `<tr><td>${esc(p.profiles?.name)}</td><td>${esc(p.memberships?.committees?.name)}</td><td>${fmtMonth(p.month_label)}</td><td>${money(p.amount)}</td>
-    <td>${methodCell(p)}</td><td>${badge(p.status)}</td><td>${p.status === 'verified' && p.receipt_no ? `<button class="btn sm out" onclick="openReceipt('${p.id}')">${esc(p.receipt_no)}</button>` : (p.status === 'rejected' ? '<span class="muted">' + esc(p.note) + '</span>' : '-')}</td></tr>`).join('') + '</table></div>' : empty('Nothing here');
+    <td>${methodCell(p)}</td><td>${badge(p.status)}</td><td>${p.status === 'verified' && p.receipt_no ? `<button class="btn sm out" onclick="openReceipt('${p.id}')">${esc(p.receipt_no)}</button>` : (p.status === 'rejected' ? '<span class="muted">' + esc(p.note) + '</span>' : '-')}</td><td><button class="btn sm red" onclick="delPayment('${p.id}')">Delete</button></td></tr>`).join('') + '</table></div>' : empty('Nothing here');
   return h;
 }
 
@@ -1547,7 +1600,7 @@ function vASchedule() {
       const coll = sm ? D.payments.filter(p => p.status === 'verified' && p.month_label === sm.key && mids.has(p.membership_id)).reduce((a, p) => a + Number(p.amount), 0) : 0;
       const opts = '<option value="">Empty</option>' + shs.map(s => `<option value="${s.id}" ${h && s.id === h.id ? 'selected' : ''}>${esc(lab(s))}${s.slot_number && !(h && s.id === h.id) ? ' (turn ' + s.slot_number + ')' : ''}</option>`).join('');
       const status = po ? badge(po.status) : '<span class="muted">not paid yet</span>';
-      const act = (h && sm && !po) ? `<button class="btn sm" onclick="markPayout('${c.id}','${h.id}','${sm.key}',${pot(c)})">Mark paid</button>` : (po && po.status !== 'paid' ? `<button class="btn sm" onclick="payoutPaid('${po.id}')">Mark paid</button>` : '');
+      const act = ((h && sm && !po) ? `<button class="btn sm" onclick="markPayout('${c.id}','${h.id}','${sm.key}',${pot(c)})">Mark paid</button>` : (po && po.status !== 'paid' ? `<button class="btn sm" onclick="payoutPaid('${po.id}')">Mark paid</button>` : '')) + (po ? `<button class="btn sm red" onclick="delPayout('${po.id}')">Undo</button>` : '');
       rows += `<tr class="${sm && sm.key === nowKey() ? 'cur' : ''}"><td><b>${sm ? sm.label : '-'}</b></td><td>${n}</td>
         <td><select class="cell" onchange="assignSlot('${c.id}', ${n}, this.value)">${opts}</select></td>
         <td>${money(pot(c))}</td><td>${sm ? money(coll) : '-'}</td><td>${status}</td><td>${act}</td></tr>`;
