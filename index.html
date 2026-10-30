@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0B0D12">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/png" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="AN Committees">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>AN Committees</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="preconnect" href="https://srqiphdhpgrrnpvkvkly.supabase.co" crossorigin>
@@ -625,6 +632,24 @@ body.menu-open #sg button{animation:riseIn .5s cubic-bezier(.2,.8,.2,1) forwards
 .credit-in{position:relative;z-index:1;padding:0 44px 36px;text-align:center;font-size:12px;color:var(--mu);letter-spacing:.04em}
 .credit-in em{font-style:normal;color:var(--brandd);font-weight:700}
 @media(max-width:899px){.credit-in{padding:0 14px 120px}.wrap{padding-bottom:24px}}
+
+/* ---- auth extras, account, activity, verify ---- */
+.lnk-row{text-align:center;margin:14px 0 0;font-size:13px;color:var(--mu)}
+.lnk-row a{color:var(--brandd);font-weight:700;cursor:pointer;text-decoration:none}.lnk-row a:hover{text-decoration:underline}
+input.otp{margin-bottom:12px;text-align:center;font-size:28px;letter-spacing:.35em;font-weight:700;font-family:'Cormorant Garamond',serif;padding:14px}
+.acc-id{display:flex;align-items:center;gap:12px;margin:14px 0 4px}.acc-id b{display:block}.acc-id small{color:var(--mu)}
+.acc-sec{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}.acc-sec input{margin-top:8px}
+.acc-em{margin:8px 0 12px;word-break:break-all}
+.actrow{display:flex;justify-content:flex-end;margin:0 0 14px}
+.sh-out.acc{color:var(--tx);margin-top:10px}
+.actl .actd{margin:22px 0 10px;display:block}.actc{padding:18px 20px 4px}
+.actc .har small{display:block}.actc .har .by{margin-top:2px;opacity:.85}
+.vwrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;position:relative;z-index:1}
+.vcard{max-width:460px;width:100%;padding:30px 28px}
+.vcard .brand{display:flex;align-items:center;gap:12px;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:26px;color:var(--brandd)}
+.vok{font-size:34px;color:var(--ok);font-weight:600;margin:10px 0 2px}.vbad{font-size:34px;color:var(--red);font-weight:600;margin:10px 0 6px}
+.vamt{font-size:46px;color:var(--brandd);font-weight:600;line-height:1;margin:2px 0 14px}
+.vfoot{margin:18px 0 0;text-align:center;font-size:12px;color:var(--mu)}.vfoot em{font-style:normal;color:var(--brandd);font-weight:700}
 </style>
 </head>
 <body>
@@ -766,7 +791,7 @@ function showAuth(mode = 'login') {
     </section>
     <section class="af"><div class="af-in">
       <h2>${mode === 'login' ? 'Welcome back' : 'Create your account'}</h2>
-      <p class="muted">${mode === 'login' ? 'Log in with your phone number and password.' : 'Your name, phone number and a password are all you need.'}</p>
+      <p class="muted">${mode === 'login' ? 'Log in with your phone number and password.' : 'We will email you a one-time code to verify your account.'}</p>
       <div class="seg">
         <button class="${mode === 'login' ? 'on' : ''}" onclick="showAuth('login')">Log in</button>
         <button class="${mode === 'signup' ? 'on' : ''}" onclick="showAuth('signup')">Sign up</button>
@@ -775,9 +800,11 @@ function showAuth(mode = 'login') {
         <label>Phone number</label><input id="l_phone" type="tel" inputmode="numeric" placeholder="03001234567" autocomplete="username">
         <label>Password</label><input id="l_pass" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
         <br><button class="btn" style="width:100%" id="lbtn" onclick="doLogin()">Log in</button>
+        <p class="lnk-row"><a onclick="showForgot()">Forgot password?</a></p>
       ` : `
         <label>Full name *</label><input id="s_name">
         <label>Phone number *</label><input id="s_phone" type="tel" inputmode="numeric" placeholder="03001234567">
+        <label>Email * (we send a verification code)</label><input id="s_email" type="email" placeholder="you@example.com" autocomplete="email">
         <label>CNIC (optional)</label><input id="s_cnic" placeholder="35202-1234567-1">
         <label>Password * (minimum 6 characters)</label><input id="s_pass" type="password" autocomplete="new-password">
         <label>Confirm password *</label><input id="s_pass2" type="password" autocomplete="new-password">
@@ -789,33 +816,6 @@ function showAuth(mode = 'login') {
   startDemo();
 }
 function shakeForm() { const f = document.querySelector('.af-in'); if (!f) return; f.classList.remove('shake'); void f.offsetWidth; f.classList.add('shake'); }
-
-async function doLogin() {
-  const phone = cleanPhone($('l_phone').value), pass = $('l_pass').value;
-  if (!phone || !pass) { shakeForm(); return toast('Enter phone and password', 1); }
-  const b = $('lbtn'); b.disabled = true; b.classList.add('busy');
-  const { error } = await sb.auth.signInWithPassword({ email: phone + EMAIL_DOMAIN, password: pass });
-  if (error) { b.disabled = false; b.classList.remove('busy'); shakeForm(); return toast('Wrong phone or password', 1); }
-  boot();
-}
-
-async function doSignup() {
-  const name = $('s_name').value.trim(), phone = cleanPhone($('s_phone').value),
-        cnic = $('s_cnic').value.trim(), p1 = $('s_pass').value, p2 = $('s_pass2').value;
-  const bad = m => { shakeForm(); toast(m, 1); };
-  if (!name || !phone || !p1) return bad('Name, phone and password are required');
-  if (phone.length < 10 || phone.length > 13) return bad('Enter a valid phone number');
-  if (p1.length < 6) return bad('Password must be at least 6 characters');
-  if (p1 !== p2) return bad('Passwords do not match');
-  const b = $('sbtn'); b.disabled = true; b.classList.add('busy');
-  const { data, error } = await sb.auth.signUp({ email: phone + EMAIL_DOMAIN, password: p1, options: { data: { name, phone, cnic } } });
-  if (error) {
-    b.disabled = false; b.classList.remove('busy'); shakeForm();
-    return toast(/registered|exists/i.test(error.message) ? 'This phone number is already registered' : error.message, 1);
-  }
-  if (!data.session) { toast('Account created, please log in'); return showAuth('login'); }
-  boot();
-}
 
 async function logout() {
   const s = document.querySelector('.shell'); if (s) s.classList.add('out');
@@ -831,6 +831,7 @@ function showLoader() {
   $('app').innerHTML = `<div class="loading"><svg class="spin" viewBox="0 0 50 50" aria-hidden="true"><circle cx="25" cy="25" r="20" fill="none" stroke-width="4" stroke-linecap="round"/></svg><p>Loading your committees</p></div>`;
 }
 async function boot() {
+  if (/^#verify=/.test(location.hash)) return showVerify(decodeURIComponent(location.hash.slice(8)));
   const { data: { session } } = await sb.auth.getSession();
   if (!session) return showAuth('login');
   showLoader();
@@ -905,9 +906,10 @@ const TABS = {
            ['m_history', 'History', 'history'], ['m_payouts', 'Payouts', 'down'], ['m_wheel', 'Lucky draw', 'wheel']],
   admin: [['a_home', 'Overview', 'home'], ['a_requests', 'Requests', 'inbox'], ['a_payments', 'Payments', 'card'],
           ['a_committees', 'Committees', 'layers'], ['a_members', 'Members', 'users'], ['a_payouts', 'Payouts', 'down'],
-          ['a_schedule', 'Schedule', 'cal'], ['a_wheel', 'Lucky draw', 'wheel'], ['m_committees', 'Join as member', 'layers'], ['m_pay', 'Pay as member', 'card'], ['m_history', 'My payments', 'history'], ['a_reports', 'Reports', 'bar'], ['a_bank', 'Accounts', 'bank'], ['a_backup', 'Backup', 'save']]
+          ['a_schedule', 'Schedule', 'cal'], ['a_wheel', 'Lucky draw', 'wheel'], ['m_committees', 'Join as member', 'layers'], ['m_pay', 'Pay as member', 'card'], ['m_history', 'My payments', 'history'], ['a_reports', 'Reports', 'bar'], ['a_activity', 'Activity', 'history'], ['a_bank', 'Accounts', 'bank'], ['a_backup', 'Backup', 'save']]
 };
 const SUBS = {
+  a_activity: 'Who did what, and when',
   m_home: 'Your payments and committees at a glance',
   m_committees: 'Browse committees and request to join',
   m_pay: 'Pay by bank, wallet or cash and upload your proof',
@@ -934,14 +936,14 @@ function renderShell(first) {
       <div class="brand">${logoMark()}<span>AN Committees</span></div>
       <nav id="nav" class="nav"></nav>
       <button class="pin" onclick="togglePin()" aria-label="Pin sidebar"><span id="pint">Pin sidebar</span></button>
-      <div class="who"><div class="av">${esc(ini)}</div>
+      <div class="who"><div class="av" onclick="openAccount()" role="button" tabindex="0" title="Account and security" style="cursor:pointer">${esc(ini)}</div>
         <div class="wn"><b>${esc(me.name)}</b><span>${me.role === 'admin' ? 'Administrator' : 'Member'}</span></div>
         <button class="ico" onclick="logout()" title="Log out" aria-label="Log out">${ic('logout')}</button></div>
     </header>
     <main class="main"><div id="content" class="wrap"></div><footer class="credit-in">AN Committees · Designed &amp; Developed by <em>Ahsan Ali</em></footer></main>
     <nav class="dock" id="dock" aria-label="Main"></nav>
     <div class="scrim" onclick="closeSheet()"></div>
-    <div class="sheet" id="sheet" role="dialog" aria-label="Menu"><div class="sht">Menu</div><div id="sg"></div><button class="sh-out" onclick="logout()">Log out</button></div></div>`;
+    <div class="sheet" id="sheet" role="dialog" aria-label="Menu"><div class="sht">Menu</div><div id="sg"></div><button class="sh-out acc" onclick="closeSheet();openAccount()">Account and security</button><button class="sh-out" onclick="logout()">Log out</button></div></div>`;
   document.body.classList.remove('menu-open');
   renderNav(); renderTab(false); animateCounts();
 }
@@ -967,13 +969,13 @@ let railPinned = false;
 function togglePin() { railPinned = !railPinned; const r = $('rail'); if (r) r.classList.toggle('open', railPinned); const t = $('pint'); if (t) t.textContent = railPinned ? 'Unpin sidebar' : 'Pin sidebar'; }
 document.addEventListener('pointermove', e => { const c = e.target.closest && e.target.closest('.card,.bt'); if (c) { const r = c.getBoundingClientRect(); c.style.setProperty('--mx', (e.clientX - r.left) + 'px'); c.style.setProperty('--my', (e.clientY - r.top) + 'px'); } });
 
-function setTab(k) { tab = k; closeSheet(); const _c = $('content'); if (_c) _c.classList.remove('noanim'); renderNav(); renderTab(true); animateCounts(); window.scrollTo(0, 0); }
+function setTab(k) { tab = k; if (k === 'a_activity') ACT = null; closeSheet(); const _c = $('content'); if (_c) _c.classList.remove('noanim'); renderNav(); renderTab(true); animateCounts(); window.scrollTo(0, 0); }
 
 function renderTab(fade) {
   const map = {
     m_home: vMHome, m_committees: vMCommittees, m_pay: vMPay, m_history: vMHistory, m_payouts: vMPayouts,
     a_home: vAHome, a_requests: vARequests, a_payments: vAPayments, a_committees: vACommittees, a_members: vAMembers,
-    a_payouts: vAPayouts, a_wheel: vWheel, m_wheel: vWheel, a_reports: vAReports, a_bank: vABank, a_schedule: vASchedule, a_backup: vABackup
+    a_payouts: vAPayouts, a_wheel: vWheel, m_wheel: vWheel, a_reports: vAReports, a_activity: vAActivity, a_bank: vABank, a_schedule: vASchedule, a_backup: vABackup
   };
   const c = $('content'); if (!c) return;
   const cur = TABS[me.role === 'admin' ? 'admin' : 'member'].find(x => x[0] === tab);
@@ -1287,7 +1289,7 @@ async function submitPay() {
 function vMHistory() {
   const list = D.payments.filter(p => p.user_id === me.id);
   if (!list.length) return empty('You have not made any payment yet', 'history', ['m_pay', 'Make a payment']);
-  return `<div class="card tw"><table><tr><th>Committee</th><th>Month</th><th>Amount</th><th>Method</th><th>Status</th><th>Date</th><th>Receipt</th></tr>` +
+  return `<div class="actrow"><button class="btn out" onclick="statementPdf('${me.id}','download')">Download statement (PDF)</button></div><div class="card tw"><table><tr><th>Committee</th><th>Month</th><th>Amount</th><th>Method</th><th>Status</th><th>Date</th><th>Receipt</th></tr>` +
     list.map(p => `<tr><td>${esc(p.memberships?.committees?.name)}</td><td>${fmtMonth(p.month_label)}</td><td>${money(p.amount)}</td>
     <td>${methodCell(p)}</td><td>${badge(p.status)}</td><td>${fdate(p.created_at)}</td>
     <td>${p.status === 'verified' && p.receipt_no ? `<button class="btn sm out" onclick="openReceipt('${p.id}')">${esc(p.receipt_no)}</button>` : (p.note ? '<span class="muted">' + esc(p.note) + '</span>' : '-')}</td></tr>`).join('') + '</table></div>';
@@ -1299,8 +1301,8 @@ function vMPayouts() {
   return `<h2>Your turn in each committee</h2>` +
     (mine.length ? `<div class="grid">${mine.map(m => `<div class="card"><h3>${esc(m.committees?.name)}</h3>${shareLines(D.committees.find(x => x.id === m.committee_id), m)}</div>`).join('')}</div>` : empty('No approved committees')) +
     `<h2 class="sec">Payouts received</h2>` +
-    (list.length ? `<div class="card tw"><table><tr><th>Committee</th><th>Month</th><th>Amount</th><th>Status</th></tr>` +
-      list.map(p => `<tr><td>${esc(p.committees?.name)}</td><td>${esc(p.month_label)}</td><td>${money(p.amount)}</td><td>${badge(p.status)}</td></tr>`).join('') + '</table></div>' : empty('No payouts received yet'));
+    (list.length ? `<div class="card tw"><table><tr><th>Committee</th><th>Month</th><th>Amount</th><th>Status</th><th></th></tr>` +
+      list.map(p => `<tr><td>${esc(p.committees?.name)}</td><td>${esc(p.month_label)}</td><td>${money(p.amount)}</td><td>${badge(p.status)}</td><td>${p.status === 'paid' ? `<button class="btn sm out" onclick="payoutSlipPdf('${p.id}','download')">Slip PDF</button>` : ''}</td></tr>`).join('') + '</table></div>' : empty('No payouts received yet'));
 }
 
 // ================= ADMIN VIEWS =================
@@ -1421,88 +1423,398 @@ async function confirmVerify(id) {
   openReceipt(id);
 }
 
-// ---------- Payment receipt PDF (pdf-lib) ----------
-async function buildReceiptPdf(r, L) {
-  const { PDFDocument, StandardFonts, rgb, degrees } = L;
-  const doc = await PDFDocument.create();
-  doc.setTitle('Payment receipt ' + r.no); doc.setAuthor('AN Committees'); doc.setSubject('Payment receipt');
-  const W = 595.28, H = 841.89, pg = doc.addPage([W, H]);
-  const ser = await doc.embedFont(StandardFonts.TimesRomanBold), serI = await doc.embedFont(StandardFonts.TimesRomanItalic);
-  const sans = await doc.embedFont(StandardFonts.Helvetica), sansB = await doc.embedFont(StandardFonts.HelveticaBold);
-  const ink = rgb(.043, .051, .071), brass = rgb(.788, .643, .298), brassD = rgb(.58, .43, .1), mu = rgb(.44, .42, .37), line = rgb(.87, .85, .8), paper = rgb(.988, .978, .958), box = rgb(.955, .94, .9);
-  const S = t => String(t == null ? '' : t).replace(/[^\x20-\x7E\u00A0-\u00FF]/g, '?');
-  const wrap = (t, f, sz, mw) => { const out = []; String(S(t)).split(/\r?\n/).forEach(par => { let cur = ''; par.split(/\s+/).forEach(w => { const test = cur ? cur + ' ' + w : w; if (f.widthOfTextAtSize(test, sz) <= mw) cur = test; else { if (cur) out.push(cur); cur = w; } }); out.push(cur); }); return out; };
-  pg.drawRectangle({ x: 0, y: 0, width: W, height: H, color: paper });
-  pg.drawRectangle({ x: 0, y: H - 150, width: W, height: 150, color: ink });
-  pg.drawRectangle({ x: 0, y: H - 153, width: W, height: 3, color: brass });
-  pg.drawText('AN COMMITTEES', { x: 48, y: H - 72, size: 29, font: ser, color: brass });
-  pg.drawText('PAYMENT RECEIPT', { x: 48, y: H - 98, size: 10, font: sansB, color: rgb(.78, .75, .68) });
-  const lbl = 'RECEIPT NO', no = S(r.no || '-');
-  pg.drawText(lbl, { x: W - 48 - sans.widthOfTextAtSize(lbl, 8.5), y: H - 62, size: 8.5, font: sans, color: rgb(.7, .67, .6) });
-  pg.drawText(no, { x: W - 48 - ser.widthOfTextAtSize(no, 20), y: H - 88, size: 20, font: ser, color: rgb(.96, .93, .86) });
-  pg.drawText('Issued ' + S(r.verifiedOn), { x: W - 48 - sans.widthOfTextAtSize('Issued ' + S(r.verifiedOn), 9), y: H - 108, size: 9, font: sans, color: rgb(.7, .67, .6) });
-  // amount
-  let y = H - 215;
-  pg.drawText('AMOUNT RECEIVED', { x: 48, y: y + 40, size: 9, font: sansB, color: mu });
-  pg.drawText(S(r.amount), { x: 48, y, size: 46, font: ser, color: brassD });
-  const cx = W - 48 - 46, cy = y + 14;
-  pg.drawCircle({ x: cx, y: cy, size: 44, borderColor: brassD, borderWidth: 2, opacity: 0 });
-  pg.drawCircle({ x: cx, y: cy, size: 38, borderColor: brassD, borderWidth: .8, opacity: 0 });
-  const vt = 'VERIFIED', vw = sansB.widthOfTextAtSize(vt, 10.5);
-  pg.drawText(vt, { x: cx - vw / 2, y: cy + 2, size: 10.5, font: sansB, color: brassD });
-  pg.drawRectangle({ x: cx - 20, y: cy - 5, width: 40, height: .8, color: brassD });
-  pg.drawText('PAID', { x: cx - sansB.widthOfTextAtSize('PAID', 9) / 2, y: cy - 18, size: 9, font: sansB, color: brassD });
-  y -= 36;
-  pg.drawRectangle({ x: 48, y, width: W - 96, height: 1.2, color: brass });
-  y -= 14;
-  const rows = [['MEMBER', r.member], ['PHONE', r.phone], ['COMMITTEE', r.committee], ['PAYMENT FOR', r.month], ['METHOD', r.method], ['SUBMITTED ON', r.submittedOn], ['VERIFIED ON', r.verifiedOn]].filter(x => x[1]);
-  rows.forEach(([k, v]) => {
-    const ls = wrap(v, sansB, 12.5, W - 96 - 150), h = Math.max(36, 20 + ls.length * 16);
-    pg.drawText(k, { x: 48, y: y - 24, size: 8.5, font: sansB, color: mu });
-    ls.forEach((t, i) => pg.drawText(t, { x: 198, y: y - 24 - i * 16, size: 12.5, font: sansB, color: ink }));
-    y -= h; pg.drawRectangle({ x: 48, y, width: W - 96, height: .6, color: line });
+// ================= FEATURES: helpers, PDFs, auth, activity =================
+function loadScript(urls, check) {
+  const list = Array.isArray(urls) ? urls : [urls];
+  return new Promise((res, rej) => {
+    const next = i => {
+      if (check()) return res();
+      if (i >= list.length) return rej(new Error('A required library could not load. Check your internet'));
+      const sc = document.createElement('script'); sc.src = list[i]; sc.onload = () => (check() ? res() : next(i + 1)); sc.onerror = () => next(i + 1); document.head.appendChild(sc);
+    };
+    next(0);
   });
-  // remark
-  if (r.remark) {
-    y -= 30;
-    pg.drawText('REMARK FROM ADMIN', { x: 48, y, size: 8.5, font: sansB, color: brassD });
-    const ls = wrap(r.remark, serI, 14, W - 96 - 36).slice(0, 8), bh = 26 + ls.length * 19;
-    y -= 10; pg.drawRectangle({ x: 48, y: y - bh, width: W - 96, height: bh, color: box, borderColor: line, borderWidth: .6 });
-    pg.drawRectangle({ x: 48, y: y - bh, width: 3.5, height: bh, color: brass });
-    ls.forEach((t, i) => pg.drawText(t, { x: 68, y: y - 24 - i * 19, size: 14, font: serI, color: ink }));
-    y -= bh;
+}
+async function loadPdfLib() { await loadScript(['https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js', 'https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js'], () => !!window.PDFLib); return window.PDFLib; }
+async function qrMatrix(text) {
+  try {
+    await loadScript(['https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js', 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js'], () => typeof window.qrcode === 'function');
+    const q = window.qrcode(0, 'M'); q.addData(text); q.make(); const n = q.getModuleCount(), m = [];
+    for (let r = 0; r < n; r++) { const row = []; for (let c = 0; c < n; c++) row.push(!!q.isDark(r, c)); m.push(row); }
+    return m;
+  } catch (e) { return null; }
+}
+async function deliverPdf(bytes, name, title, mode) {
+  const blob = new Blob([bytes], { type: 'application/pdf' });
+  if (mode === 'share' && navigator.canShare) {
+    const f = new File([blob], name, { type: 'application/pdf' });
+    if (navigator.canShare({ files: [f] })) { await navigator.share({ files: [f], title, text: title + ' - AN Committees' }); return; }
   }
-  // footer
-  pg.drawRectangle({ x: 48, y: 92, width: W - 96, height: .8, color: line });
-  const f1 = 'This is a computer-generated receipt and does not require a signature.', f2 = 'AN Committees  |  Designed & Developed by Ahsan Ali';
-  pg.drawText(f1, { x: (W - sans.widthOfTextAtSize(f1, 8.5)) / 2, y: 72, size: 8.5, font: sans, color: mu });
-  pg.drawText(f2, { x: (W - serI.widthOfTextAtSize(f2, 11)) / 2, y: 54, size: 11, font: serI, color: brassD });
-  return await doc.save();
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000); toast('PDF downloaded');
+}
+async function pdfTask(fn) { try { toast('Preparing PDF...'); const L = await loadPdfLib(); await fn(L); } catch (e) { if (e && e.name === 'AbortError') return; toast('Could not create PDF: ' + (e.message || e), 1); } }
+
+// ================= PDF DOCUMENTS (pdf-lib) =================
+async function pdfKit(L, title) {
+  const { PDFDocument, StandardFonts, rgb } = L;
+  const doc = await PDFDocument.create(); doc.setTitle(title); doc.setAuthor('AN Committees'); doc.setCreator('AN Committees');
+  const k = { doc, rgb, W: 595.28, H: 841.89 };
+  k.ser = await doc.embedFont(StandardFonts.TimesRomanBold); k.serI = await doc.embedFont(StandardFonts.TimesRomanItalic);
+  k.sans = await doc.embedFont(StandardFonts.Helvetica); k.sansB = await doc.embedFont(StandardFonts.HelveticaBold);
+  Object.assign(k, { ink: rgb(.043, .051, .071), brass: rgb(.788, .643, .298), brassD: rgb(.58, .43, .1), mu: rgb(.44, .42, .37), line: rgb(.87, .85, .8), paper: rgb(.988, .978, .958), box: rgb(.955, .94, .9), light: rgb(.78, .75, .68), ok: rgb(.2, .5, .32), bad: rgb(.74, .28, .2), warn: rgb(.76, .48, .08) });
+  k.S = t => String(t == null ? '' : t).replace(/[^\x20-\x7E\u00A0-\u00FF]/g, '?');
+  k.wrap = (t, f, sz, mw) => { const out = []; String(k.S(t)).split(/\r?\n/).forEach(par => { let cur = ''; par.split(/\s+/).forEach(w => { const test = cur ? cur + ' ' + w : w; if (f.widthOfTextAtSize(test, sz) <= mw) cur = test; else { if (cur) out.push(cur); cur = w; } }); out.push(cur); }); return out; };
+  k.tx = (pg, t, x, y, sz, f, col) => pg.drawText(k.S(t), { x, y, size: sz, font: f, color: col });
+  k.rt = (pg, t, x, y, sz, f, col) => pg.drawText(k.S(t), { x: x - f.widthOfTextAtSize(k.S(t), sz), y, size: sz, font: f, color: col });
+  k.ct = (pg, t, cx, y, sz, f, col) => pg.drawText(k.S(t), { x: cx - f.widthOfTextAtSize(k.S(t), sz) / 2, y, size: sz, font: f, color: col });
+  k.page = () => { const pg = doc.addPage([k.W, k.H]); pg.drawRectangle({ x: 0, y: 0, width: k.W, height: k.H, color: k.paper }); return pg; };
+  k.header = (pg, kind, rl, rv, rs, h = 150) => {
+    pg.drawRectangle({ x: 0, y: k.H - h, width: k.W, height: h, color: k.ink });
+    pg.drawRectangle({ x: 0, y: k.H - h - 3, width: k.W, height: 3, color: k.brass });
+    k.tx(pg, 'AN COMMITTEES', 48, k.H - 72, 29, k.ser, k.brass); k.tx(pg, kind, 48, k.H - 98, 10, k.sansB, k.light);
+    k.rt(pg, rl, k.W - 48, k.H - 62, 8.5, k.sans, rgb(.7, .67, .6)); k.rt(pg, rv, k.W - 48, k.H - 88, 20, k.ser, rgb(.96, .93, .86));
+    if (rs) k.rt(pg, rs, k.W - 48, k.H - 108, 9, k.sans, rgb(.7, .67, .6));
+  };
+  k.mini = (pg, label) => { pg.drawRectangle({ x: 0, y: k.H - 50, width: k.W, height: 50, color: k.ink }); pg.drawRectangle({ x: 0, y: k.H - 52, width: k.W, height: 2, color: k.brass }); k.tx(pg, 'AN COMMITTEES', 48, k.H - 32, 15, k.ser, k.brass); k.rt(pg, label, k.W - 48, k.H - 31, 9, k.sans, k.light); };
+  k.stamp = (pg, cx, cy, a, b) => {
+    pg.drawCircle({ x: cx, y: cy, size: 44, borderColor: k.brassD, borderWidth: 2, opacity: 0 }); pg.drawCircle({ x: cx, y: cy, size: 38, borderColor: k.brassD, borderWidth: .8, opacity: 0 });
+    k.ct(pg, a, cx, cy + 2, 10.5, k.sansB, k.brassD); pg.drawRectangle({ x: cx - 20, y: cy - 5, width: 40, height: .8, color: k.brassD }); k.ct(pg, b, cx, cy - 18, 9, k.sansB, k.brassD);
+  };
+  k.footerAll = note => {
+    const pages = doc.getPages();
+    pages.forEach((pg, i) => {
+      pg.drawRectangle({ x: 48, y: 74, width: k.W - 96, height: .8, color: k.line });
+      k.ct(pg, note + (pages.length > 1 ? '   |   Page ' + (i + 1) + ' of ' + pages.length : ''), k.W / 2, 58, 8.5, k.sans, k.mu);
+      k.ct(pg, 'AN Committees  |  Designed & Developed by Ahsan Ali', k.W / 2, 40, 10.5, k.serI, k.brassD);
+    });
+  };
+  k.qr = (pg, m, x, y, size) => {
+    if (!m || !m.length) return; const n = m.length, cs = size / n, pad = 5;
+    pg.drawRectangle({ x: x - pad, y: y - pad, width: size + pad * 2, height: size + pad * 2, color: rgb(1, 1, 1), borderColor: k.line, borderWidth: .6 });
+    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (m[r][c]) pg.drawRectangle({ x: x + c * cs, y: y + (n - 1 - r) * cs, width: cs + .15, height: cs + .15, color: k.ink });
+  };
+  k.rows = (pg, y, rows, labelX = 48, valX = 198) => {
+    rows.filter(x => x[1]).forEach(([lb, v]) => {
+      const ls = k.wrap(v, k.sansB, 12.5, k.W - 96 - (valX - 48)), h = Math.max(32, 18 + ls.length * 16);
+      k.tx(pg, lb, labelX, y - 22, 8.5, k.sansB, k.mu); ls.forEach((t, i) => k.tx(pg, t, valX, y - 22 - i * 16, 12.5, k.sansB, k.ink));
+      y -= h; pg.drawRectangle({ x: 48, y, width: k.W - 96, height: .6, color: k.line });
+    });
+    return y;
+  };
+  return k;
 }
 
-async function loadPdfLib() {
-  if (window.PDFLib) return window.PDFLib;
-  await new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js'; sc.onload = res; sc.onerror = () => rej(new Error('PDF engine could not load. Check your internet and try again')); document.head.appendChild(sc); });
-  return window.PDFLib;
+async function buildReceiptPdf(r, L) {
+  const k = await pdfKit(L, 'Payment receipt ' + r.no), pg = k.page();
+  k.header(pg, 'PAYMENT RECEIPT', 'RECEIPT NO', r.no || '-', 'Issued ' + r.verifiedOn);
+  let y = k.H - 215;
+  k.tx(pg, 'AMOUNT RECEIVED', 48, y + 40, 9, k.sansB, k.mu); k.tx(pg, r.amount, 48, y, 46, k.ser, k.brassD);
+  if (r.qr) { k.stamp(pg, 330, y + 14, 'VERIFIED', 'PAID'); k.qr(pg, r.qr, k.W - 48 - 72, y - 36, 72); k.ct(pg, 'SCAN TO VERIFY', k.W - 48 - 36, y - 56, 7.5, k.sansB, k.mu); y -= 62; }
+  else { k.stamp(pg, k.W - 94, y + 14, 'VERIFIED', 'PAID'); y -= 36; }
+  pg.drawRectangle({ x: 48, y, width: k.W - 96, height: 1.2, color: k.brass }); y -= 14;
+  y = k.rows(pg, y, [['MEMBER', r.member], ['PHONE', r.phone], ['COMMITTEE', r.committee], ['PAYMENT FOR', r.month], ['METHOD', r.method], ['SUBMITTED ON', r.submittedOn], ['VERIFIED ON', r.verifiedOn]]);
+  if (r.remark) {
+    y -= 28; k.tx(pg, 'REMARK FROM ADMIN', 48, y, 8.5, k.sansB, k.brassD);
+    const ls = k.wrap(r.remark, k.serI, 14, k.W - 96 - 36).slice(0, 7), bh = 26 + ls.length * 19; y -= 10;
+    pg.drawRectangle({ x: 48, y: y - bh, width: k.W - 96, height: bh, color: k.box, borderColor: k.line, borderWidth: .6 }); pg.drawRectangle({ x: 48, y: y - bh, width: 3.5, height: bh, color: k.brass });
+    ls.forEach((t, i) => k.tx(pg, t, 68, y - 24 - i * 19, 14, k.serI, k.ink));
+  }
+  k.footerAll('This is a computer-generated receipt and does not require a signature.');
+  return await k.doc.save();
 }
+
+async function buildSlipPdf(r, L) {
+  const k = await pdfKit(L, 'Payout slip ' + r.no), pg = k.page();
+  k.header(pg, 'PAYOUT SLIP', 'SLIP NO', r.no || '-', 'Issued ' + r.date);
+  let y = k.H - 215;
+  k.tx(pg, 'PAYOUT AMOUNT', 48, y + 40, 9, k.sansB, k.mu); k.tx(pg, r.amount, 48, y, 46, k.ser, k.brassD);
+  k.stamp(pg, k.W - 94, y + 14, r.paid ? 'PAYOUT' : 'PENDING', r.paid ? 'PAID' : 'NOT YET');
+  y -= 36; pg.drawRectangle({ x: 48, y, width: k.W - 96, height: 1.2, color: k.brass }); y -= 14;
+  y = k.rows(pg, y, [['MEMBER', r.member], ['PHONE', r.phone], ['COMMITTEE', r.committee], ['PAYOUT FOR', r.month], ['TURN', r.turn], ['STATUS', r.paid ? 'Paid' : 'Pending'], ['DATE RECORDED', r.date]]);
+  const sy = Math.min(y - 90, 230);
+  pg.drawRectangle({ x: 48, y: sy, width: 200, height: .8, color: k.ink }); pg.drawRectangle({ x: k.W - 248, y: sy, width: 200, height: .8, color: k.ink });
+  k.tx(pg, 'Received by (member signature)', 48, sy - 14, 9, k.sans, k.mu); k.tx(pg, r.member, 48, sy - 28, 10.5, k.sansB, k.ink);
+  k.tx(pg, 'Paid by (authorised signatory)', k.W - 248, sy - 14, 9, k.sans, k.mu); if (r.paidBy) k.tx(pg, r.paidBy, k.W - 248, sy - 28, 10.5, k.sansB, k.ink);
+  k.footerAll('This slip confirms the payout recorded in AN Committees.');
+  return await k.doc.save();
+}
+
+async function buildStatementPdf(s, L) {
+  const k = await pdfKit(L, 'Statement ' + s.member), W = k.W;
+  let pg = k.page(); k.header(pg, 'MEMBER STATEMENT', 'GENERATED', s.generatedOn, '', 130);
+  let y = k.H - 175;
+  k.tx(pg, 'MEMBER', 48, y + 22, 8.5, k.sansB, k.mu); k.tx(pg, s.member, 48, y - 4, 24, k.ser, k.ink); if (s.phone) k.tx(pg, s.phone, 48, y - 22, 11, k.sans, k.mu);
+  y -= 46;
+  const need = h => { if (y - h < 100) { pg = k.page(); k.mini(pg, 'Member statement  |  ' + s.member); y = k.H - 90; } };
+  const stCol = t => /^Paid$/.test(t) ? k.ok : /overdue/i.test(t) ? k.bad : /^Due|^Part/.test(t) ? k.warn : k.mu;
+  if (!s.sections.length) { k.tx(pg, 'No approved committees yet.', 48, y - 10, 12, k.sans, k.mu); }
+  s.sections.forEach(sec => {
+    need(150);
+    k.tx(pg, sec.committee, 48, y, 20, k.ser, k.brassD); k.tx(pg, sec.sub, 48, y - 16, 10, k.sans, k.mu); y -= 34;
+    const cols = { m: 54, due: 236, paid: 314, pend: 390, bal: 462, st: 478 };
+    const head = () => { pg.drawRectangle({ x: 48, y: y - 20, width: W - 96, height: 22, color: k.ink }); k.tx(pg, 'MONTH', cols.m, y - 13, 8, k.sansB, k.light); k.rt(pg, 'DUE', cols.due, y - 13, 8, k.sansB, k.light); k.rt(pg, 'PAID', cols.paid, y - 13, 8, k.sansB, k.light); k.rt(pg, 'PENDING', cols.pend, y - 13, 8, k.sansB, k.light); k.rt(pg, 'BALANCE', cols.bal - 8, y - 13, 8, k.sansB, k.light); k.tx(pg, 'STATUS', cols.st + 8, y - 13, 8, k.sansB, k.light); y -= 22; };
+    head();
+    sec.rows.forEach((r, i) => {
+      if (y - 22 < 100) { need(9999); k.tx(pg, sec.committee + ' (continued)', 48, y, 12, k.ser, k.brassD); y -= 16; head(); }
+      if (i % 2 === 0) pg.drawRectangle({ x: 48, y: y - 20, width: W - 96, height: 22, color: k.box });
+      k.tx(pg, r.month, cols.m, y - 13, 10, k.sansB, k.ink); k.rt(pg, r.due, cols.due, y - 13, 10, k.sans, k.ink); k.rt(pg, r.paid, cols.paid, y - 13, 10, k.sans, k.ink); k.rt(pg, r.pend, cols.pend, y - 13, 10, k.sans, k.mu); k.rt(pg, r.bal, cols.bal - 8, y - 13, 10, k.sansB, r.balN > 0 ? k.bad : k.ink); k.tx(pg, r.status, cols.st + 8, y - 13, 9.5, k.sansB, stCol(r.status));
+      y -= 22;
+    });
+    if (!sec.rows.length) { k.tx(pg, 'No months to show yet.', 54, y - 14, 10, k.sans, k.mu); y -= 22; }
+    need(70); y -= 8; pg.drawRectangle({ x: 48, y: y - 52, width: W - 96, height: 56, color: k.box, borderColor: k.line, borderWidth: .6 }); pg.drawRectangle({ x: 48, y: y - 52, width: 3.5, height: 56, color: k.brass });
+    [['TOTAL DUE', sec.t.due], ['PAID (VERIFIED)', sec.t.paid], ['PENDING CHECK', sec.t.pend], ['BALANCE DUE', sec.t.bal]].forEach(([l, v], i) => { const x = 66 + i * 125; k.tx(pg, l, x, y - 18, 7.5, k.sansB, k.mu); k.tx(pg, v, x, y - 38, 14, k.ser, i === 3 && sec.t.balN > 0 ? k.bad : k.ink); });
+    y -= 76;
+    if (sec.turns.length) { need(40 + sec.turns.length * 20); k.tx(pg, 'PAYOUT TURN', 48, y, 8.5, k.sansB, k.brassD); y -= 6; sec.turns.forEach(t => { y -= 20; k.tx(pg, t.label, 54, y, 10.5, k.sansB, k.ink); k.rt(pg, t.status, W - 54, y, 10, k.sansB, t.paid ? k.ok : k.mu); pg.drawRectangle({ x: 48, y: y - 6, width: W - 96, height: .5, color: k.line }); }); y -= 28; }
+    else y -= 10;
+  });
+  k.footerAll('Statement generated from AN Committees records. Pending items are not yet verified.');
+  return await k.doc.save();
+}
+
 async function receiptPdf(id, mode) {
   const p = D.payments.find(x => x.id === id); if (!p || p.status !== 'verified') return;
-  try {
-    toast('Preparing PDF...');
-    const L = await loadPdfLib();
+  await pdfTask(async L => {
+    const link = location.protocol.startsWith('http') && p.receipt_no ? location.origin + '/#verify=' + encodeURIComponent(p.receipt_no) : null;
+    const qr = link ? await qrMatrix(link) : null;
     const bytes = await buildReceiptPdf({
-      no: p.receipt_no, member: p.profiles?.name, phone: p.profiles?.phone, committee: p.memberships?.committees?.name, month: fmtMonth(p.month_label),
-      amount: money(p.amount), method: p.method === 'cash' ? 'Cash' : (p.account_label || 'Bank / wallet'), submittedOn: fmtDT(p.created_at), verifiedOn: fmtDT(p.verified_at), remark: p.verify_note || ''
+      no: p.receipt_no, member: p.profiles?.name, phone: p.profiles?.phone, committee: p.memberships?.committees?.name, month: fmtMonth(p.month_label), amount: money(p.amount),
+      method: p.method === 'cash' ? 'Cash' : (p.account_label || 'Bank / wallet'), submittedOn: fmtDT(p.created_at), verifiedOn: fmtDT(p.verified_at), remark: p.verify_note || '', qr
     }, L);
-    const blob = new Blob([bytes], { type: 'application/pdf' }), name = 'Receipt-' + (p.receipt_no || id) + '.pdf';
-    if (mode === 'share' && navigator.canShare) {
-      const f = new File([blob], name, { type: 'application/pdf' });
-      if (navigator.canShare({ files: [f] })) { await navigator.share({ files: [f], title: 'Payment receipt ' + (p.receipt_no || ''), text: 'AN Committees payment receipt ' + (p.receipt_no || '') }); return; }
-    }
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(a.href), 5000); toast('Receipt downloaded');
-  } catch (e) { if (e && e.name === 'AbortError') return; toast('Could not create PDF: ' + (e.message || e), 1); }
+    await deliverPdf(bytes, 'Receipt-' + (p.receipt_no || id) + '.pdf', 'Payment receipt ' + (p.receipt_no || ''), mode);
+  });
 }
+async function payoutSlipPdf(id, mode) {
+  const p = D.payouts.find(x => x.id === id); if (!p) return;
+  const c = D.committees.find(x => x.id === p.committee_id), prof = p.profiles || D.profiles.find(x => x.id === p.member_id) || {};
+  let turn = '';
+  if (c) for (let n = 1; n <= (Number(c.total_members) || 0); n++) { const sm = slotMonth(c, n); if (sm && sm.key === p.month_label) { turn = 'Turn ' + n + ' of ' + c.total_members; break; } }
+  await pdfTask(async L => {
+    const bytes = await buildSlipPdf({ no: 'PO-' + String(p.id).replace(/-/g, '').slice(0, 8).toUpperCase(), member: prof.name || '', phone: prof.phone || '', committee: p.committees?.name || (c && c.name) || '', month: fmtMonth(p.month_label), turn, amount: money(p.amount), paid: p.status === 'paid', date: fmtDT(p.paid_at || p.created_at), paidBy: me.role === 'admin' ? me.name : '' }, L);
+    await deliverPdf(bytes, 'Payout-slip-' + String(p.id).slice(0, 8) + '.pdf', 'Payout slip', mode);
+  });
+}
+function stmtSection(m) {
+  const c = D.committees.find(x => x.id === m.committee_id); if (!c) return null;
+  const due = dueOf(m), nk = nowKey(), sum = (a, f) => a.filter(f).reduce((s, p) => s + Number(p.amount), 0);
+  let sd = m.created_at ? new Date(m.created_at) : new Date(); sd = new Date(sd.getFullYear(), sd.getMonth(), 1);
+  if (c.start_date) { const s0 = new Date(c.start_date + 'T00:00:00'), st = new Date(s0.getFullYear(), s0.getMonth(), 1); if (st > sd) sd = st; }
+  const pays = D.payments.filter(p => p.membership_id === m.id && p.status !== 'rejected');
+  let last = nk; pays.forEach(p => { if (p.month_label > last) last = p.month_label; });
+  const rows = [], t = { due: 0, paid: 0, pend: 0, bal: 0 };
+  for (let i = 0; i < 80; i++) {
+    const key = mKey(new Date(sd.getFullYear(), sd.getMonth() + i, 1)); if (key > last) break;
+    const pv = sum(pays, p => p.month_label === key && p.status === 'verified'), pp = sum(pays, p => p.month_label === key && p.status === 'pending');
+    const bal = Math.max(0, due - pv - pp), covered = pv + pp >= due;
+    let st = covered ? (pv >= due ? 'Paid' : 'Pending check') : (key < nk ? 'Overdue' : key === nk ? 'Due' : 'Upcoming');
+    if (!covered && pv + pp > 0) st = key < nk ? 'Part paid, overdue' : 'Part paid';
+    if (key <= nk) { t.due += due; t.bal += bal; } t.paid += pv; t.pend += pp;
+    rows.push({ month: fmtMonth(key), due: money(due), paid: pv ? money(pv) : '-', pend: pp ? money(pp) : '-', bal: bal ? money(bal) : '-', balN: key <= nk ? bal : 0, status: st });
+  }
+  const cur = c.start_date ? curIdx(c) : 0, turns = [];
+  const held = D.shares.filter(s => s.membership_id === m.id && s.slot_number).map(s => ({ n: s.slot_number, id: s.id }));
+  if (!held.length && m.slot_number) held.push({ n: m.slot_number, id: null });
+  held.sort((a, b) => a.n - b.n).forEach(h => {
+    const sm = slotMonth(c, h.n);
+    const po = D.payouts.find(p => p.committee_id === c.id && (p.share_id && h.id ? p.share_id === h.id : p.member_id === m.user_id) && (!sm || p.month_label === sm.key));
+    const paid = !!(po && po.status === 'paid');
+    turns.push({ label: 'Turn ' + h.n + '  |  ' + (sm ? sm.label : 'not scheduled') + '  |  ' + money(pot(c)), paid, status: paid ? 'Paid out' : (c.start_date && h.n < cur ? 'Not paid yet' : 'Upcoming') });
+  });
+  return { committee: c.name, sub: money(c.monthly_amount) + ' per month  |  ' + (m.share_count || 1) + ' share' + ((m.share_count || 1) > 1 ? 's' : ''), rows, t: { due: money(t.due), paid: money(t.paid), pend: t.pend ? money(t.pend) : '-', bal: t.bal ? money(t.bal) : '-', balN: t.bal }, turns };
+}
+async function statementPdf(uid, mode) {
+  const prof = D.profiles.find(x => x.id === uid) || (me && me.id === uid ? me : null); if (!prof) return;
+  const sections = D.memberships.filter(m => m.user_id === uid && m.status === 'approved').map(stmtSection).filter(Boolean);
+  await pdfTask(async L => {
+    const bytes = await buildStatementPdf({ member: prof.name || '', phone: prof.phone || '', generatedOn: fmtDT(new Date()), sections }, L);
+    await deliverPdf(bytes, 'Statement-' + String(prof.name || 'member').replace(/[^A-Za-z0-9]+/g, '-') + '.pdf', 'Statement ' + (prof.name || ''), mode);
+  });
+}
+function dueMonthKeys(m) {
+  const c = D.committees.find(x => x.id === m.committee_id); if (!c) return [];
+  const due = dueOf(m), nk = nowKey(); let sd = m.created_at ? new Date(m.created_at) : new Date(); sd = new Date(sd.getFullYear(), sd.getMonth(), 1);
+  if (c.start_date) { const s0 = new Date(c.start_date + 'T00:00:00'), st = new Date(s0.getFullYear(), s0.getMonth(), 1); if (st > sd) sd = st; }
+  const out = [];
+  for (let i = 0; i < 80; i++) { const key = mKey(new Date(sd.getFullYear(), sd.getMonth() + i, 1)); if (key > nk) break; const rem = due - paidOf(m, key); if (rem > 0) out.push({ key, rem }); }
+  return out;
+}
+const waNumber = ph => { let d = cleanPhone(ph); if (d.startsWith('00')) d = d.slice(2); else if (d.startsWith('0')) d = '92' + d.slice(1); return d; };
+function remindMember(uid) {
+  const prof = D.profiles.find(x => x.id === uid); if (!prof) return;
+  const nk = nowKey(), lines = []; let tot = 0;
+  D.memberships.filter(m => m.user_id === uid && m.status === 'approved').forEach(m => { const c = D.committees.find(x => x.id === m.committee_id); dueMonthKeys(m).forEach(d => { lines.push('- ' + (c ? c.name : 'Committee') + ': ' + fmtMonth(d.key) + ', ' + money(d.rem) + (d.key < nk ? ' (overdue)' : '')); tot += d.rem; }); });
+  if (!lines.length) return toast((prof.name || 'This member') + ' has no dues right now');
+  const msg = 'Assalam o Alaikum ' + ((prof.name || '').split(' ')[0] || '') + ',\n\nA friendly reminder from AN Committees. Your pending payments:\n' + lines.join('\n') + '\n\nTotal due: ' + money(tot) + '\nPlease pay in the app and upload your receipt.' + (location.protocol.startsWith('http') ? '\n' + location.origin : '') + '\n\nJazakAllah.';
+  window.open('https://wa.me/' + waNumber(prof.phone) + '?text=' + encodeURIComponent(msg), '_blank', 'noopener');
+}
+
+// ---------- Email OTP, forgot password, account ----------
+const AUTH_CREDIT = '<div class="credit"><b>Welcome to AN Committees</b><span>Trusted committee management, engineered by Ahsan Ali</span></div>';
+function authSwap(html) {
+  if (!document.querySelector('.af-in')) showAuth('login');
+  const f = document.querySelector('.af-in'); if (!f) return; f.innerHTML = html + AUTH_CREDIT;
+  const i = f.querySelector('input'); if (i) setTimeout(() => i.focus(), 60);
+}
+const maskEmail = e => { const [u, d] = String(e).split('@'); return (u || '').slice(0, 2) + '***@' + (d || ''); };
+const busyOn = id => { const b = $(id); if (b) { b.disabled = true; b.classList.add('busy'); } };
+const busyOff = id => { const b = $(id); if (b) { b.disabled = false; b.classList.remove('busy'); } };
+let otpState = { kind: null, email: null };
+function showForgot() {
+  authSwap(`<h2>Reset password</h2><p class="muted">Enter your phone number. We will email a code to the address saved on your account.</p>
+    <label>Phone number</label><input id="f_phone" type="tel" inputmode="numeric" placeholder="03001234567" onkeydown="if(event.key==='Enter')fpSend()">
+    <br><button class="btn" style="width:100%" id="fbtn" onclick="fpSend()">Send code</button><p class="lnk-row"><a onclick="showAuth('login')">Back to log in</a></p>`);
+}
+async function fpSend() {
+  const phone = cleanPhone($('f_phone').value); if (phone.length < 10) { shakeForm(); return toast('Enter a valid phone number', 1); }
+  busyOn('fbtn');
+  const r = await sb.rpc('login_email', { p_phone: phone });
+  if (r.error) { busyOff('fbtn'); return toast('Password reset is not set up yet. Please contact the admin', 1); }
+  if (!r.data) { busyOff('fbtn'); shakeForm(); return toast('No account found with this number', 1); }
+  if (String(r.data).endsWith(EMAIL_DOMAIN)) {
+    return authSwap(`<h2>No email on this account</h2><p class="muted">This account was created with a phone number only, so a code cannot be emailed. Please contact the admin to help you get back in.</p><br><button class="btn gray" style="width:100%" onclick="showAuth('login')">Back to log in</button>`);
+  }
+  const { error } = await sb.auth.resetPasswordForEmail(r.data);
+  busyOff('fbtn');
+  if (error) return toast(/rate|limit|seconds/i.test(error.message) ? 'Too many requests. Please wait a few minutes and try again' : error.message, 1);
+  showOtp('recovery', r.data);
+}
+function showOtp(kind, email) {
+  otpState = { kind, email };
+  authSwap(`<h2>Enter your code</h2><p class="muted">We emailed a code to <b>${esc(maskEmail(email))}</b>. It can take a minute. Check spam as well.</p>
+    <label>Verification code</label><input id="o_code" class="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="000000" onkeydown="if(event.key==='Enter')otpVerify()">
+    <br><button class="btn" style="width:100%" id="obtn" onclick="otpVerify()">Verify</button>
+    <p class="lnk-row"><a id="o_resend" onclick="otpResend()">Resend code</a> <span>.</span> <a onclick="showAuth('login')">Cancel</a></p>`);
+}
+async function otpVerify() {
+  const code = ($('o_code').value || '').replace(/\D/g, ''); if (code.length < 6) { shakeForm(); return toast('Enter the code from your email', 1); }
+  busyOn('obtn');
+  const { error } = await sb.auth.verifyOtp({ email: otpState.email, token: code, type: otpState.kind === 'signup' ? 'signup' : 'recovery' });
+  if (error) { busyOff('obtn'); shakeForm(); return toast('That code is wrong or has expired', 1); }
+  if (otpState.kind === 'signup') { toast('Email verified. Welcome!'); return boot(); }
+  newPassPanel();
+}
+let otpCool = false;
+async function otpResend() {
+  if (otpCool) return toast('Please wait a few seconds before asking again');
+  otpCool = true; setTimeout(() => { otpCool = false; }, 30000);
+  const r = otpState.kind === 'signup' ? await sb.auth.resend({ type: 'signup', email: otpState.email }) : await sb.auth.resetPasswordForEmail(otpState.email);
+  if (r.error) { otpCool = false; return toast(/rate|limit|seconds/i.test(r.error.message) ? 'Too many requests. Please wait a few minutes' : r.error.message, 1); }
+  toast('A new code was sent');
+}
+function newPassPanel() {
+  authSwap(`<h2>Set a new password</h2><p class="muted">Choose a password you will remember.</p>
+    <label>New password</label><input id="n_p1" type="password" autocomplete="new-password"><label>Confirm password</label><input id="n_p2" type="password" autocomplete="new-password" onkeydown="if(event.key==='Enter')newPassSave()">
+    <br><button class="btn" style="width:100%" id="nbtn" onclick="newPassSave()">Save password</button>`);
+}
+async function newPassSave() {
+  const p1 = $('n_p1').value, p2 = $('n_p2').value;
+  if (p1.length < 6) { shakeForm(); return toast('Password must be at least 6 characters', 1); }
+  if (p1 !== p2) { shakeForm(); return toast('Passwords do not match', 1); }
+  busyOn('nbtn');
+  const { error } = await sb.auth.updateUser({ password: p1 });
+  if (error) { busyOff('nbtn'); return toast(error.message, 1); }
+  toast('Password updated'); boot();
+}
+async function doSignup() {
+  const name = $('s_name').value.trim(), phone = cleanPhone($('s_phone').value), email = ($('s_email').value || '').trim().toLowerCase(),
+        cnic = $('s_cnic').value.trim(), p1 = $('s_pass').value, p2 = $('s_pass2').value;
+  const bad = m => { shakeForm(); toast(m, 1); };
+  if (!name || !phone || !email || !p1) return bad('Name, phone, email and password are required');
+  if (phone.length < 10 || phone.length > 13) return bad('Enter a valid phone number');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return bad('Enter a valid email address');
+  if (p1.length < 6) return bad('Password must be at least 6 characters');
+  if (p1 !== p2) return bad('Passwords do not match');
+  busyOn('sbtn');
+  const ex = await sb.rpc('phone_exists', { p_phone: phone });
+  if (!ex.error && ex.data) { busyOff('sbtn'); return bad('This phone number is already registered'); }
+  const { data, error } = await sb.auth.signUp({ email, password: p1, options: { data: { name, phone, cnic } } });
+  if (error) { busyOff('sbtn'); shakeForm(); return toast(/registered|exists/i.test(error.message) ? 'This email is already registered' : (/rate|limit/i.test(error.message) ? 'Too many requests. Please wait a few minutes' : error.message), 1); }
+  if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) { busyOff('sbtn'); return bad('This email is already registered'); }
+  if (!data.session) { toast('We sent a code to your email'); return showOtp('signup', email); }
+  boot();
+}
+async function doLogin() {
+  const phone = cleanPhone($('l_phone').value), pass = $('l_pass').value;
+  if (!phone || !pass) { shakeForm(); return toast('Enter phone and password', 1); }
+  busyOn('lbtn');
+  let email = phone + EMAIL_DOMAIN;
+  try { const r = await sb.rpc('login_email', { p_phone: phone }); if (!r.error && r.data) email = r.data; } catch (e) {}
+  const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+  if (error) {
+    busyOff('lbtn');
+    if (/not confirmed/i.test(error.message)) { await sb.auth.resend({ type: 'signup', email }); toast('Please verify your email. We sent a new code'); return showOtp('signup', email); }
+    shakeForm(); return toast('Wrong phone or password', 1);
+  }
+  boot();
+}
+let deferredInstall = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredInstall = e; });
+async function installApp() { if (!deferredInstall) return; deferredInstall.prompt(); try { await deferredInstall.userChoice; } catch (e) {} deferredInstall = null; closeModal(); }
+async function openAccount() {
+  let email = ''; try { const { data: { user } } = await sb.auth.getUser(); email = (user && user.email) || ''; } catch (e) {}
+  const real = email && !email.endsWith(EMAIL_DOMAIN), standalone = matchMedia('(display-mode: standalone)').matches;
+  openModal(`<h3>Account and security</h3>
+    <div class="acc-id"><span class="av">${esc((me.name || '?').trim().charAt(0).toUpperCase())}</span><div><b>${esc(me.name)}</b><small>${esc(me.phone || '')}</small></div></div>
+    <div class="acc-sec"><div class="eb">Email</div>
+      ${real ? `<p class="acc-em">${esc(email)} <span class="badge verified"><i></i>Verified</span></p><button class="btn sm gray" onclick="accEmailForm()">Change email</button>` : `<p class="muted">No email is saved on this account. Add one so you can reset your password if you forget it.</p><button class="btn sm out" onclick="accEmailForm()">Add email</button>`}
+      <div id="acc_em"></div></div>
+    <div class="acc-sec"><div class="eb">Change password</div><input id="a_p1" type="password" placeholder="New password" autocomplete="new-password"><input id="a_p2" type="password" placeholder="Confirm new password" autocomplete="new-password"><button class="btn sm" style="margin-top:10px" onclick="accPass()">Update password</button></div>
+    ${standalone ? '' : `<div class="acc-sec"><div class="eb">App</div>${deferredInstall ? `<button class="btn sm out" onclick="installApp()">Install AN Committees on this device</button>` : `<p class="muted">To install: open the browser menu and choose "Add to Home screen" (on iPhone: Share, then Add to Home Screen).</p>`}</div>`}
+    <div class="mfoot"><button class="btn" onclick="closeModal()">Done</button></div>`);
+}
+function accEmailForm() { $('acc_em').innerHTML = `<label>New email address</label><input id="a_email" type="email" placeholder="you@example.com" autocomplete="email"><button class="btn sm" style="margin-top:10px" id="a_send" onclick="accEmailSend()">Send code</button>`; const i = $('a_email'); if (i) i.focus(); }
+async function accEmailSend() {
+  const email = ($('a_email').value || '').trim().toLowerCase(); if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return toast('Enter a valid email address', 1);
+  busyOn('a_send');
+  const { error } = await sb.auth.updateUser({ email });
+  if (error) { busyOff('a_send'); return toast(/rate|limit|seconds/i.test(error.message) ? 'Too many requests. Please wait a few minutes' : (/registered|exists/i.test(error.message) ? 'That email is already used by another account' : error.message), 1); }
+  $('acc_em').innerHTML = `<p class="muted">We sent a code to <b>${esc(maskEmail(email))}</b>.</p><input id="a_code" class="otp" inputmode="numeric" maxlength="8" placeholder="000000"><button class="btn sm" style="margin-top:10px" id="a_ver" onclick="accEmailVerify('${esc(email)}')">Verify email</button>`;
+}
+async function accEmailVerify(email) {
+  const code = ($('a_code').value || '').replace(/\D/g, ''); if (code.length < 6) return toast('Enter the code from your email', 1);
+  busyOn('a_ver');
+  const { error } = await sb.auth.verifyOtp({ email, token: code, type: 'email_change' });
+  if (error) { busyOff('a_ver'); return toast('That code is wrong or has expired', 1); }
+  toast('Email saved and verified'); closeModal(); openAccount();
+}
+async function accPass() {
+  const p1 = $('a_p1').value, p2 = $('a_p2').value;
+  if (p1.length < 6) return toast('Password must be at least 6 characters', 1); if (p1 !== p2) return toast('Passwords do not match', 1);
+  const { error } = await sb.auth.updateUser({ password: p1 });
+  if (error) return toast(error.message, 1); toast('Password updated'); $('a_p1').value = ''; $('a_p2').value = '';
+}
+
+// ---------- Activity log (admin) ----------
+let ACT = null, ACT_ERR = null;
+async function loadActivity() {
+  const r = await sb.from('activity_log').select('*').order('created_at', { ascending: false }).limit(200);
+  if (r.error) { ACT = []; ACT_ERR = r.error.message; } else { ACT = r.data || []; ACT_ERR = null; }
+  if (tab === 'a_activity') { const c = $('content'); if (c) c.classList.add('noanim'); renderTab(false); }
+}
+const ACT_L = { payment_submitted: 'Payment submitted', payment_verified: 'Payment verified', payment_rejected: 'Payment rejected', payment_deleted: 'Payment deleted', payout_added: 'Payout recorded', payout_paid: 'Payout marked paid', payout_pending: 'Payout set to pending', payout_deleted: 'Payout deleted', membership_pending: 'Join request', membership_approved: 'Join request approved', membership_rejected: 'Join request rejected', membership_removed: 'Membership removed' };
+function vAActivity() {
+  if (ACT === null) { loadActivity(); return '<div class="empty"><p>Loading activity...</p></div>'; }
+  if (ACT_ERR) return empty('The activity log is not set up yet. Run supabase-advanced-setup.sql in Supabase.', 'history');
+  if (!ACT.length) return empty('Nothing recorded yet. New actions will appear here.', 'history');
+  const groups = []; ACT.forEach(a => { const d = fdate(a.created_at); let g = groups[groups.length - 1]; if (!g || g[0] !== d) { g = [d, []]; groups.push(g); } g[1].push(a); });
+  return '<div class="actl">' + groups.map(([d, items]) => `<div class="eb actd">${esc(d)}</div><div class="card actc">` + items.map(a => {
+    const bad = /deleted|rejected|removed/.test(a.action), good = /verified|approved|paid/.test(a.action);
+    return `<div class="har"><i style="${bad ? 'background:var(--red)' : good ? '' : 'background:var(--mu)'}"></i><div><b>${esc(ACT_L[a.action] || a.action)}</b><small>${esc(a.summary || '')}</small><small class="by">by ${esc(a.actor_name || 'system')} . ${esc(fmtDT(a.created_at))}</small></div></div>`;
+  }).join('') + '</div>').join('') + '</div>';
+}
+
+// ---------- Public receipt verification ----------
+async function showVerify(no) {
+  $('app').innerHTML = `<div class="vwrap"><div class="card vcard"><div class="brand">${logoMark()}<span>AN Committees</span></div><div class="eb" style="margin-top:22px">Receipt verification</div><div id="vres"><p class="muted">Checking ${esc(no)}...</p></div><button class="btn out" style="margin-top:22px" onclick="leaveVerify()">Open AN Committees</button><p class="vfoot">Designed &amp; Developed by <em>Ahsan Ali</em></p></div></div>`;
+  const r = await sb.rpc('verify_receipt', { p_no: no }); const row = !r.error && Array.isArray(r.data) ? r.data[0] : null, box = $('vres'); if (!box) return;
+  if (r.error) box.innerHTML = '<p class="muted">Verification is not available right now.</p>';
+  else if (!row) box.innerHTML = `<div class="vbad ser">Not found</div><p class="muted">No verified receipt matches <b>${esc(no)}</b>. Please check the number or contact the admin.</p>`;
+  else box.innerHTML = `<div class="vok ser">Genuine receipt</div><div class="vamt ser">${money(row.amount)}</div>${kv([['Receipt no', esc(no)], ['Member', esc(row.member_name)], ['Committee', esc(row.committee)], ['For month', fmtMonth(row.month_label)], ['Verified on', fmtDT(row.verified_at)]])}`;
+}
+function leaveVerify() { history.replaceState(null, '', location.pathname + location.search); boot(); }
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+
+
 function receiptText(p) {
   return ['PAYMENT RECEIPT', 'Receipt no: ' + p.receipt_no, 'Member: ' + (p.profiles?.name || ''), 'Committee: ' + (p.memberships?.committees?.name || ''),
     'Month: ' + fmtMonth(p.month_label), 'Amount: ' + money(p.amount), 'Method: ' + (p.method === 'cash' ? 'Cash' : (p.account_label || 'Bank / wallet')), 'Verified: ' + fmtDT(p.verified_at)].concat(p.verify_note ? ['Remark: ' + p.verify_note] : []).join('\n');
@@ -1608,7 +1920,7 @@ async function delC(id) {
 function vAMembers() {
   return `<h2>${D.profiles.length} registered</h2><div class="card tw"><table><tr><th>Name</th><th>Phone</th><th>CNIC</th><th>Role</th><th>Date</th><th></th></tr>` +
     D.profiles.map(p => `<tr><td>${esc(p.name)}</td><td>${esc(p.phone)}</td><td>${esc(p.cnic) || '-'}</td><td>${esc(p.role)}</td><td>${fdate(p.created_at)}</td>
-    <td>${adminCell(p)}</td></tr>`).join('') + '</table></div>';
+    <td class="actions"><button class="btn sm gray" onclick="statementPdf('${p.id}','download')">Statement</button>${p.id !== me.id ? `<button class="btn sm out" onclick="remindMember('${p.id}')">Remind</button>` : ''} ${adminCell(p)}</td></tr>`).join('') + '</table></div>';
 }
 async function delMember(id) {
   const p = D.profiles.find(x => x.id === id); if (!p) return;
@@ -1629,7 +1941,7 @@ function vAPayouts() {
     <h2 class="sec">Payouts</h2>` +
     (D.payouts.length ? `<div class="card tw"><table><tr><th>Committee</th><th>Member</th><th>Month</th><th>Amount</th><th>Status</th><th></th></tr>` +
       D.payouts.map(p => `<tr><td>${esc(p.committees?.name)}</td><td>${esc(p.profiles?.name)}</td><td>${esc(p.month_label)}</td><td>${money(p.amount)}</td><td>${badge(p.status)}</td>
-      <td class="actions">${p.status !== 'paid' ? `<button class="btn sm" onclick="payoutPaid('${p.id}')">Mark Paid</button>` : ''}<button class="btn sm red" onclick="delPayout('${p.id}')">X</button></td></tr>`).join('') + '</table></div>' : empty('No payouts yet'));
+      <td class="actions">${p.status !== 'paid' ? `<button class="btn sm" onclick="payoutPaid('${p.id}')">Mark Paid</button>` : ''}${p.status === 'paid' ? `<button class="btn sm gray" onclick="payoutSlipPdf('${p.id}','download')">Slip PDF</button>` : ''}<button class="btn sm red" onclick="delPayout('${p.id}')">X</button></td></tr>`).join('') + '</table></div>' : empty('No payouts yet'));
 }
 function payoutCommChange() {
   const sel = $('po_c'); if (!sel) return;
@@ -1691,7 +2003,7 @@ function vASchedule() {
       const coll = sm ? D.payments.filter(p => p.status === 'verified' && p.month_label === sm.key && mids.has(p.membership_id)).reduce((a, p) => a + Number(p.amount), 0) : 0;
       const opts = '<option value="">Empty</option>' + shs.map(s => `<option value="${s.id}" ${h && s.id === h.id ? 'selected' : ''}>${esc(lab(s))}${s.slot_number && !(h && s.id === h.id) ? ' (turn ' + s.slot_number + ')' : ''}</option>`).join('');
       const status = po ? badge(po.status) : '<span class="muted">not paid yet</span>';
-      const act = ((h && sm && !po) ? `<button class="btn sm" onclick="markPayout('${c.id}','${h.id}','${sm.key}',${pot(c)})">Mark paid</button>` : (po && po.status !== 'paid' ? `<button class="btn sm" onclick="payoutPaid('${po.id}')">Mark paid</button>` : '')) + (po ? `<button class="btn sm red" onclick="delPayout('${po.id}')">Undo</button>` : '');
+      const act = ((h && sm && !po) ? `<button class="btn sm" onclick="markPayout('${c.id}','${h.id}','${sm.key}',${pot(c)})">Mark paid</button>` : (po && po.status !== 'paid' ? `<button class="btn sm" onclick="payoutPaid('${po.id}')">Mark paid</button>` : '')) + (po && po.status === 'paid' ? `<button class="btn sm gray" onclick="payoutSlipPdf('${po.id}','download')">Slip</button>` : '') + (po ? `<button class="btn sm red" onclick="delPayout('${po.id}')">Undo</button>` : '');
       rows += `<tr class="${sm && sm.key === nowKey() ? 'cur' : ''}"><td><b>${sm ? sm.label : '-'}</b></td><td>${n}</td>
         <td><select class="cell" onchange="assignSlot('${c.id}', ${n}, this.value)">${opts}</select></td>
         <td>${money(pot(c))}</td><td>${sm ? money(coll) : '-'}</td><td>${status}</td><td>${act}</td></tr>`;
