@@ -1408,7 +1408,7 @@ function openVerify(id) {
     <div class="warnbox">${cash ? 'Verify only after the cash is in your hand.' : 'Open your bank or wallet app and check that the money has arrived. Do not trust the screenshot alone.'} A verified payment cannot be changed later.</div>
     <label>Type the amount you received (Rs)</label>
     <input id="v_amt" type="number" inputmode="numeric" placeholder="${p.amount}" oninput="vCheck(${Number(p.amount)})">
-    <label>Note for your records (optional)</label><input id="v_note" placeholder="e.g. Received by hand at the shop">
+    <label>Remark for the member (optional, printed on the receipt)</label><input id="v_note" maxlength="300" placeholder="e.g. Received by hand. Thank you, see you next month">
     <div class="mfoot"><button class="btn gray" onclick="closeModal()">Cancel</button><button class="btn" id="v_ok" disabled onclick="confirmVerify('${id}')">Verify and issue receipt</button></div>`);
 }
 function vCheck(a) { const b = $('v_ok'); if (b) b.disabled = Number($('v_amt').value) !== a; }
@@ -1421,16 +1421,98 @@ async function confirmVerify(id) {
   openReceipt(id);
 }
 
+// ---------- Payment receipt PDF (pdf-lib) ----------
+async function buildReceiptPdf(r, L) {
+  const { PDFDocument, StandardFonts, rgb, degrees } = L;
+  const doc = await PDFDocument.create();
+  doc.setTitle('Payment receipt ' + r.no); doc.setAuthor('AN Committees'); doc.setSubject('Payment receipt');
+  const W = 595.28, H = 841.89, pg = doc.addPage([W, H]);
+  const ser = await doc.embedFont(StandardFonts.TimesRomanBold), serI = await doc.embedFont(StandardFonts.TimesRomanItalic);
+  const sans = await doc.embedFont(StandardFonts.Helvetica), sansB = await doc.embedFont(StandardFonts.HelveticaBold);
+  const ink = rgb(.043, .051, .071), brass = rgb(.788, .643, .298), brassD = rgb(.58, .43, .1), mu = rgb(.44, .42, .37), line = rgb(.87, .85, .8), paper = rgb(.988, .978, .958), box = rgb(.955, .94, .9);
+  const S = t => String(t == null ? '' : t).replace(/[^\x20-\x7E\u00A0-\u00FF]/g, '?');
+  const wrap = (t, f, sz, mw) => { const out = []; String(S(t)).split(/\r?\n/).forEach(par => { let cur = ''; par.split(/\s+/).forEach(w => { const test = cur ? cur + ' ' + w : w; if (f.widthOfTextAtSize(test, sz) <= mw) cur = test; else { if (cur) out.push(cur); cur = w; } }); out.push(cur); }); return out; };
+  pg.drawRectangle({ x: 0, y: 0, width: W, height: H, color: paper });
+  pg.drawRectangle({ x: 0, y: H - 150, width: W, height: 150, color: ink });
+  pg.drawRectangle({ x: 0, y: H - 153, width: W, height: 3, color: brass });
+  pg.drawText('AN COMMITTEES', { x: 48, y: H - 72, size: 29, font: ser, color: brass });
+  pg.drawText('PAYMENT RECEIPT', { x: 48, y: H - 98, size: 10, font: sansB, color: rgb(.78, .75, .68) });
+  const lbl = 'RECEIPT NO', no = S(r.no || '-');
+  pg.drawText(lbl, { x: W - 48 - sans.widthOfTextAtSize(lbl, 8.5), y: H - 62, size: 8.5, font: sans, color: rgb(.7, .67, .6) });
+  pg.drawText(no, { x: W - 48 - ser.widthOfTextAtSize(no, 20), y: H - 88, size: 20, font: ser, color: rgb(.96, .93, .86) });
+  pg.drawText('Issued ' + S(r.verifiedOn), { x: W - 48 - sans.widthOfTextAtSize('Issued ' + S(r.verifiedOn), 9), y: H - 108, size: 9, font: sans, color: rgb(.7, .67, .6) });
+  // amount
+  let y = H - 215;
+  pg.drawText('AMOUNT RECEIVED', { x: 48, y: y + 40, size: 9, font: sansB, color: mu });
+  pg.drawText(S(r.amount), { x: 48, y, size: 46, font: ser, color: brassD });
+  const cx = W - 48 - 46, cy = y + 14;
+  pg.drawCircle({ x: cx, y: cy, size: 44, borderColor: brassD, borderWidth: 2, opacity: 0 });
+  pg.drawCircle({ x: cx, y: cy, size: 38, borderColor: brassD, borderWidth: .8, opacity: 0 });
+  const vt = 'VERIFIED', vw = sansB.widthOfTextAtSize(vt, 10.5);
+  pg.drawText(vt, { x: cx - vw / 2, y: cy + 2, size: 10.5, font: sansB, color: brassD });
+  pg.drawRectangle({ x: cx - 20, y: cy - 5, width: 40, height: .8, color: brassD });
+  pg.drawText('PAID', { x: cx - sansB.widthOfTextAtSize('PAID', 9) / 2, y: cy - 18, size: 9, font: sansB, color: brassD });
+  y -= 36;
+  pg.drawRectangle({ x: 48, y, width: W - 96, height: 1.2, color: brass });
+  y -= 14;
+  const rows = [['MEMBER', r.member], ['PHONE', r.phone], ['COMMITTEE', r.committee], ['PAYMENT FOR', r.month], ['METHOD', r.method], ['SUBMITTED ON', r.submittedOn], ['VERIFIED ON', r.verifiedOn]].filter(x => x[1]);
+  rows.forEach(([k, v]) => {
+    const ls = wrap(v, sansB, 12.5, W - 96 - 150), h = Math.max(36, 20 + ls.length * 16);
+    pg.drawText(k, { x: 48, y: y - 24, size: 8.5, font: sansB, color: mu });
+    ls.forEach((t, i) => pg.drawText(t, { x: 198, y: y - 24 - i * 16, size: 12.5, font: sansB, color: ink }));
+    y -= h; pg.drawRectangle({ x: 48, y, width: W - 96, height: .6, color: line });
+  });
+  // remark
+  if (r.remark) {
+    y -= 30;
+    pg.drawText('REMARK FROM ADMIN', { x: 48, y, size: 8.5, font: sansB, color: brassD });
+    const ls = wrap(r.remark, serI, 14, W - 96 - 36).slice(0, 8), bh = 26 + ls.length * 19;
+    y -= 10; pg.drawRectangle({ x: 48, y: y - bh, width: W - 96, height: bh, color: box, borderColor: line, borderWidth: .6 });
+    pg.drawRectangle({ x: 48, y: y - bh, width: 3.5, height: bh, color: brass });
+    ls.forEach((t, i) => pg.drawText(t, { x: 68, y: y - 24 - i * 19, size: 14, font: serI, color: ink }));
+    y -= bh;
+  }
+  // footer
+  pg.drawRectangle({ x: 48, y: 92, width: W - 96, height: .8, color: line });
+  const f1 = 'This is a computer-generated receipt and does not require a signature.', f2 = 'AN Committees  |  Designed & Developed by Ahsan Ali';
+  pg.drawText(f1, { x: (W - sans.widthOfTextAtSize(f1, 8.5)) / 2, y: 72, size: 8.5, font: sans, color: mu });
+  pg.drawText(f2, { x: (W - serI.widthOfTextAtSize(f2, 11)) / 2, y: 54, size: 11, font: serI, color: brassD });
+  return await doc.save();
+}
+
+async function loadPdfLib() {
+  if (window.PDFLib) return window.PDFLib;
+  await new Promise((res, rej) => { const sc = document.createElement('script'); sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js'; sc.onload = res; sc.onerror = () => rej(new Error('PDF engine could not load. Check your internet and try again')); document.head.appendChild(sc); });
+  return window.PDFLib;
+}
+async function receiptPdf(id, mode) {
+  const p = D.payments.find(x => x.id === id); if (!p || p.status !== 'verified') return;
+  try {
+    toast('Preparing PDF...');
+    const L = await loadPdfLib();
+    const bytes = await buildReceiptPdf({
+      no: p.receipt_no, member: p.profiles?.name, phone: p.profiles?.phone, committee: p.memberships?.committees?.name, month: fmtMonth(p.month_label),
+      amount: money(p.amount), method: p.method === 'cash' ? 'Cash' : (p.account_label || 'Bank / wallet'), submittedOn: fmtDT(p.created_at), verifiedOn: fmtDT(p.verified_at), remark: p.verify_note || ''
+    }, L);
+    const blob = new Blob([bytes], { type: 'application/pdf' }), name = 'Receipt-' + (p.receipt_no || id) + '.pdf';
+    if (mode === 'share' && navigator.canShare) {
+      const f = new File([blob], name, { type: 'application/pdf' });
+      if (navigator.canShare({ files: [f] })) { await navigator.share({ files: [f], title: 'Payment receipt ' + (p.receipt_no || ''), text: 'AN Committees payment receipt ' + (p.receipt_no || '') }); return; }
+    }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000); toast('Receipt downloaded');
+  } catch (e) { if (e && e.name === 'AbortError') return; toast('Could not create PDF: ' + (e.message || e), 1); }
+}
 function receiptText(p) {
   return ['PAYMENT RECEIPT', 'Receipt no: ' + p.receipt_no, 'Member: ' + (p.profiles?.name || ''), 'Committee: ' + (p.memberships?.committees?.name || ''),
-    'Month: ' + fmtMonth(p.month_label), 'Amount: ' + money(p.amount), 'Method: ' + (p.method === 'cash' ? 'Cash' : (p.account_label || 'Bank / wallet')), 'Verified: ' + fmtDT(p.verified_at)].join('\n');
+    'Month: ' + fmtMonth(p.month_label), 'Amount: ' + money(p.amount), 'Method: ' + (p.method === 'cash' ? 'Cash' : (p.account_label || 'Bank / wallet')), 'Verified: ' + fmtDT(p.verified_at)].concat(p.verify_note ? ['Remark: ' + p.verify_note] : []).join('\n');
 }
 function openReceipt(id) {
   const p = D.payments.find(x => x.id === id); if (!p || p.status !== 'verified') return;
   openModal(`<div class="rcpt"><div class="rh">${logoMark()}<div><b>Payment receipt</b><span>${esc(p.receipt_no || '')}</span></div>${badge('verified')}</div>
     <div class="ramt">${money(p.amount)}</div>
-    ${kv([['Member', esc(p.profiles?.name)], ['Committee', esc(p.memberships?.committees?.name)], ['For month', fmtMonth(p.month_label)], ['Method', p.method === 'cash' ? 'Cash' : esc(p.account_label || 'Bank / wallet')], ['Verified on', fmtDT(p.verified_at)], p.verify_note && me.role === 'admin' ? ['Your note', esc(p.verify_note)] : null])}
-    <div class="mfoot"><button class="btn gray" onclick="copyText(receiptText(D.payments.find(x => x.id === '${id}')))">Copy text</button><button class="btn" onclick="closeModal()">Done</button></div></div>`);
+    ${kv([['Member', esc(p.profiles?.name)], ['Committee', esc(p.memberships?.committees?.name)], ['For month', fmtMonth(p.month_label)], ['Method', p.method === 'cash' ? 'Cash' : esc(p.account_label || 'Bank / wallet')], ['Verified on', fmtDT(p.verified_at)], p.verify_note ? ['Remark from admin', esc(p.verify_note)] : null])}
+    <div class="mfoot"><button class="btn gray" onclick="copyText(receiptText(D.payments.find(x => x.id === '${id}')))">Copy text</button>${navigator.canShare ? `<button class="btn out" onclick="receiptPdf('${id}','share')">Share PDF</button>` : ''}<button class="btn" onclick="receiptPdf('${id}','download')">Download PDF</button></div></div>`);
 }
 
 function openReject(id) {
