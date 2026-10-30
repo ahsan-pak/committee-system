@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0B0D12">
-<title>Committee System</title>
+<title>AN Committees</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="preconnect" href="https://srqiphdhpgrrnpvkvkly.supabase.co" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -617,6 +617,14 @@ body.menu-open #sg button{animation:riseIn .5s cubic-bezier(.2,.8,.2,1) forwards
 .phint{margin:10px 0 0;padding:10px 12px;border-radius:12px;background:var(--brandl);color:var(--tx);font-size:13px;border:1px solid rgba(201,164,76,.3)}
 .phint.part{background:var(--amberl);border-color:rgba(230,165,92,.4)}.phint.ok{background:rgba(127,203,155,.12);border-color:rgba(127,203,155,.4)}
 .phint:empty{display:none}
+
+/* ---- credits ---- */
+.credit{margin-top:30px;padding-top:22px;border-top:1px solid var(--line);text-align:center}
+.credit b{display:block;font-family:'Cormorant Garamond',Georgia,serif;font-size:26px;font-weight:600;color:var(--brandd);letter-spacing:.01em}
+.credit span{display:block;margin-top:6px;font-size:12px;color:var(--mu);letter-spacing:.02em;line-height:1.5}
+.credit-in{position:relative;z-index:1;padding:0 44px 36px;text-align:center;font-size:12px;color:var(--mu);letter-spacing:.04em}
+.credit-in em{font-style:normal;color:var(--brandd);font-weight:700}
+@media(max-width:899px){.credit-in{padding:0 14px 120px}.wrap{padding-bottom:24px}}
 </style>
 </head>
 <body>
@@ -748,7 +756,7 @@ function showAuth(mode = 'login') {
   $('app').innerHTML = `
   <div class="auth in">
     <section class="ap">
-      <div class="brand">${logoMark()}<span>Committee System</span></div>
+      <div class="brand">${logoMark()}<span>AN Committees</span></div>
       <div class="apc">
         <div class="ring-demo" id="demo" aria-hidden="true">${ringSVG({ total_members: 12 }, { cur: 3 })}</div>
         <h1>Every installment, recorded and verified.</h1>
@@ -775,6 +783,7 @@ function showAuth(mode = 'login') {
         <label>Confirm password *</label><input id="s_pass2" type="password" autocomplete="new-password">
         <br><button class="btn" style="width:100%" id="sbtn" onclick="doSignup()">Create account</button>
       `}
+      <div class="credit"><b>Welcome to AN Committees</b><span>Trusted committee management, engineered by Ahsan Ali</span></div>
     </div></section>
   </div>`;
   startDemo();
@@ -922,14 +931,14 @@ function renderShell(first) {
   const ini = (me.name || '?').trim().charAt(0).toUpperCase();
   $('app').innerHTML = `<div class="shell ${first ? 'enter' : ''}">
     <header class="top" id="rail">
-      <div class="brand">${logoMark()}<span>Committee System</span></div>
+      <div class="brand">${logoMark()}<span>AN Committees</span></div>
       <nav id="nav" class="nav"></nav>
       <button class="pin" onclick="togglePin()" aria-label="Pin sidebar"><span id="pint">Pin sidebar</span></button>
       <div class="who"><div class="av">${esc(ini)}</div>
         <div class="wn"><b>${esc(me.name)}</b><span>${me.role === 'admin' ? 'Administrator' : 'Member'}</span></div>
         <button class="ico" onclick="logout()" title="Log out" aria-label="Log out">${ic('logout')}</button></div>
     </header>
-    <main class="main"><div id="content" class="wrap"></div></main>
+    <main class="main"><div id="content" class="wrap"></div><footer class="credit-in">AN Committees · Designed &amp; Developed by <em>Ahsan Ali</em></footer></main>
     <nav class="dock" id="dock" aria-label="Main"></nav>
     <div class="scrim" onclick="closeSheet()"></div>
     <div class="sheet" id="sheet" role="dialog" aria-label="Menu"><div class="sht">Menu</div><div id="sg"></div><button class="sh-out" onclick="logout()">Log out</button></div></div>`;
