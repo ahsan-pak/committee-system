@@ -1196,20 +1196,21 @@ async function openRoster(cid) {
 const dueOf = m => { const c = D.committees.find(x => x.id === m.committee_id); return c ? Number(c.monthly_amount) * (m.share_count || 1) : 0; };
 const paidOf = (m, key) => D.payments.filter(p => p.membership_id === m.id && p.month_label === key && p.status !== 'rejected').reduce((a, p) => a + Number(p.amount), 0);
 const mKey = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+function dueStart(m, c) {
+  if (c.start_date) { const s0 = new Date(c.start_date + 'T00:00:00'); return new Date(s0.getFullYear(), s0.getMonth(), 1); }
+  const j = m.created_at ? new Date(m.created_at) : new Date(); return new Date(j.getFullYear(), j.getMonth(), 1);
+}
+function commRange(c) {
+  if (!c || !c.start_date) return null;
+  const s0 = new Date(c.start_date + 'T00:00:00'), st = new Date(s0.getFullYear(), s0.getMonth(), 1), n = Number(c.duration_months) || Number(c.total_members) || 12;
+  return { start: mKey(st), end: mKey(new Date(st.getFullYear(), st.getMonth() + n - 1, 1)) };
+}
 function memberDue(m) {
   const c = D.committees.find(x => x.id === m.committee_id); if (!c) return null;
-  const due = dueOf(m), nk = nowKey();
-  let sd = m.created_at ? new Date(m.created_at) : new Date(); sd = new Date(sd.getFullYear(), sd.getMonth(), 1);
-  let end = null;
-  if (c.start_date) {
-    const s0 = new Date(c.start_date + 'T00:00:00'), st = new Date(s0.getFullYear(), s0.getMonth(), 1);
-    if (st > sd) sd = st;
-    const n = Number(c.duration_months) || Number(c.total_members) || 12;
-    end = mKey(new Date(st.getFullYear(), st.getMonth() + n - 1, 1));
-  }
-  for (let i = 0; i < 60; i++) {
+  const due = dueOf(m), nk = nowKey(), sd = dueStart(m, c), rg = commRange(c);
+  for (let i = 0; i < 80; i++) {
     const key = mKey(new Date(sd.getFullYear(), sd.getMonth() + i, 1));
-    if (end && key > end) break;
+    if (rg && key > rg.end) break;
     const paid = paidOf(m, key);
     if (paid < due) return { key, due, paid, rem: due - paid, state: key <= nk ? 'due' : 'ok', overdue: key < nk };
   }
@@ -1239,18 +1240,28 @@ function vMPay() {
 function payMemChange() {
   const sel = $('p_mem'); if (!sel) return;
   const m = D.memberships.find(x => x.id === sel.value); if (!m) return;
-  const du = memberDue(m); $('p_month').value = (du && du.key) || nowKey();
-  payMonthChange();
+  const c = D.committees.find(x => x.id === m.committee_id), rg = c && commRange(c), du = memberDue(m);
+  let key = (du && du.key) || nowKey();
+  if (rg) key = key < rg.start ? rg.start : key > rg.end ? rg.end : key;
+  $('p_month').value = key; payMonthChange();
 }
 function payMonthChange() {
   const sel = $('p_mem'), mo = $('p_month'); if (!sel || !mo) return;
-  const m = D.memberships.find(x => x.id === sel.value); if (!m || !mo.value) return;
-  const due = dueOf(m), paid = paidOf(m, mo.value), rem = Math.max(0, due - paid), h = $('p_hint');
+  const m = D.memberships.find(x => x.id === sel.value); if (!m) return;
+  const c = D.committees.find(x => x.id === m.committee_id), rg = c && commRange(c), h = $('p_hint');
+  if (rg) { mo.min = rg.start; mo.max = rg.end; } else { mo.removeAttribute('min'); mo.removeAttribute('max'); }
+  if (!mo.value) return;
+  if (rg && (mo.value < rg.start || mo.value > rg.end)) {
+    $('p_amt').value = '';
+    if (h) { h.innerHTML = `<b>${fmtMonth(mo.value)}</b> is outside this committee. It runs from <b>${fmtMonth(rg.start)}</b> to <b>${fmtMonth(rg.end)}</b>. Please choose a month in that range.`; h.className = 'phint part'; }
+    return;
+  }
+  const due = dueOf(m), paid = paidOf(m, mo.value), rem = Math.max(0, due - paid);
   $('p_amt').value = rem > 0 ? rem : '';
-  if (h) h.innerHTML = rem <= 0 ? `<b>${fmtMonth(mo.value)}</b> is already fully paid (${money(due)}). Choose another month.`
+  if (h) { h.innerHTML = rem <= 0 ? `<b>${fmtMonth(mo.value)}</b> is already fully paid (${money(due)}). Choose another month.`
     : paid > 0 ? `<b>${fmtMonth(mo.value)}</b>: ${money(paid)} paid of ${money(due)}. <b>${money(rem)}</b> is still due.`
     : `<b>${fmtMonth(mo.value)}</b>: ${money(due)} due.`;
-  if (h) h.className = 'phint' + (rem <= 0 ? ' ok' : paid > 0 ? ' part' : '');
+    h.className = 'phint' + (rem <= 0 ? ' ok' : paid > 0 ? ' part' : ''); }
 }
 function payMethodChange() {
   const bank = document.querySelector('input[name=pm]:checked').value === 'bank';
@@ -1264,6 +1275,8 @@ async function submitPay() {
   if (!month) return toast('Select a month', 1);
   if (!amount || amount <= 0) return toast('Enter a valid amount', 1);
   const mm0 = D.memberships.find(x => x.id === mid), rem0 = mm0 ? Math.max(0, dueOf(mm0) - paidOf(mm0, month)) : 0;
+  const c0 = mm0 && D.committees.find(x => x.id === mm0.committee_id), rg0 = c0 && commRange(c0);
+  if (rg0 && (month < rg0.start || month > rg0.end)) return toast(fmtMonth(month) + ' is outside this committee (' + fmtMonth(rg0.start) + ' to ' + fmtMonth(rg0.end) + ')', 1);
   if (rem0 <= 0) return toast(fmtMonth(month) + ' is already fully paid. Choose the next month', 1);
   if (amount > rem0) return toast('Only ' + money(rem0) + ' is still due for ' + fmtMonth(month), 1);
   if (method === 'bank' && !$('p_acc')) return toast('No payment account available. Contact the admin', 1);
@@ -1597,13 +1610,12 @@ async function payoutSlipPdf(id, mode) {
 function stmtSection(m) {
   const c = D.committees.find(x => x.id === m.committee_id); if (!c) return null;
   const due = dueOf(m), nk = nowKey(), sum = (a, f) => a.filter(f).reduce((s, p) => s + Number(p.amount), 0);
-  let sd = m.created_at ? new Date(m.created_at) : new Date(); sd = new Date(sd.getFullYear(), sd.getMonth(), 1);
-  if (c.start_date) { const s0 = new Date(c.start_date + 'T00:00:00'), st = new Date(s0.getFullYear(), s0.getMonth(), 1); if (st > sd) sd = st; }
+  const sd = dueStart(m, c), rg = commRange(c);
   const pays = D.payments.filter(p => p.membership_id === m.id && p.status !== 'rejected');
   let last = nk; pays.forEach(p => { if (p.month_label > last) last = p.month_label; });
   const rows = [], t = { due: 0, paid: 0, pend: 0, bal: 0 };
   for (let i = 0; i < 80; i++) {
-    const key = mKey(new Date(sd.getFullYear(), sd.getMonth() + i, 1)); if (key > last) break;
+    const key = mKey(new Date(sd.getFullYear(), sd.getMonth() + i, 1)); if (key > last || (rg && key > rg.end)) break;
     const pv = sum(pays, p => p.month_label === key && p.status === 'verified'), pp = sum(pays, p => p.month_label === key && p.status === 'pending');
     const bal = Math.max(0, due - pv - pp), covered = pv + pp >= due;
     let st = covered ? (pv >= due ? 'Paid' : 'Pending check') : (key < nk ? 'Overdue' : key === nk ? 'Due' : 'Upcoming');
@@ -1632,10 +1644,9 @@ async function statementPdf(uid, mode) {
 }
 function dueMonthKeys(m) {
   const c = D.committees.find(x => x.id === m.committee_id); if (!c) return [];
-  const due = dueOf(m), nk = nowKey(); let sd = m.created_at ? new Date(m.created_at) : new Date(); sd = new Date(sd.getFullYear(), sd.getMonth(), 1);
-  if (c.start_date) { const s0 = new Date(c.start_date + 'T00:00:00'), st = new Date(s0.getFullYear(), s0.getMonth(), 1); if (st > sd) sd = st; }
+  const due = dueOf(m), nk = nowKey(); const sd = dueStart(m, c), rg = commRange(c);
   const out = [];
-  for (let i = 0; i < 80; i++) { const key = mKey(new Date(sd.getFullYear(), sd.getMonth() + i, 1)); if (key > nk) break; const rem = due - paidOf(m, key); if (rem > 0) out.push({ key, rem }); }
+  for (let i = 0; i < 80; i++) { const key = mKey(new Date(sd.getFullYear(), sd.getMonth() + i, 1)); if (key > nk || (rg && key > rg.end)) break; const rem = due - paidOf(m, key); if (rem > 0) out.push({ key, rem }); }
   return out;
 }
 const waNumber = ph => { let d = cleanPhone(ph); if (d.startsWith('00')) d = d.slice(2); else if (d.startsWith('0')) d = '92' + d.slice(1); return d; };
@@ -1747,18 +1758,20 @@ async function doLogin() {
   }
   boot();
 }
+let accEmail = '';
 let deferredInstall = null;
 window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredInstall = e; });
 async function installApp() { if (!deferredInstall) return; deferredInstall.prompt(); try { await deferredInstall.userChoice; } catch (e) {} deferredInstall = null; closeModal(); }
 async function openAccount() {
   let email = ''; try { const { data: { user } } = await sb.auth.getUser(); email = (user && user.email) || ''; } catch (e) {}
+  accEmail = email;
   const real = email && !email.endsWith(EMAIL_DOMAIN), standalone = matchMedia('(display-mode: standalone)').matches;
   openModal(`<h3>Account and security</h3>
     <div class="acc-id"><span class="av">${esc((me.name || '?').trim().charAt(0).toUpperCase())}</span><div><b>${esc(me.name)}</b><small>${esc(me.phone || '')}</small></div></div>
     <div class="acc-sec"><div class="eb">Email</div>
       ${real ? `<p class="acc-em">${esc(email)} <span class="badge verified"><i></i>Verified</span></p><button class="btn sm gray" onclick="accEmailForm()">Change email</button>` : `<p class="muted">No email is saved on this account. Add one so you can reset your password if you forget it.</p><button class="btn sm out" onclick="accEmailForm()">Add email</button>`}
       <div id="acc_em"></div></div>
-    <div class="acc-sec"><div class="eb">Change password</div><input id="a_p1" type="password" placeholder="New password" autocomplete="new-password"><input id="a_p2" type="password" placeholder="Confirm new password" autocomplete="new-password"><button class="btn sm" style="margin-top:10px" onclick="accPass()">Update password</button></div>
+    <div class="acc-sec"><div class="eb">Change password</div>${real ? `<p class="muted">For your safety, we email a code to <b>${esc(maskEmail(email))}</b> before the password can be changed.</p><div id="acc_pw"><button class="btn sm out" onclick="accPassSend()">Send code to my email</button></div>` : `<p class="muted">Add and verify your email first. After that you can change your password with a code sent to your email.</p>`}</div>
     ${standalone ? '' : `<div class="acc-sec"><div class="eb">App</div>${deferredInstall ? `<button class="btn sm out" onclick="installApp()">Install AN Committees on this device</button>` : `<p class="muted">To install: open the browser menu and choose "Add to Home screen" (on iPhone: Share, then Add to Home Screen).</p>`}</div>`}
     <div class="mfoot"><button class="btn" onclick="closeModal()">Done</button></div>`);
 }
@@ -1777,11 +1790,25 @@ async function accEmailVerify(email) {
   if (error) { busyOff('a_ver'); return toast('That code is wrong or has expired', 1); }
   toast('Email saved and verified'); closeModal(); openAccount();
 }
-async function accPass() {
-  const p1 = $('a_p1').value, p2 = $('a_p2').value;
-  if (p1.length < 6) return toast('Password must be at least 6 characters', 1); if (p1 !== p2) return toast('Passwords do not match', 1);
+async function accPassSend() {
+  if (!accEmail || accEmail.endsWith(EMAIL_DOMAIN)) return toast('Add and verify your email first', 1);
+  const btn = document.querySelector('#acc_pw button'); if (btn) { btn.disabled = true; btn.classList.add('busy'); }
+  const { error } = await sb.auth.resetPasswordForEmail(accEmail);
+  if (error) { if (btn) { btn.disabled = false; btn.classList.remove('busy'); } return toast(/rate|limit|seconds/i.test(error.message) ? 'Too many requests. Please wait a few minutes' : error.message, 1); }
+  $('acc_pw').innerHTML = `<p class="muted">Code sent to <b>${esc(maskEmail(accEmail))}</b>. Enter it below with your new password.</p><input id="a_code" class="otp" inputmode="numeric" maxlength="8" placeholder="000000"><input id="a_p1" type="password" placeholder="New password" autocomplete="new-password"><input id="a_p2" type="password" placeholder="Confirm new password" autocomplete="new-password"><button class="btn sm" style="margin-top:10px" id="a_psave" onclick="accPassSave()">Change password</button>`;
+  toast('A code was sent to your email');
+}
+async function accPassSave() {
+  const code = ($('a_code').value || '').replace(/\D/g, ''), p1 = $('a_p1').value, p2 = $('a_p2').value;
+  if (code.length < 6) return toast('Enter the code from your email', 1);
+  if (p1.length < 6) return toast('Password must be at least 6 characters', 1);
+  if (p1 !== p2) return toast('Passwords do not match', 1);
+  busyOn('a_psave');
+  const v = await sb.auth.verifyOtp({ email: accEmail, token: code, type: 'recovery' });
+  if (v.error) { busyOff('a_psave'); return toast('That code is wrong or has expired', 1); }
   const { error } = await sb.auth.updateUser({ password: p1 });
-  if (error) return toast(error.message, 1); toast('Password updated'); $('a_p1').value = ''; $('a_p2').value = '';
+  if (error) { busyOff('a_psave'); return toast(error.message, 1); }
+  toast('Password changed'); closeModal();
 }
 
 // ---------- Activity log (admin) ----------
