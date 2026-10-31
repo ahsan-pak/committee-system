@@ -1028,24 +1028,29 @@ const hLab = { done: 'Paid', next: 'This month', late: 'Not paid yet', up: 'Upco
 const rosterC = {};
 function ensureRoster(cid) {
   const r = rosterC[cid]; if (r && (r.busy || Date.now() - r.t < 10000)) return;
-  rosterC[cid] = { rows: r ? r.rows : [], t: Date.now(), busy: true };
-  sb.rpc('get_roster', { cid }).then(({ data, error }) => {
-    const prev = JSON.stringify(rosterC[cid].rows), rows = error ? [] : (data || []);
-    rosterC[cid] = { rows, t: Date.now(), busy: false };
-    if (prev !== JSON.stringify(rows) && (tab === 'a_home' || tab === 'm_home') && !document.getElementById('modal')) { const el = $('content'); if (el) el.classList.add('noanim'); renderTab(false); }
-  }).catch(() => { rosterC[cid].busy = false; });
+  rosterC[cid] = { rows: r ? r.rows : [], paid: r ? r.paid : {}, t: Date.now(), busy: true };
+  Promise.all([
+    sb.rpc('get_roster', { cid }).then(x => x, () => ({ data: null, error: true })),
+    sb.rpc('get_slot_status', { cid }).then(x => x, () => ({ data: null, error: true }))
+  ]).then(([a, b]) => {
+    const prev = JSON.stringify([rosterC[cid].rows, rosterC[cid].paid]);
+    const rows = a.error ? [] : (a.data || []), paid = {};
+    if (!b.error && Array.isArray(b.data)) b.data.forEach(x => { if (x.paid) paid[x.slot] = true; });
+    rosterC[cid] = { rows, paid, t: Date.now(), busy: false };
+    if (prev !== JSON.stringify([rows, paid]) && (tab === 'a_home' || tab === 'm_home') && !document.getElementById('modal')) { const el = $('content'); if (el) el.classList.add('noanim'); renderTab(false); }
+  }).catch(() => { if (rosterC[cid]) rosterC[cid].busy = false; });
 }
 function orbitData(c) {
   const adm = me.role === 'admin', total = Math.max(1, Math.min(Number(c.total_members) || 1, 36)), cur = c.start_date ? curIdx(c) : 0;
   const mems = D.memberships.filter(m => m.committee_id === c.id && m.status === 'approved');
   const mm = mems.find(m => m.user_id === me.id), mine = mm ? mySlots(mm) : new Set(), names = slotNames(c);
-  const ro = (rosterC[c.id] && rosterC[c.id].rows) || [], nodes = []; let paidN = 0;
+  const ro = (rosterC[c.id] && rosterC[c.id].rows) || [], sp = (rosterC[c.id] && rosterC[c.id].paid) || {}, nodes = []; let paidN = 0;
   for (let i = 1; i <= total; i++) {
     const own = isMine(mine, i), r = ro.find(x => x.r_slot === i), vis = adm || c.show_roster || own;
     const nm = own ? (me.name || 'You') : (vis ? (names[i] || (r && r.r_name) || '') : '');
     const h = D.shares.find(s => s.committee_id === c.id && s.slot_number === i), hm = h && mems.find(m => m.id === h.membership_id), sm = slotMonth(c, i);
     const po = h && D.payouts.find(p => p.committee_id === c.id && (p.share_id ? p.share_id === h.id : (hm && p.member_id === hm.user_id)) && (!sm || p.month_label === sm.key));
-    const paid = !!((po && po.status === 'paid') || (r && r.r_paid));
+    const paid = !!((po && po.status === 'paid') || (r && r.r_paid) || sp[i]);
     if (paid) paidN++;
     nodes.push({ i, own, name: nm, month: sm ? sm.label : '', paid, st: paid ? 'done' : i === cur ? 'next' : i < cur ? 'late' : 'up' });
   }
