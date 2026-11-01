@@ -2082,7 +2082,7 @@ async function markPayout(cid, sid, key, amt) {
 
 function vABackup() {
   return `<div class="card" style="max-width:560px"><h2>Download a full backup</h2>
-    <p class="muted">One Excel file with separate sheets for members, committees, join requests, payments, payouts, the payout schedule and payment accounts. Payment proof images are not included.</p>
+    <p class="muted">One Excel file with separate sheets for members (with their shares and turns), committees, join requests, payments (with received amount and your remarks), payouts, the payout schedule, lucky draws, payment accounts and the activity log. Payment proof images are not included.</p>
     <br><button class="btn" id="bkbtn" onclick="downloadBackup()">Download Excel backup</button></div>`;
 }
 function loadXlsx() {
@@ -2096,22 +2096,33 @@ function loadXlsx() {
 async function downloadBackup() {
   try { await loadXlsx(); } catch (e) { return toast('Could not load the Excel library. Check your internet and try again', 1); }
   const cn = id => (D.committees.find(c => c.id === id) || {}).name || '';
+  const turnsOf = m => D.shares.filter(s => s.membership_id === m.id && s.slot_number).map(s => s.slot_number).sort((x, y) => x - y);
+  const memSummary = uid => D.memberships.filter(m => m.user_id === uid && m.status === 'approved').map(m => {
+    const n = m.share_count || 1, t = turnsOf(m);
+    return cn(m.committee_id) + ': ' + n + ' share' + (n > 1 ? 's' : '') + (t.length ? ' (turns ' + t.join(', ') + ')' : '');
+  }).join(' | ');
   const sheets = {
-    Members: D.profiles.map(p => ({ Name: p.name, Phone: p.phone, CNIC: p.cnic || '', Role: p.role, Joined: fdate(p.created_at) })),
+    Members: D.profiles.map(p => ({ Name: p.name, Phone: p.phone, CNIC: p.cnic || '', Role: p.role, Joined: fdate(p.created_at), 'Committees and shares': memSummary(p.id) })),
     Committees: D.committees.map(c => ({ Name: c.name, 'Member list shared': c.show_roster ? 'Yes' : 'No', 'Monthly amount': c.monthly_amount, 'Total members': c.total_members, 'Pot per month': pot(c), 'Start date': c.start_date || '', 'Duration (months)': c.duration_months || '', Status: c.status })),
-    'Join requests': D.memberships.map(m => ({ Member: m.profiles?.name, Phone: m.profiles?.phone, Committee: m.committees?.name, Slot: m.slot_number || '', Status: m.status, Date: fdate(m.created_at) })),
-    Payments: D.payments.map(p => ({ Member: p.profiles?.name, Phone: p.profiles?.phone, Committee: p.memberships?.committees?.name, Month: p.month_label, Amount: p.amount, Method: p.method, Account: p.account_label || '', Status: p.status, Note: p.note || '', Receipt: p.receipt_no || '', Submitted: fdate(p.created_at), Verified: fdate(p.verified_at) })),
+    'Join requests': D.memberships.map(m => ({ Member: m.profiles?.name, Phone: m.profiles?.phone, Committee: m.committees?.name, Slot: m.slot_number || '', Shares: m.share_count || 1, Turns: turnsOf(m).join(', '), Status: m.status, Date: fdate(m.created_at) })),
+    Payments: D.payments.map(p => ({ Member: p.profiles?.name, Phone: p.profiles?.phone, Committee: p.memberships?.committees?.name, Month: p.month_label, Amount: p.amount, Method: p.method, Account: p.account_label || '', Status: p.status, Note: p.note || '', Receipt: p.receipt_no || '', Submitted: fdate(p.created_at), Verified: fdate(p.verified_at), Received: p.received_amount == null ? '' : p.received_amount, 'Admin remark': p.verify_note || '' })),
     Payouts: D.payouts.map(p => ({ Committee: p.committees?.name, Member: p.profiles?.name, Phone: p.profiles?.phone, Month: p.month_label, Amount: p.amount, Status: p.status })),
     Schedule: [],
+    'Lucky draws': (D.draws || []).map(d => ({ Committee: cn(d.committee_id), Month: d.month_label, Status: d.status, Winner: d.winner_name || '', Created: fdate(d.created_at) })),
     Accounts: D.accounts.map(a => ({ Type: a.type, Name: a.provider, Title: a.account_title, Number: a.account_number, IBAN: a.iban || '', Visible: a.active ? 'Yes' : 'No' }))
   };
   D.committees.forEach(c => {
     for (let n = 1; n <= c.total_members; n++) {
-      const m = D.memberships.find(x => x.committee_id === c.id && x.status === 'approved' && x.slot_number === n), sm = slotMonth(c, n);
-      const po = m ? D.payouts.find(p => p.committee_id === c.id && p.member_id === m.user_id && (!sm || p.month_label === sm.key)) : null;
-      sheets.Schedule.push({ Committee: c.name, 'Payout month': sm ? sm.label : '', Slot: n, Member: m ? m.profiles?.name : '', Phone: m ? m.profiles?.phone : '', Pot: pot(c), Payout: po ? po.status : 'not paid yet' });
+      const sm = slotMonth(c, n), h = D.shares.find(x => x.committee_id === c.id && x.slot_number === n);
+      const m = h ? D.memberships.find(x => x.id === h.membership_id && x.status === 'approved') : D.memberships.find(x => x.committee_id === c.id && x.status === 'approved' && x.slot_number === n);
+      const po = m ? D.payouts.find(p => p.committee_id === c.id && (p.share_id && h ? p.share_id === h.id : p.member_id === m.user_id) && (!sm || p.month_label === sm.key)) : null;
+      sheets.Schedule.push({ Committee: c.name, 'Payout month': sm ? sm.label : '', Slot: n, Member: m ? (m.profiles?.name || '') + (h && m.share_count > 1 ? ' #' + h.share_number : '') : '', Phone: m ? (m.profiles?.phone || '') : '', Pot: pot(c), Payout: !m ? 'no member assigned' : (po ? po.status : 'not paid yet') });
     }
   });
+  try {
+    const r = await sb.from('activity_log').select('*').order('created_at', { ascending: false }).limit(2000);
+    if (!r.error && r.data && r.data.length) sheets.Activity = r.data.map(a => ({ When: fmtDT(a.created_at), Action: ACT_L[a.action] || a.action, Details: a.summary || '', By: a.actor_name || '' }));
+  } catch (e) {}
   const wb = XLSX.utils.book_new();
   Object.entries(sheets).forEach(([name, rows]) => XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows.length ? rows : [{ Info: 'No data' }]), name));
   XLSX.writeFile(wb, 'committee-backup-' + new Date().toISOString().slice(0, 10) + '.xlsx');
