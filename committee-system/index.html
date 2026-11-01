@@ -1,0 +1,2323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0B0D12">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/png" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="AN Committees">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>AN Committees</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="preconnect" href="https://srqiphdhpgrrnpvkvkly.supabase.co" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#111;--ink2:#1c1c1c;--paper:#ECEAE2;--card:#fff;--line:#E4E1D6;--tx:#111;--mu:#6B6B63;--brand:#111;--brandd:#111;--brandl:#EAF7C8;--amber:#7A5200;--amberl:#FFEFC2;--red:#B42318;--redl:#FCE4E0;--lime:#C8F169}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font-family:'Space Grotesk',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;background:var(--paper);color:var(--tx);font-size:15px;line-height:1.5;font-variant-numeric:tabular-nums}
+h1,h2,h3{margin:0;letter-spacing:-.01em}
+h2{font-size:17px;margin-bottom:12px}
+h3{font-size:15px;margin-bottom:10px}
+.sec{margin:28px 0 12px}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.muted{color:var(--mu);font-size:13px}
+
+.shell{display:grid;grid-template-columns:248px 1fr;min-height:100vh}
+.side{background:var(--ink);color:#C9D3E6;display:flex;flex-direction:column;padding:18px 14px;position:sticky;top:0;height:100vh}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:16px;color:#fff;padding:4px 8px 18px}
+.nav{display:flex;flex-direction:column;gap:2px;flex:1;overflow:auto}
+.nav button{position:relative;display:flex;align-items:center;gap:12px;border:0;background:transparent;color:#B8C4DA;padding:10px 12px;border-radius:10px;cursor:pointer;font:inherit;font-weight:600;text-align:left;width:100%;transition:background .15s,color .15s}
+.nav button:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav button.on{background:rgba(52,211,168,.14);color:#fff}
+.nav button.on svg{color:#34D3A8}
+.nav .cnt{margin-left:auto;background:#F0B44C;color:#3a2600;border-radius:999px;font-size:12px;font-weight:800;padding:0 7px;min-width:20px;text-align:center}
+.who{display:flex;align-items:center;gap:10px;padding:14px 8px 0;border-top:1px solid rgba(255,255,255,.1);margin-top:10px}
+.av{width:34px;height:34px;border-radius:10px;background:#34D3A8;color:#06352A;display:grid;place-items:center;font-weight:800;flex:none}
+.wn{display:flex;flex-direction:column;min-width:0;flex:1}
+.wn b{color:#fff;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wn span{font-size:12px;color:#8FA0BF}
+.ico{border:0;background:transparent;color:#B8C4DA;cursor:pointer;padding:7px;border-radius:8px;display:grid;place-items:center}
+.ico:hover{background:rgba(255,255,255,.08);color:#fff}
+.main{min-width:0}
+.wrap{max-width:1080px;margin:0 auto;padding:28px 28px 56px}
+.mtop{display:none}
+.ph{margin-bottom:20px}
+.ph h1{font-size:26px;font-weight:800;letter-spacing:-.02em}
+.ph p{margin:2px 0 0;color:var(--mu)}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:14px}
+.card.tw{padding:6px 10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px}
+.grid .card{margin:0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
+.two .card{margin:0}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tw{overflow-x:auto}
+
+.hero{background:var(--ink);color:#fff;border-radius:18px;padding:24px 26px;display:flex;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-bottom:20px}
+.hl{color:#9FB0CE;font-size:14px;font-weight:600}
+.hv{font-size:40px;font-weight:800;letter-spacing:-.02em;line-height:1.15;margin:2px 0}
+.hs{color:#9FB0CE;font-size:14px}
+.hstrip{display:flex;gap:30px;margin:0;align-self:flex-end;flex-wrap:wrap}
+.hstrip dt{color:#9FB0CE;font-size:13px}
+.hstrip dd{margin:0;font-size:20px;font-weight:700}
+
+.list .li{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.list .li:last-child{border-bottom:0}
+.li .t{flex:1;min-width:0}
+.li .t b{display:block;font-size:14px}
+.li .t span{color:var(--mu);font-size:13px}
+.li .amt2{font-weight:700}
+.note{background:var(--amberl);color:var(--amber);border-radius:12px;padding:12px 14px;margin-bottom:16px;font-weight:600}
+
+.cc-h{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.amt{font-size:24px;font-weight:800;letter-spacing:-.02em}
+.amt small{font-size:13px;font-weight:600;color:var(--mu);letter-spacing:0}
+.slots{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0}
+.slot{width:28px;height:28px;border-radius:8px;border:1.5px dashed #C4CCDA;color:#98A2B3;display:grid;place-items:center;font-size:12px;font-weight:700}
+.slot.on{border:1.5px solid var(--brand);background:var(--brandl);color:var(--brandd)}
+.slot.me{background:var(--brand);border-color:var(--brand);color:#fff}
+.bar{height:6px;background:var(--line);border-radius:6px;overflow:hidden;margin:10px 0 4px}
+.bar i{display:block;height:100%;background:var(--brand);border-radius:6px}
+
+label{display:block;font-size:13px;font-weight:600;color:#475467;margin:14px 0 6px}
+input,select,textarea{width:100%;padding:11px 12px;border:1px solid #CBD2DE;border-radius:10px;font:inherit;background:#fff;color:var(--tx)}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px rgba(10,124,102,.15)}
+input[type=radio]{width:auto}
+.btn{background:var(--brand);color:#fff;border:0;padding:11px 18px;border-radius:10px;cursor:pointer;font:inherit;font-size:14px;font-weight:700;transition:background .15s}
+.btn:hover{background:var(--brandd)}
+.btn:disabled{opacity:.55;cursor:wait}
+.btn.sm{padding:7px 12px;font-size:13px;border-radius:8px}
+.btn.red{background:var(--redl);color:var(--red)}
+.btn.red:hover{background:#F6D3CE}
+.btn.gray{background:#EEF1F6;color:#344054}
+.btn.gray:hover{background:#E1E6EF}
+.btn.out{background:#fff;color:var(--brandd);border:1px solid #BFE3D8}
+.btn.out:hover{background:var(--brandl)}
+.actions{display:flex;gap:6px;flex-wrap:wrap}
+
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;padding:11px 12px;border-bottom:1px solid var(--line);color:var(--mu);font-weight:600;font-size:13px;white-space:nowrap}
+td{text-align:left;padding:12px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+
+.badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:700;text-transform:capitalize}
+.badge i{width:6px;height:6px;border-radius:50%;background:currentColor}
+.badge.pending{background:var(--amberl);color:var(--amber)}
+.badge.approved,.badge.verified,.badge.paid,.badge.open{background:var(--brandl);color:var(--brandd)}
+.badge.rejected,.badge.closed{background:var(--redl);color:var(--red)}
+
+.bank{background:var(--brandl);border:1px solid #BFE3D8;border-radius:12px;padding:12px 14px;margin:10px 0;line-height:1.7}
+.empty{text-align:center;color:var(--mu);padding:34px 16px;border:1.5px dashed #CBD2DE;border-radius:14px;background:#fff;margin-bottom:14px}
+.empty svg{color:#98A2B3;margin-bottom:6px}
+.empty p{margin:0 0 12px}
+.stat{font-size:26px;font-weight:800;color:var(--brand)}
+
+#toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;display:none;z-index:99;max-width:90%;text-align:center;box-shadow:0 10px 30px rgba(18,32,58,.25);font-weight:600}
+#toast.err{background:var(--red)}
+
+.auth{display:grid;grid-template-columns:1.05fr 1fr;min-height:100vh}
+.ap{background:var(--ink);color:#fff;padding:40px 48px;display:flex;flex-direction:column;justify-content:space-between;gap:32px}
+.ap .brand{padding:0}
+.ap h1{font-size:38px;line-height:1.12;font-weight:800;letter-spacing:-.02em;margin:0 0 14px;max-width:16ch}
+.ap p{color:#B8C4DA;max-width:42ch;margin:0}
+.ap .slots{margin-top:28px;max-width:300px}
+.ap .slot{width:38px;height:38px;border-color:rgba(255,255,255,.25);color:rgba(255,255,255,.5);font-size:14px}
+.ap .slot.on{background:rgba(52,211,168,.18);border-color:#34D3A8;color:#8CF0D0}
+.ap .slot.me{background:#34D3A8;color:#06352A;border-color:#34D3A8}
+.fine{color:#8FA0BF;font-size:13px}
+.af{display:grid;place-items:center;padding:32px 20px;background:#fff}
+.af-in{width:100%;max-width:390px}
+.af h2{font-size:26px;font-weight:800;margin-bottom:4px;letter-spacing:-.02em}
+.seg{display:flex;background:#EEF1F6;border-radius:10px;padding:4px;margin:20px 0 4px}
+.seg button{flex:1;border:0;background:transparent;padding:9px;border-radius:8px;font:inherit;font-weight:700;color:#475467;cursor:pointer}
+.seg button.on{background:#fff;color:var(--tx);box-shadow:0 1px 3px rgba(16,24,40,.12)}
+
+@media(max-width:899px){
+  .shell{display:block}
+  .side{position:fixed;left:0;right:0;bottom:0;top:auto;height:auto;flex-direction:row;padding:6px 6px calc(6px + env(safe-area-inset-bottom));z-index:20}
+  .side .brand,.side .who{display:none}
+  .nav{flex-direction:row;overflow-x:auto;gap:2px}
+  .nav button{flex-direction:column;gap:3px;font-size:11px;padding:7px 10px;width:auto;min-width:70px;align-items:center;text-align:center;white-space:nowrap}
+  .nav .cnt{position:absolute;top:2px;right:10px;margin:0;font-size:11px;min-width:18px}
+  .mtop{display:flex;justify-content:space-between;align-items:center;background:var(--ink);color:#fff;padding:12px 16px}
+  .mtop .brand{padding:0}
+  .wrap{padding:18px 16px 110px}
+  .ph h1{font-size:22px}
+  .hv{font-size:32px}
+  .two{grid-template-columns:1fr}
+  #toast{bottom:90px}
+  .auth{grid-template-columns:1fr}
+  .ap{padding:22px 20px;gap:0}
+  .ap h1{font-size:24px;margin:0}
+  .ap .slots,.ap p,.fine{display:none}
+  .af{padding:24px 20px 40px;place-items:start center}
+}
+@media(max-width:560px){.row{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+:root{--gold:#C8F169}
+.btn:active{transform:scale(.97)}
+.btn.busy{position:relative;color:transparent!important;pointer-events:none}
+.btn.busy::after{content:'';position:absolute;inset:0;margin:auto;width:16px;height:16px;border:2px solid #fff;border-right-color:transparent;border-radius:50%;animation:rot .6s linear infinite}
+.ringbox{display:grid;place-items:center;margin:8px 0 2px}
+.ringbox svg,.ring-demo svg{width:100%;max-width:230px;height:auto;overflow:visible}
+.track{fill:none;stroke:#E8ECF3;stroke-width:2}
+.dot circle{fill:#fff;stroke:#C4CCDA;stroke-width:1.5;transition:fill .5s,stroke .5s}
+.dot text{font-size:11px;font-weight:700;text-anchor:middle;fill:#667085;pointer-events:none}
+.dot.done circle{fill:var(--brand);stroke:var(--brand)}
+.dot.done text{fill:#fff}
+.dot.now circle{fill:var(--gold);stroke:var(--gold);animation:halo 1.8s ease-out infinite}
+.dot.now text{fill:#2b1d00}
+.dot.empty circle{stroke-dasharray:3 3;fill:none}
+.dot.me circle{stroke:var(--ink);stroke-width:3.5;animation:none}
+.rc1{font-size:25px;font-weight:800;text-anchor:middle;fill:var(--ink)}
+.rc2{font-size:14px;font-weight:600;text-anchor:middle;fill:var(--mu)}
+.legend{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;color:var(--mu);font-size:12px;margin:2px 0 8px}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.lg{width:10px;height:10px;border-radius:50%;display:inline-block;border:1.5px solid #C4CCDA}
+.lg.done{background:var(--brand);border-color:var(--brand)}.lg.now{background:var(--gold);border-color:var(--gold)}.lg.me{border:2.5px solid var(--ink)}
+.pay-line{margin:6px 0;font-size:14px}
+@keyframes halo{0%{stroke-width:1.5;stroke-opacity:1}100%{stroke-width:11;stroke-opacity:0}}
+@keyframes rot{to{transform:rotate(360deg)}}
+@keyframes pop{from{opacity:0;transform:translateY(10px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes shake{20%{transform:translateX(-8px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(3px)}}
+@keyframes slideIn{from{transform:translateX(-30px);opacity:0}to{transform:none;opacity:1}}
+@keyframes riseIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes bye{to{opacity:0;transform:scale(.985) translateY(8px)}}
+.shake{animation:shake .4s}
+.shell.enter .side{animation:slideIn .45s cubic-bezier(.2,.8,.2,1)}
+.shell.enter .main{animation:riseIn .5s .08s both cubic-bezier(.2,.8,.2,1)}
+.shell.out{animation:bye .3s forwards}
+.wrap.fade{animation:fadeIn .2s}
+.auth.in .af-in{animation:riseIn .5s .05s both cubic-bezier(.2,.8,.2,1)}
+.auth.in .ap{animation:fadeIn .5s}
+.loading{min-height:100vh;display:grid;place-content:center;justify-items:center;gap:14px;background:var(--ink);color:#9FB0CE;font-weight:600}
+.spin{width:48px;height:48px;animation:rot 1s linear infinite}
+.spin circle{stroke:#34D3A8;stroke-dasharray:90 150}
+.ap .apc{display:grid;gap:14px;justify-items:start}
+.ring-demo{width:100%;max-width:250px;margin-bottom:8px}
+.ap .dot circle{fill:transparent;stroke:rgba(255,255,255,.28)}
+.ap .dot text{fill:rgba(255,255,255,.75)}
+.ap .dot.done circle{fill:#34D3A8;stroke:#34D3A8}
+.ap .dot.done text{fill:#06352A}
+.ap .dot.now circle{fill:var(--gold);stroke:var(--gold)}
+.ap .dot.now text{fill:#2b1d00}
+.ap .track{stroke:rgba(255,255,255,.12)}
+.ap .rc1{fill:#fff}.ap .rc2{fill:#9FB0CE}
+.mback{position:fixed;inset:0;background:rgba(10,18,36,.55);display:grid;place-items:center;padding:16px;z-index:60;animation:fadeIn .15s;backdrop-filter:blur(2px)}
+.mbox{background:#fff;border-radius:18px;padding:22px;width:100%;max-width:460px;max-height:90vh;overflow:auto;animation:pop .24s cubic-bezier(.2,.9,.3,1.15);box-shadow:0 24px 60px rgba(10,18,36,.35)}
+.mbox.wide{max-width:640px}
+.mfoot{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap}
+dl.kv{margin:12px 0 0}
+.kv>div{display:flex;justify-content:space-between;gap:16px;padding:9px 0;border-bottom:1px solid var(--line)}
+.kv dt{color:var(--mu)}.kv dd{margin:0;text-align:right;font-weight:600}
+.warnbox{background:var(--amberl);color:var(--amber);padding:10px 12px;border-radius:10px;font-weight:600;font-size:13px;margin-top:14px}
+.rcpt .rh{display:flex;gap:12px;align-items:center;color:var(--ink)}
+.rcpt .rh b{display:block}.rcpt .rh span{font-size:12px;color:var(--mu)}.rcpt .rh .badge{margin-left:auto}
+.ramt{font-size:36px;font-weight:800;margin:14px 0 2px;color:var(--brandd);letter-spacing:-.02em}
+.sh{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin:6px 0 12px}
+select.cell{padding:7px 8px;min-width:160px;border-radius:8px;width:auto}
+tr.cur td{background:#FFF7E3}
+label.chk{display:flex;align-items:center;gap:10px;color:var(--tx);font-weight:600}
+label.chk input{width:auto}
+@media(max-width:899px){.shell.enter .side{animation:none}.ring-demo{display:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+.dot.now.empty circle{fill:#FFF3D1}
+#lbtn,#sbtn{margin-top:18px}
+.card{transition:transform .2s,box-shadow .2s}
+.grid .card{animation:riseIn .45s both}
+.grid .card:nth-child(2){animation-delay:.06s}.grid .card:nth-child(3){animation-delay:.12s}.grid .card:nth-child(n+4){animation-delay:.18s}
+.grid .card:hover{transform:translateY(-3px);box-shadow:0 12px 26px rgba(18,32,58,.09)}
+tr:hover td{background:#F8FAFC}td,.badge,.btn,.nav button{transition:background .2s,color .2s,transform .15s}
+.slot,.dot circle{transition:all .4s}
+.wheelbox{display:grid;place-items:center}.wheelbox svg{width:100%;max-width:360px;overflow:visible}
+#w_c{margin-bottom:10px}
+
+/* ===== Editorial Bento layout (black / lime) ===== */
+body{font-family:'Space Grotesk',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif}
+:focus-visible{outline-color:#111}
+.shell{display:block}
+.top{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:18px;padding:14px 28px;background:#ECEAE2}
+.top .brand{padding:0;color:#111;font-size:19px;letter-spacing:-.03em;flex:none}
+.nav{flex:none;margin:0 auto;display:flex;flex-direction:row;gap:2px;background:#111;border-radius:999px;padding:5px;position:relative;overflow:visible}
+.nav button{width:auto;padding:9px 16px;font-size:13px;color:#CFCFC6;white-space:nowrap;border-radius:999px;gap:7px;position:relative}
+.nav button svg{display:none}
+@media(hover:hover){.nav button:hover{background:rgba(255,255,255,.1);color:#fff}}
+.nav button.on{background:var(--lime);color:#111}
+.nav button.onm{background:transparent;color:#CFCFC6}
+.nav .cnt{margin-left:6px;background:#FF9F43;color:#111;font-size:11px;min-width:18px;padding:0 5px}
+.mobonly{display:none}
+.moremenu{position:absolute;top:calc(100% + 10px);right:0;background:#111;border-radius:22px;padding:8px;min-width:230px;display:none;flex-direction:column;gap:2px;z-index:50;box-shadow:0 18px 40px rgba(17,17,17,.3)}
+.moremenu.open{display:flex}
+.moremenu button{width:100%;justify-content:flex-start;padding:11px 14px}
+.moremenu button svg{display:block}
+.moremenu .mob{display:none}
+.who{padding:0;border:0;margin:0 0 0 auto;display:flex;align-items:center;gap:10px;flex:none}
+.av{background:#111;color:var(--lime);border-radius:50%}
+.wn b{color:#111}
+.wn span{color:#6B6B63}
+.top .ico{color:#111;background:rgba(17,17,17,.07);border-radius:50%}
+.top .ico:hover{background:var(--lime);color:#111}
+.wrap{max-width:1180px;padding:24px 28px 64px}
+.ph{margin-bottom:22px}
+.ph h1{font-size:40px;letter-spacing:-.045em;font-weight:700}
+h2{font-size:19px;letter-spacing:-.02em}
+.card{border:0;border-radius:26px;padding:22px}
+.bento{display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:minmax(136px,auto);gap:14px;margin-bottom:24px}
+.bt{background:#fff;border-radius:26px;padding:20px;display:flex;flex-direction:column;gap:4px;min-width:0;animation:riseIn .45s both}
+.bt.big{grid-column:span 2;grid-row:span 2;background:#111;color:#fff;padding:28px}
+.bt.lime{background:var(--lime);color:#111}
+.bl{font-size:13px;font-weight:600;color:#6B6B63}
+.bt.big .bl{color:#A8A8A0}.bt.lime .bl{color:#2D3A0B}
+.bv{font-size:46px;font-weight:700;letter-spacing:-.045em;line-height:1.05}
+.bt.big .bv{font-size:62px;letter-spacing:-.055em;margin-top:6px}
+.bv.sm{font-size:28px;margin-top:6px}
+.bs{font-size:13px;color:#6B6B63}.bt.big .bs{color:#A8A8A0}
+.bt .btn{margin-top:auto;align-self:flex-start}
+.btn.dk{background:#111;color:#fff}.btn.dk:hover{background:#fff;color:#111}
+.btn.lm{background:var(--lime);color:#111}.btn.lm:hover{background:#fff;color:#111}
+.bars{margin-top:auto;display:flex;gap:10px;align-items:flex-end;height:120px;padding-top:14px}
+.b6{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end}
+.b6 i{width:100%;background:#3A3A38;border-radius:10px;display:block}
+.b6 i.cur{background:var(--lime)}
+.b6 span{font-size:10px;color:#A8A8A0}
+.bcta{margin-top:auto}
+.bcta .btn{margin:0}
+.amt,.stat{letter-spacing:-.03em}
+.btn{background:#111;color:#fff;border-radius:999px;padding:12px 22px}
+.btn:hover{background:var(--lime);color:#111}
+.btn.sm{padding:8px 14px}
+.btn.red{background:var(--redl);color:var(--red)}
+.btn.red:hover{background:#F8CFC8;color:var(--red)}
+.btn.gray{background:#ECEAE2;color:#111}
+.btn.gray:hover{background:#E0DDD1;color:#111}
+.btn.out{background:#fff;color:#111;border:1.5px solid #111}
+.btn.out:hover{background:var(--lime)}
+input,select,textarea{border:1.5px solid #D6D3C6;border-radius:14px}
+input:focus,select:focus,textarea:focus{border-color:#111;box-shadow:0 0 0 3px rgba(200,241,105,.7)}
+label{color:#3D3D38}
+.seg{background:#ECEAE2;border-radius:999px}
+.seg button{border-radius:999px;color:#3D3D38}
+.seg button.on{background:#111;color:var(--lime);box-shadow:none}
+th{text-transform:uppercase;letter-spacing:.06em;font-size:11px}
+tr:hover td{background:#F7F6F0}
+tr.cur td{background:#F3FBDD}
+.slot{border-radius:50%;border-color:#C9C6B8;color:#8A8A80}
+.slot.on{background:var(--lime);border:1.5px solid #111;color:#111}
+.slot.me{background:#111;border-color:#111;color:var(--lime)}
+.bar{height:8px}
+.bank{border:1.5px solid #D5EBA0;border-radius:16px}
+.note,.warnbox{border-radius:16px}
+.empty{border-radius:26px;border-color:#C9C6B8;background:transparent}
+.grid .card:hover{box-shadow:0 14px 30px rgba(17,17,17,.1)}
+#toast{background:#111;color:var(--lime);border-radius:999px;box-shadow:0 10px 30px rgba(17,17,17,.3)}
+#toast.err{background:var(--red);color:#fff}
+.mback{background:rgba(17,17,17,.6)}
+.mbox{border-radius:28px}
+.ap{background:#111}
+.ap h1{font-size:46px;letter-spacing:-.04em;font-weight:700;max-width:14ch}
+.ap p,.fine{color:#A8A8A0}
+.af{background:var(--paper)}
+.af h2{letter-spacing:-.03em}
+.ap .slot.on{background:rgba(200,241,105,.18);border-color:var(--lime);color:var(--lime)}
+.ap .slot.me{background:var(--lime);color:#111;border-color:var(--lime)}
+.ap .dot.done circle{fill:var(--lime);stroke:var(--lime)}
+.ap .dot.done text{fill:#111}
+.ap .dot.now circle{fill:#FF9F43;stroke:#FF9F43}
+.ap .rc2{fill:#A8A8A0}
+.spin circle{stroke:var(--lime)}
+.loading{color:#A8A8A0}
+.shell.enter .top{animation:fadeIn .4s}
+@media(max-width:899px){
+  .top{padding:10px 14px}
+  .top .brand{font-size:16px}
+  .wn{display:none}
+  .nav{position:fixed;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));margin:0;justify-content:space-around;padding:6px;z-index:40;box-shadow:0 12px 30px rgba(17,17,17,.3)}
+  .nav>button{flex:1;flex-direction:column;gap:3px;font-size:10px;padding:8px 2px;min-width:0;align-items:center;display:flex}
+  .nav>button.dsk{display:none}
+  .nav>button.onm{background:var(--lime);color:#111}
+  .nav>button svg{display:block}
+  .nav>.mobonly{display:flex}
+  .nav .cnt{position:absolute;top:2px;right:6px;margin:0}
+  .moremenu{min-width:230px;max-width:calc(100vw - 20px);max-height:calc(100vh - 210px);overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .moremenu button{flex-direction:row;min-width:0;width:100%;text-align:left;align-items:center;justify-content:flex-start;gap:12px;font-size:14px;padding:12px 14px;white-space:nowrap}
+  .moremenu .cnt{position:static;margin-left:auto}
+  .moremenu{top:auto;bottom:calc(100% + 10px)}
+  .moremenu .mob{display:flex}
+  .wrap{padding:12px 14px 120px}
+  .ph h1{font-size:30px}
+  .bento{grid-template-columns:repeat(2,1fr);grid-auto-rows:minmax(120px,auto);gap:10px}
+  .bt.big{grid-row:auto;padding:22px}
+  .bt.big .bv{font-size:48px}
+  .bv{font-size:38px}
+  .bars{height:90px}
+  #toast{bottom:100px}
+  .ap{padding:22px 20px}
+  .ap h1{font-size:26px;max-width:none}
+}
+
+/* ---- form polish ---- */
+.card h2{margin:0 0 4px}
+label{margin:18px 0 7px;font-size:13px}
+select,input:not([type=checkbox]):not([type=radio]){min-height:50px}
+.pm{display:flex;gap:4px;background:#ECEAE2;padding:4px;border-radius:999px;margin-top:2px}
+label.pmo{flex:1;margin:0;position:relative;text-align:center;padding:12px 8px;border-radius:999px;cursor:pointer;font-size:14px;font-weight:600;color:#3D3D38;display:block}
+label.pmo input{position:absolute;opacity:0;pointer-events:none;width:1px;min-height:0}
+label.pmo:has(input:checked){background:#111;color:var(--lime)}
+.sendhd{margin:20px 0 6px;font-size:14px;font-weight:700;color:#111}
+.bank{background:#F5F9E8;border:1.5px solid #D5EBA0;border-radius:18px;padding:14px 16px;line-height:1.7;font-size:14px}
+input[type=file]{padding:10px;background:#F7F6F0;border-style:dashed;font-size:13px}
+input[type=file]::file-selector-button{background:#111;color:#fff;border:0;border-radius:999px;padding:8px 14px;margin-right:12px;font:inherit;font-weight:600;cursor:pointer}
+#pbtn{width:100%;padding:15px;font-size:15px;margin-top:6px}
+.ls{display:none}
+@media(max-width:899px){
+  .nav>button .ls{display:inline}
+  .nav>button .lf.hs{display:none}
+  .card{padding:20px 18px}
+}
+
+/* ===== Obsidian & Brass theme ===== */
+:root{color-scheme:dark;--ink:#0B0D12;--ink2:#12151C;--paper:#0B0D12;--card:#12151C;--c2:#1B1F2A;--line:#2A3040;--tx:#F3EDE0;--mu:#A09B8B;--brand:#C9A44C;--brandd:#E4C778;--brandl:rgba(201,164,76,.14);--amber:#E6A55C;--amberl:rgba(230,165,92,.14);--red:#F2998E;--redl:rgba(242,153,142,.13);--lime:#C9A44C;--gold:#E4C778;--on:#0B0D12;--gl:rgba(201,164,76,.16);--ok:#7FCB9B}
+body{font-family:Manrope,system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;background:var(--paper);color:var(--tx);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(42vmax 42vmax at 6% 0%,var(--gl),transparent 70%),radial-gradient(48vmax 48vmax at 100% 100%,var(--gl),transparent 70%);animation:aur 22s ease-in-out infinite alternate}
+@keyframes aur{to{transform:translate(2vmax,2vmax) scale(1.1)}}
+@keyframes shine{from{transform:translateX(-120%) skewX(-20deg)}to{transform:translateX(320%) skewX(-20deg)}}
+@keyframes lab{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:none}}
+#app{position:relative;z-index:1}
+:focus-visible{outline-color:var(--brandd)}
+h1,h2,h3,.ph h1,.bv,.amt,.stat,.ramt,.ap h1,.af h2{font-family:'Cormorant Garamond',Georgia,serif}
+.ph h1{font-size:46px;font-weight:600;letter-spacing:-.01em;line-height:1.05}
+h2{font-size:24px;font-weight:600}h3{font-size:22px;font-weight:600}
+.ph p,.muted{color:var(--mu)}
+.card,.bt{background:linear-gradient(160deg,var(--card),var(--paper));border:1px solid var(--line);color:var(--tx);border-radius:24px;position:relative}
+.card:not(.tw),.bt{overflow:hidden}
+.card::before,.bt::before{content:"";position:absolute;left:24px;right:24px;top:0;height:1px;background:linear-gradient(90deg,transparent,var(--brand),transparent);opacity:.75;pointer-events:none}
+.card::after,.bt::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .4s;background:radial-gradient(380px circle at var(--mx,50%) var(--my,50%),var(--gl),transparent 60%)}
+.card:hover::after,.bt:hover::after{opacity:1}
+.grid .card:hover{box-shadow:0 16px 34px rgba(0,0,0,.45);border-color:rgba(201,164,76,.45)}
+.bt:nth-child(2){animation-delay:.07s}.bt:nth-child(3){animation-delay:.14s}.bt:nth-child(4){animation-delay:.21s}.bt:nth-child(5){animation-delay:.28s}
+.amt{font-size:32px;font-weight:600}.amt small{font-family:Manrope}
+.bt.big{background:linear-gradient(145deg,#1E2330,#12151C);border-color:rgba(201,164,76,.38);color:var(--tx)}
+.bt.lime{background:linear-gradient(145deg,#E4C778,#C9A44C);color:var(--on);border:0}
+.bt.lime::before,.bt.lime::after{display:none}
+.bl,.bt.big .bl,.bs,.bt.big .bs{color:var(--mu)}.bt.lime .bl{color:#4a3a0e}
+.bv{font-size:54px;font-weight:600;letter-spacing:-.02em}
+.bt.big .bv{font-size:70px;color:var(--brandd);letter-spacing:-.02em}
+.bv.sm{font-size:34px}
+.b6 i{background:var(--c2)}.b6 i.cur{background:linear-gradient(var(--brandd),var(--brand))}.b6 span{color:var(--mu)}
+.btn{position:relative;overflow:hidden;background:var(--brand);color:var(--on);border-radius:999px;font-weight:800}
+.btn:hover{background:var(--brandd);color:var(--on)}
+.btn.dk{background:var(--on);color:var(--brandd)}.btn.dk:hover{background:var(--c2);color:var(--brandd)}
+.btn.lm{background:var(--brand);color:var(--on)}
+.btn.gray{background:var(--c2);color:var(--tx);border:1px solid var(--line)}.btn.gray:hover{background:#252B3A;color:var(--tx)}
+.btn.out{background:transparent;color:var(--brandd);border:1px solid var(--brand)}.btn.out:hover{background:var(--brand);color:var(--on)}
+.btn.red{background:var(--redl);color:var(--red)}.btn.red:hover{background:rgba(242,153,142,.24);color:var(--red)}
+.btn:not(.sm):not(.gray):not(.out):not(.red):not(.dk):not(:disabled)::before{content:"";position:absolute;top:0;left:0;width:40%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);animation:shine 3.4s ease-in-out infinite;pointer-events:none}
+.btn.busy::before{display:none}.btn.busy::after{border-color:var(--on);border-right-color:transparent}
+input,select,textarea{background:var(--card);color:var(--tx);border:1px solid var(--line);border-radius:14px}
+input::placeholder,textarea::placeholder{color:#6f6b5f}
+input:focus,select:focus,textarea:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--gl)}
+label{color:var(--mu)}
+input[type=file]{background:var(--c2)}input[type=file]::file-selector-button{background:var(--brand);color:var(--on)}
+.seg,.pm{background:var(--c2)}.seg button,label.pmo{color:var(--mu)}
+.seg button.on{background:var(--brand);color:var(--on)}label.pmo:has(input:checked){background:var(--brand);color:var(--on)}
+th{color:var(--mu)}td,th{border-color:var(--line)}
+tr:hover td{background:rgba(255,255,255,.03)}tr.cur td{background:rgba(201,164,76,.1)}
+.bank{background:var(--brandl);border:1px solid rgba(201,164,76,.35);color:var(--tx)}
+.empty{background:transparent;border-color:var(--line)}.empty svg{color:var(--mu)}
+.mback{background:rgba(4,5,8,.72)}
+.mbox{background:linear-gradient(160deg,var(--card),var(--paper));border:1px solid var(--line);color:var(--tx);border-radius:26px;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.rcpt .rh{color:var(--tx)}.ramt{color:var(--brandd)}.stat{color:var(--brandd)}
+.slot{border-color:var(--line);color:var(--mu)}.slot.on{background:var(--brandl);border-color:var(--brand);color:var(--brandd)}.slot.me{background:var(--brand);border-color:var(--brand);color:var(--on)}
+.bar{background:var(--c2)}.bar i{background:linear-gradient(90deg,var(--brand),var(--brandd))}
+.track{stroke:var(--line)}
+.dot circle{fill:var(--c2);stroke:var(--line)}.dot text{fill:var(--mu)}
+.dot.done circle{fill:var(--brand);stroke:var(--brand)}.dot.done text{fill:var(--on)}
+.dot.now circle{fill:var(--paper);stroke:var(--brandd)}.dot.now text{fill:var(--tx)}
+.dot.me circle{stroke:var(--tx);stroke-width:3}.dot.empty circle{fill:none}.dot.now.empty circle{fill:rgba(228,199,120,.12)}
+.rc1{fill:var(--brandd);font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:600}.rc2{fill:var(--mu)}
+.lg{border-color:var(--line)}.lg.done{background:var(--brand);border-color:var(--brand)}.lg.now{background:var(--gold);border-color:var(--gold)}.lg.me{border-color:var(--tx)}
+.ap{background:linear-gradient(160deg,#12151C,#0B0D12);border-right:1px solid var(--line)}
+.ap h1{font-size:54px;font-weight:600;letter-spacing:-.01em}.af{background:var(--paper)}
+.ap .dot circle{fill:transparent;stroke:rgba(255,255,255,.25)}.ap .dot.done circle{fill:var(--brand);stroke:var(--brand)}.ap .dot.done text{fill:var(--on)}
+.ap .dot.now circle{fill:var(--gold);stroke:var(--gold)}.ap .dot.now text{fill:var(--on)}.ap .rc1{fill:var(--brandd)}.ap .rc2{fill:var(--mu)}
+.ap .slot.on{background:var(--brandl);border-color:var(--brand);color:var(--brandd)}.ap .slot.me{background:var(--brand);color:var(--on);border-color:var(--brand)}
+.loading{background:var(--paper);color:var(--mu)}.spin circle{stroke:var(--brand)}
+#toast{background:var(--c2);color:var(--brandd);border:1px solid var(--brand);border-radius:999px}#toast.err{background:var(--red);color:var(--on)}
+.av{background:var(--brand);color:var(--on)}.wn b{color:var(--tx)}.wn span{color:var(--mu)}
+.top .ico{color:var(--mu);background:rgba(255,255,255,.06)}.top .ico:hover{background:var(--brand);color:var(--on)}
+.top .brand{color:var(--tx)}
+.nav .cnt{position:absolute;top:4px;right:4px;margin:0;background:var(--amber);color:var(--on);font-size:10px;min-width:16px;padding:0 5px}
+.pin,.dock,.scrim,.sheet{display:none}
+/* ---- PC rail ---- */
+@media(min-width:900px){
+.top{position:fixed;left:0;top:0;bottom:0;width:88px;z-index:40;flex-direction:column;align-items:stretch;gap:18px;padding:22px 14px;background:rgba(11,13,18,.86);backdrop-filter:blur(16px);border-right:1px solid var(--line);overflow:hidden;transition:width .5s cubic-bezier(.2,.8,.2,1),box-shadow .5s}
+.top:hover,.top.open{width:252px;box-shadow:24px 0 60px rgba(0,0,0,.55)}
+.top .brand{height:48px;padding:0 0 0 4px;white-space:nowrap;gap:12px}
+.top .brand span{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:24px;color:var(--brandd);font-weight:600;opacity:0;transition:opacity .3s}
+.top:hover .brand span,.top.open .brand span{opacity:1;transition-delay:.15s}
+.top .brand svg{color:var(--brand);flex:none}
+.nav{flex:1;margin:0;background:transparent;border-radius:0;padding:0;flex-direction:column;gap:5px;overflow-y:auto;overflow-x:hidden;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nav button{width:100%;height:46px;flex:none;padding:0 13px;gap:16px;border-radius:14px;justify-content:flex-start;color:var(--mu);font-size:14px;font-weight:700;background:transparent}
+.nav button svg{display:block;flex:none}
+.nav button .lf{opacity:0}
+.top:hover .nav button .lf,.top.open .nav button .lf{animation:lab .45s cubic-bezier(.2,.8,.2,1) forwards;animation-delay:calc(.08s + var(--k)*35ms)}
+.nav button:hover{background:rgba(255,255,255,.05);color:var(--tx)}
+.nav button.on{background:var(--brand);color:var(--on);box-shadow:0 8px 26px var(--gl)}
+.pin{display:block;height:42px;border:1px solid var(--line);background:var(--c2);color:var(--mu);border-radius:14px;font:inherit;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap;overflow:hidden;transition:.3s}
+.pin:hover{color:var(--brandd);border-color:var(--brand)}
+.who{margin:0;white-space:nowrap}
+.top .wn,.top .who .ico{opacity:0;transition:opacity .3s}
+.top:hover .wn,.top:hover .who .ico,.top.open .wn,.top.open .who .ico{opacity:1;transition-delay:.2s}
+.main{margin-left:88px}
+.wrap{max-width:1240px;padding:36px 44px 64px}
+}
+/* ---- Mobile ---- */
+@media(max-width:899px){
+.top{position:sticky;top:0;z-index:30;padding:calc(10px + env(safe-area-inset-top,0px)) 16px 10px;background:rgba(11,13,18,.86);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);gap:12px}
+.top .brand span{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:26px;color:var(--brandd);font-weight:600}
+.top .brand svg{color:var(--brand)}
+.top .nav{display:none}.wn{display:none}
+.wrap{padding:16px 14px 140px}
+.ph h1{font-size:38px}
+.bv{font-size:42px}.bt.big .bv{font-size:54px}
+.bento{grid-template-columns:1fr 1fr;gap:10px}
+.dock{display:flex;position:fixed;z-index:45;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom,0px));align-items:center;background:rgba(27,31,42,.92);backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:999px;padding:8px 10px;box-shadow:0 14px 40px rgba(0,0,0,.6)}
+.dock button{position:relative;flex:1;border:0;background:transparent;font:inherit;font-size:10.5px;font-weight:700;color:var(--mu);padding:4px 0;display:flex;flex-direction:column;align-items:center;gap:3px;min-height:46px;justify-content:center;cursor:pointer;transition:color .25s}
+.dock button.on{color:var(--brandd)}
+.dock .pay{flex:none;width:58px;height:58px;min-height:0;margin:-28px 4px 0;border-radius:50%;background:var(--brand);color:var(--on);box-shadow:0 0 0 6px var(--paper);transition:transform .25s}
+.dock .pay.on{color:var(--on);box-shadow:0 0 0 6px var(--paper),0 0 22px var(--gl)}
+.dock .pay:active{transform:scale(.92)}
+.dock .cnt{position:absolute;top:2px;right:14%;background:var(--amber);color:var(--on);border-radius:999px;font-size:10px;font-weight:800;min-width:16px;text-align:center;padding:0 4px}
+.scrim{display:block;position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.62);backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .4s}
+.sheet{display:block;position:fixed;z-index:60;left:0;right:0;bottom:0;max-height:86vh;overflow-y:auto;background:var(--card);border:1px solid var(--line);border-bottom:0;border-radius:28px 28px 0 0;padding:12px 16px calc(24px + env(safe-area-inset-bottom,0px));transform:translateY(105%);transition:transform .55s cubic-bezier(.2,.9,.2,1)}
+.sheet::before{content:"";display:block;width:42px;height:4px;border-radius:9px;background:var(--line);margin:0 auto 14px}
+.sht{font-size:10.5px;letter-spacing:.2em;color:var(--mu);font-weight:700;text-transform:uppercase}
+#sg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px}
+#sg button{position:relative;display:flex;align-items:center;gap:12px;background:var(--c2);border:1px solid var(--line);border-radius:16px;padding:14px;font:inherit;font-size:14px;font-weight:700;color:var(--tx);min-height:56px;text-align:left;cursor:pointer;opacity:0;transform:translateY(14px)}
+#sg button svg{color:var(--brandd);flex:none}
+#sg button.on{border-color:var(--brand);background:var(--brandl)}
+#sg .cnt{position:static;margin-left:auto}
+.sh-out{width:100%;margin-top:14px;padding:14px;border-radius:16px;border:1px solid var(--line);background:transparent;color:var(--red);font:inherit;font-weight:700;cursor:pointer}
+body.menu-open .scrim{opacity:1;pointer-events:auto}
+body.menu-open .sheet{transform:none}
+body.menu-open #sg button{animation:riseIn .5s cubic-bezier(.2,.8,.2,1) forwards;animation-delay:calc(.12s + var(--k)*45ms)}
+#toast{bottom:110px}
+.card{padding:20px 18px}
+}
+@media(prefers-reduced-motion:reduce){.nav button .lf,#sg button{opacity:1!important;transform:none!important}}
+
+/* ===== Home dashboard (from design file) ===== */
+.eb{font-size:10.5px;letter-spacing:.2em;color:var(--mu);font-weight:700;text-transform:uppercase}
+.ser{font-family:'Cormorant Garamond',Georgia,serif}
+@keyframes hpop{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes hpulse{from{transform:scale(1);opacity:.9}to{transform:scale(2.2);opacity:0}}
+@keyframes hdraw{from{stroke-dashoffset:942.5}}
+@keyframes hdrawr{from{stroke-dashoffset:226.2}}
+@keyframes hgrow{from{transform:scaleY(0)}}
+@keyframes hgrowx{from{transform:scaleX(0)}}
+.rv{opacity:0;animation:riseIn .85s cubic-bezier(.2,.7,.2,1) forwards;animation-delay:calc(var(--i,0)*110ms)}
+.hpc{display:none}.hmb{display:block}
+@media(min-width:900px){.hpc{display:block}.hmb{display:none}}
+.hhead{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:24px}
+.hhead h1{margin:6px 0 0;font-size:clamp(32px,4.4vw,50px);font-weight:600;letter-spacing:-.01em;line-height:1.05}
+.hhead em{color:var(--brandd);font-weight:500}
+.hchip{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:99px;padding:6px 6px 6px 16px;font-size:13px;font-weight:700;background:var(--card)}
+.hsw{display:flex;gap:6px;flex-wrap:wrap;margin:-8px 0 18px}
+.hsw button{border:1px solid var(--line);background:var(--card);color:var(--mu);border-radius:99px;padding:8px 16px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;transition:.3s}
+.hsw button:hover{color:var(--tx);border-color:var(--brand)}.hsw button.on{background:var(--brand);color:var(--on);border-color:var(--brand)}
+.hgrid{display:grid;grid-template-columns:1.15fr 1fr;gap:20px;margin-bottom:24px}
+.hgrid .card{margin:0}
+.horbit{grid-row:span 2;padding:24px;display:flex;flex-direction:column;align-items:center}
+.ow{position:relative;width:min(100%,460px);aspect-ratio:1}
+.ow svg{width:100%;height:100%;display:block;overflow:visible}
+.hrot{transform-origin:210px 210px;animation:rot 60s linear infinite}.hrot.b{animation-duration:90s;animation-direction:reverse}
+.harc{stroke-dasharray:942.5;animation:hdraw 2.2s .3s cubic-bezier(.3,.7,.2,1) backwards;filter:drop-shadow(0 0 6px var(--brand))}
+.hnd{cursor:default}.hndi{animation:hpop .55s cubic-bezier(.3,1.5,.5,1) backwards;animation-delay:var(--d)}
+.hnd circle{transition:.25s}
+.hnd.done circle{fill:var(--brand);stroke:var(--brand)}.hnd.done text{fill:var(--on)}
+.hnd.next circle{fill:var(--paper);stroke:var(--tx);stroke-width:2}
+.hnd.up circle{fill:var(--c2);stroke:var(--line)}
+.hnd.mine circle{stroke:var(--brandd);stroke-width:3}
+.hnd text{font:700 12px Manrope,sans-serif;fill:var(--mu);text-anchor:middle}.hnd.next text{fill:var(--tx)}
+.hnd:hover .hndi{transform:scale(1.28);transition:transform .25s}
+.hpl{fill:none!important;stroke:var(--tx)!important;animation:hpulse 2s ease-out infinite;transform-box:fill-box;transform-origin:center}
+.oc{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;pointer-events:none;padding:0 22%}
+.oc .hbig{font-size:clamp(30px,3.6vw,50px);color:var(--brandd);margin:8px 0 6px}
+.os{font-size:13px;max-width:100%}
+.hbig{font-weight:600;line-height:1;letter-spacing:-.02em}
+.hleg{display:flex;gap:18px;flex-wrap:wrap;justify-content:center;font-size:11.5px;color:var(--mu);margin-top:8px}
+.hleg i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px}
+.hstat{padding:24px 26px}
+.hstat .hbig{font-size:clamp(40px,5vw,58px);margin:10px 0 6px}
+.hbars{display:flex;align-items:flex-end;gap:9px;height:64px;margin-top:16px}
+.hbars span{flex:1;background:var(--c2);border-radius:6px 6px 2px 2px;transform-origin:bottom;animation:hgrow .9s cubic-bezier(.3,.8,.3,1) backwards;animation-delay:calc(.6s + var(--k)*80ms)}
+.hbars span:last-child{background:linear-gradient(var(--brandd),var(--brand))}
+.hq{padding:22px 24px}
+.hqr{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line);font-size:13.5px;margin-top:0}
+.hq .hqr:first-of-type{margin-top:12px}
+.hqr b{display:block}.hqr small{color:var(--mu);font-size:11.5px}.hqr .a{margin-left:auto;font-weight:800;text-align:right}
+.hqr>div{min-width:0}
+.av.d{background:var(--c2);color:var(--brandd)}
+.htl{grid-column:1/-1;padding:22px 26px}
+.htr{display:flex;gap:12px;margin-top:16px;overflow-x:auto;padding:6px 2px 8px}
+.htm{flex:1 0 118px;border:1px solid var(--line);border-radius:16px;padding:14px;background:var(--paper);transition:.35s}
+.htm:hover{transform:translateY(-5px);border-color:var(--brand)}
+.htm.done{background:var(--c2)}.htm.next{border-color:var(--tx);box-shadow:0 0 0 4px var(--gl)}.htm.mine{border-color:var(--brandd)}
+.htm .m{font-size:22px;font-weight:600}.htm .n{font-size:12px;margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.htm .st{font-size:10px;letter-spacing:.14em;text-transform:uppercase;margin-top:10px;color:var(--mu);font-weight:700}
+.htm.done .st{color:var(--brandd)}.htm.next .st{color:var(--tx)}
+/* mobile */
+.hmh{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:6px 2px 6px}
+.hmh .hbig{font-size:clamp(40px,13vw,56px);margin:8px 0 6px}
+.hsub{font-size:12.5px;color:var(--mu)}
+.hring{flex:none}.hring .t{fill:none;stroke:var(--line);stroke-width:7}
+.hring .p{fill:none;stroke:var(--brand);stroke-width:7;stroke-linecap:round;stroke-dasharray:226.2;transform:rotate(-90deg);transform-origin:44px 44px;animation:hdrawr 1.8s .4s cubic-bezier(.3,.7,.2,1) backwards}
+.hring text{font:600 20px 'Cormorant Garamond',serif;fill:var(--tx);text-anchor:middle}
+.hsl{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;margin:10px -14px 0;padding:6px 14px 8px;scrollbar-width:none}
+.hsl::-webkit-scrollbar{display:none}
+.hmc{flex:0 0 84%;scroll-snap-align:center;padding:20px;margin:0}
+.hmc h3{margin:6px 0 2px;font-size:28px}.hmc .am{font-size:13px;color:var(--mu)}
+.hpb{height:5px;background:var(--c2);border-radius:9px;margin:18px 0 12px;overflow:hidden}
+.hpb i{display:block;height:100%;background:var(--brand);border-radius:9px;transform-origin:left;animation:hgrowx 1.4s .6s cubic-bezier(.3,.7,.2,1) backwards}
+.hrow{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;color:var(--mu)}
+.hadd{display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;gap:10px;cursor:pointer}
+.hqa{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:14px 0 2px}
+.hqa button{background:none;border:0;font:inherit;font-size:11px;color:var(--mu);font-weight:700;display:flex;flex-direction:column;align-items:center;gap:8px;padding:0;cursor:pointer}
+.hqa button i{width:54px;height:54px;border:1px solid var(--line);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--brandd);background:var(--card);transition:.25s}
+.hqa button:active i{background:var(--brand);color:var(--on);transform:scale(.92)}
+.hsec{padding-top:22px}.hsec>.eb{display:block;margin-bottom:12px}
+.hmq{display:flex;flex-direction:column;gap:10px}
+.hmq .hqr.card{padding:14px 16px;border-radius:18px;margin:0;border-top:1px solid var(--line)}
+.har{display:flex;gap:14px;padding:0 0 18px;position:relative}
+.har::before{content:"";position:absolute;left:4px;top:14px;bottom:-2px;width:1px;background:var(--line)}.har:last-child::before{display:none}
+.har i{width:9px;height:9px;border-radius:50%;margin-top:5px;flex:none;background:var(--brand);position:relative}
+.har b{display:block;font-size:13.5px}.har small{color:var(--mu);font-size:11.5px}
+@media(prefers-reduced-motion:reduce){.rv{opacity:1}}
+
+/* ---- paid status + names ---- */
+.ow{width:min(100%,520px)}
+.hnd.late circle{fill:rgba(230,165,92,.14);stroke:var(--amber);stroke-width:2}.hnd.late text{fill:var(--amber)}
+.hlb{fill:var(--tx);font-family:Manrope,sans-serif;font-weight:700}.hlb.open{fill:var(--mu);font-weight:500;font-style:italic}.hlb.me{fill:var(--brandd)}
+.htm.late{border-color:rgba(230,165,92,.55)}.htm.late .st{color:var(--amber)}
+.htm.done{border-color:rgba(201,164,76,.4)}
+.hord-l{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.hord{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:16px;background:var(--card)}
+.hord .no{width:30px;height:30px;border-radius:50%;background:var(--c2);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:var(--mu);flex:none}
+.hord.done .no{background:var(--brand);color:var(--on)}.hord.late .no{background:rgba(230,165,92,.16);color:var(--amber)}
+.hord.next{border-color:var(--tx)}.hord.mine{border-color:var(--brandd)}
+.hord b{display:block;font-size:14px}.hord small{color:var(--mu);font-size:11.5px}
+.hord .hst{margin-left:auto;font-size:11px;font-weight:800;letter-spacing:.04em;color:var(--mu);text-align:right}
+.hord.done .hst{color:var(--brandd)}.hord.late .hst{color:var(--amber)}
+.noanim .rv{animation:none;opacity:1}
+.noanim .harc,.noanim .hndi,.noanim .hbars span,.noanim .hpb i,.noanim .hring .p{animation:none}
+
+.phint{margin:10px 0 0;padding:10px 12px;border-radius:12px;background:var(--brandl);color:var(--tx);font-size:13px;border:1px solid rgba(201,164,76,.3)}
+.phint.part{background:var(--amberl);border-color:rgba(230,165,92,.4)}.phint.ok{background:rgba(127,203,155,.12);border-color:rgba(127,203,155,.4)}
+.phint:empty{display:none}
+
+/* ---- credits ---- */
+.credit{margin-top:30px;padding-top:22px;border-top:1px solid var(--line);text-align:center}
+.credit b{display:block;font-family:'Cormorant Garamond',Georgia,serif;font-size:26px;font-weight:600;color:var(--brandd);letter-spacing:.01em}
+.credit span{display:block;margin-top:6px;font-size:12px;color:var(--mu);letter-spacing:.02em;line-height:1.5}
+.credit-in{position:relative;z-index:1;padding:0 44px 36px;text-align:center;font-size:12px;color:var(--mu);letter-spacing:.04em}
+.credit-in em{font-style:normal;color:var(--brandd);font-weight:700}
+@media(max-width:899px){.credit-in{padding:0 14px 120px}.wrap{padding-bottom:24px}}
+
+/* ---- auth extras, account, activity, verify ---- */
+.lnk-row{text-align:center;margin:14px 0 0;font-size:13px;color:var(--mu)}
+.lnk-row a{color:var(--brandd);font-weight:700;cursor:pointer;text-decoration:none}.lnk-row a:hover{text-decoration:underline}
+input.otp{margin-bottom:12px;text-align:center;font-size:28px;letter-spacing:.35em;font-weight:700;font-family:'Cormorant Garamond',serif;padding:14px}
+.acc-id{display:flex;align-items:center;gap:12px;margin:14px 0 4px}.acc-id b{display:block}.acc-id small{color:var(--mu)}
+.acc-sec{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}.acc-sec input{margin-top:8px}
+.acc-em{margin:8px 0 12px;word-break:break-all}
+.actrow{display:flex;justify-content:flex-end;margin:0 0 14px}
+.sh-out.acc{color:var(--tx);margin-top:10px}
+.actl .actd{margin:22px 0 10px;display:block}.actc{padding:18px 20px 4px}
+.actc .har small{display:block}.actc .har .by{margin-top:2px;opacity:.85}
+.vwrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;position:relative;z-index:1}
+.vcard{max-width:460px;width:100%;padding:30px 28px}
+.vcard .brand{display:flex;align-items:center;gap:12px;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:26px;color:var(--brandd)}
+.vok{font-size:34px;color:var(--ok);font-weight:600;margin:10px 0 2px}.vbad{font-size:34px;color:var(--red);font-weight:600;margin:10px 0 6px}
+.vamt{font-size:46px;color:var(--brandd);font-weight:600;line-height:1;margin:2px 0 14px}
+.vfoot{margin:18px 0 0;text-align:center;font-size:12px;color:var(--mu)}.vfoot em{font-style:normal;color:var(--brandd);font-weight:700}
+
+/* ---- logo ---- */
+.logo-img{display:block;flex:none;height:30px;width:auto;object-fit:contain;filter:drop-shadow(0 2px 8px rgba(201,164,76,.25))}
+.top .brand{gap:10px}
+@media(min-width:900px){.top .brand .logo-img{width:60px;height:auto;margin-left:0}.top .brand{padding-left:0}}
+.ap .brand .logo-img{height:38px}
+.vcard .brand .logo-img{height:34px}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toast"></div>
+
+<script>
+// ====== SETTINGS ======
+const SUPABASE_URL = 'https://srqiphdhpgrrnpvkvkly.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_AjVvlATOpYbiZJ_HWO8lYQ_ahBJS_nb';
+const EMAIL_DOMAIN = '@committee-app.com';
+// =======================
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let me = null, tab = '', ch = null, tmr = null;
+let D = {committees:[],memberships:[],payments:[],payouts:[],accounts:[],profiles:[]};
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const money = n => 'Rs ' + Number(n || 0).toLocaleString('en-PK');
+const fdate = d => d ? new Date(d).toLocaleDateString('en-GB') : '-';
+const badge = s => `<span class="badge ${esc(s)}"><i></i>${esc(s)}</span>`;
+const empty = (t, icon, btn) => `<div class="empty">${ic(icon || 'inbox', 28)}<p>${esc(t)}</p>${btn ? `<button class="btn sm" onclick="setTab('${btn[0]}')">${esc(btn[1])}</button>` : ''}</div>`;
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function slotMonth(c, n) {
+  if (!c || !c.start_date || !n) return null;
+  const d = new Date(c.start_date + 'T00:00:00');
+  d.setMonth(d.getMonth() + (n - 1));
+  const key = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+  return { key, label: MON[d.getMonth()] + ' ' + d.getFullYear() };
+}
+const pot = c => Number(c.monthly_amount) * Number(c.total_members);
+const cleanPhone = p => String(p || '').replace(/[^0-9]/g, '');
+
+function toast(m, err) {
+  const t = $('toast'); t.textContent = m; t.className = err ? 'err' : ''; t.style.display = 'block';
+  clearTimeout(t._t); t._t = setTimeout(() => t.style.display = 'none', 4000);
+}
+
+// ================= AUTH =================
+function logoMark() {
+  return '<img class="logo-img" src="logo.png" alt="AN Committees" width="62" height="30" decoding="async">';
+}
+const nowKey = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); };
+const fmtMonth = k => { const [y, m] = String(k || '').split('-'); return m ? MON[+m - 1] + ' ' + y : '-'; };
+const fmtDT = d => d ? new Date(d).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
+const reduced = () => window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// ---------- modal ----------
+function openModal(html, wide) {
+  closeModal();
+  const d = document.createElement('div');
+  d.id = 'modal'; d.className = 'mback';
+  d.innerHTML = `<div class="mbox ${wide ? 'wide' : ''}" role="dialog" aria-modal="true">${html}</div>`;
+  d.addEventListener('mousedown', e => { if (e.target === d) closeModal(); });
+  document.body.appendChild(d);
+  const f = d.querySelector('input,select,textarea'); if (f) setTimeout(() => f.focus(), 40);
+}
+function closeModal() { const m = $('modal'); if (m) m.remove(); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+async function copyText(t) {
+  try { await navigator.clipboard.writeText(t); }
+  catch (e) { const a = document.createElement('textarea'); a.value = t; document.body.appendChild(a); a.select(); document.execCommand('copy'); a.remove(); }
+  toast('Copied');
+}
+
+// ---------- rotation ring (the signature visual) ----------
+function curIdx(c) {
+  if (!c.start_date) return 0;
+  const s = new Date(c.start_date + 'T00:00:00'), n = new Date();
+  return (n.getFullYear() - s.getFullYear()) * 12 + (n.getMonth() - s.getMonth()) + 1;
+}
+function ringSVG(c, o = {}) {
+  const total = Math.max(1, Math.min(Number(c.total_members) || 1, 60));
+  const size = 240, mid = size / 2, R = mid - (total > 24 ? 14 : 24);
+  const dr = total <= 12 ? 13 : total <= 24 ? 9.5 : 6;
+  const cur = o.cur != null ? o.cur : curIdx(c);
+  const names = o.names || {}, filled = o.filled || null, mine = o.mine || 0;
+  let dots = '';
+  for (let i = 1; i <= total; i++) {
+    const a = (i - 1) / total * 2 * Math.PI - Math.PI / 2;
+    const x = (mid + R * Math.cos(a)).toFixed(1), y = (mid + R * Math.sin(a)).toFixed(1);
+    const sm = slotMonth(c, i);
+    const st = i < cur ? 'done' : i === cur ? 'now' : 'up';
+    const cls = 'dot ' + st + (isMine(mine, i) ? ' me' : '') + (filled && !filled.has(i) ? ' empty' : '');
+    const tip = 'Turn ' + i + (sm ? ' - ' + sm.label : '') + (names[i] ? ' - ' + names[i] : '');
+    dots += `<g class="${cls}" data-n="${i}"${isMine(mine, i) ? ' data-me="1"' : ''}><title>${esc(tip)}</title><circle cx="${x}" cy="${y}" r="${dr}"/>${total <= 16 ? `<text x="${x}" y="${y}" dy=".35em">${i}</text>` : ''}</g>`;
+  }
+  let l1, l2 = '';
+  if (cur >= 1 && cur <= total) { l1 = 'Month ' + cur; l2 = 'of ' + total; }
+  else if (cur > total) { l1 = 'Finished'; }
+  else if (c.start_date) { l1 = 'Starts'; l2 = slotMonth(c, 1).label; }
+  else { l1 = 'No start date'; }
+  return `<svg viewBox="0 0 ${size} ${size}" role="img" aria-label="Payout rotation"><circle class="track" cx="${mid}" cy="${mid}" r="${R}"/>${dots}<text class="rc1" x="${mid}" y="${mid - 2}">${esc(l1)}</text><text class="rc2" x="${mid}" y="${mid + 20}">${esc(l2)}</text></svg>`;
+}
+const ringLegend = me_ => `<div class="legend"><span><i class="lg done"></i>Received</span><span><i class="lg now"></i>This month</span>${me_ ? '<span><i class="lg me"></i>You</span>' : ''}</div>`;
+function setRingCur(svg, cur, total) {
+  svg.querySelectorAll('.dot').forEach(g => { const n = +g.dataset.n; g.setAttribute('class', 'dot ' + (n < cur ? 'done' : n === cur ? 'now' : 'up') + (g.dataset.me ? ' me' : '')); });
+  const a = svg.querySelector('.rc1'), b = svg.querySelector('.rc2');
+  if (a) a.textContent = 'Month ' + cur; if (b) b.textContent = 'of ' + total;
+}
+let demoT = null;
+function stopDemo() { if (demoT) { clearInterval(demoT); demoT = null; } }
+function startDemo() {
+  stopDemo();
+  if (reduced()) return;
+  let k = 3;
+  demoT = setInterval(() => {
+    const root = $('demo'); const svg = root && root.querySelector('svg');
+    if (!svg) return stopDemo();
+    k = k % 12 + 1; setRingCur(svg, k, 12);
+  }, 1300);
+}
+
+// ---------- count-up ----------
+function animateCounts(root) {
+  (root || document).querySelectorAll('[data-count]').forEach(el => {
+    const to = Number(el.dataset.count) || 0;
+    if (reduced() || !to) { el.textContent = money(to); return; }
+    const t0 = performance.now(), dur = 800;
+    const step = t => { const p = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - p, 3); el.textContent = money(Math.round(to * e)); if (p < 1) requestAnimationFrame(step); };
+    requestAnimationFrame(step);
+  });
+}
+
+// ================= AUTH =================
+function showAuth(mode = 'login') {
+  stopDemo();
+  $('app').innerHTML = `
+  <div class="auth in">
+    <section class="ap">
+      <div class="brand">${logoMark()}<span>AN Committees</span></div>
+      <div class="apc">
+        <div class="ring-demo" id="demo" aria-hidden="true">${ringSVG({ total_members: 12 }, { cur: 3 })}</div>
+        <h1>Every installment, recorded and verified.</h1>
+        <p>Join a committee, pay by bank or wallet, and see exactly which month your payout arrives.</p>
+      </div>
+      <span class="fine">One turn per member, one payout per month.</span>
+    </section>
+    <section class="af"><div class="af-in">
+      <h2>${mode === 'login' ? 'Welcome back' : 'Create your account'}</h2>
+      <p class="muted">${mode === 'login' ? 'Log in with your phone number and password.' : 'We will email you a one-time code to verify your account.'}</p>
+      <div class="seg">
+        <button class="${mode === 'login' ? 'on' : ''}" onclick="showAuth('login')">Log in</button>
+        <button class="${mode === 'signup' ? 'on' : ''}" onclick="showAuth('signup')">Sign up</button>
+      </div>
+      ${mode === 'login' ? `
+        <label>Phone number</label><input id="l_phone" type="tel" inputmode="numeric" placeholder="03001234567" autocomplete="username">
+        <label>Password</label><input id="l_pass" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+        <br><button class="btn" style="width:100%" id="lbtn" onclick="doLogin()">Log in</button>
+        <p class="lnk-row"><a onclick="showForgot()">Forgot password?</a></p>
+      ` : `
+        <label>Full name *</label><input id="s_name">
+        <label>Phone number *</label><input id="s_phone" type="tel" inputmode="numeric" placeholder="03001234567">
+        <label>Email * (we send a verification code)</label><input id="s_email" type="email" placeholder="you@example.com" autocomplete="email">
+        <label>CNIC (optional)</label><input id="s_cnic" placeholder="35202-1234567-1">
+        <label>Password * (minimum 6 characters)</label><input id="s_pass" type="password" autocomplete="new-password">
+        <label>Confirm password *</label><input id="s_pass2" type="password" autocomplete="new-password">
+        <br><button class="btn" style="width:100%" id="sbtn" onclick="doSignup()">Create account</button>
+      `}
+      <div class="credit"><b>Welcome to AN Committees</b><span>Trusted committee management, engineered by Ahsan Ali</span></div>
+    </div></section>
+  </div>`;
+  startDemo();
+}
+function shakeForm() { const f = document.querySelector('.af-in'); if (!f) return; f.classList.remove('shake'); void f.offsetWidth; f.classList.add('shake'); }
+
+async function logout() {
+  const s = document.querySelector('.shell'); if (s) s.classList.add('out');
+  if (ch) { sb.removeChannel(ch); ch = null; }
+  await Promise.all([sb.auth.signOut(), new Promise(r => setTimeout(r, 320))]);
+  me = null; D = { committees: [], memberships: [], payments: [], payouts: [], accounts: [], profiles: [] };
+  closeModal(); showAuth('login'); toast('You have been logged out');
+}
+
+// ================= BOOT / DATA =================
+function showLoader() {
+  stopDemo();
+  $('app').innerHTML = `<div class="loading"><svg class="spin" viewBox="0 0 50 50" aria-hidden="true"><circle cx="25" cy="25" r="20" fill="none" stroke-width="4" stroke-linecap="round"/></svg><p>Loading your committees</p></div>`;
+}
+async function boot() {
+  if (/^#verify=/.test(location.hash)) return showVerify(decodeURIComponent(location.hash.slice(8)));
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) return showAuth('login');
+  showLoader();
+  const ok = await loadData(session.user.id);
+  if (!ok) { toast('Profile not found, please log in again', 1); await sb.auth.signOut(); return showAuth('login'); }
+  tab = me.role === 'admin' ? 'a_home' : 'm_home';
+  renderShell(true);
+  subscribeRealtime();
+}
+
+async function loadData(uid) {
+  const r = await Promise.all([
+    sb.from('profiles').select('*').order('created_at', { ascending: false }),
+    sb.from('committees').select('*').order('created_at', { ascending: false }),
+    sb.from('memberships').select('*, profiles(name,phone), committees(name,monthly_amount)').order('created_at', { ascending: false }),
+    sb.from('payments').select('*, profiles!user_id(name,phone), memberships(committees(name))').order('created_at', { ascending: false }),
+    sb.from('payouts').select('*, profiles(name,phone), committees(name)').order('created_at', { ascending: false }),
+    sb.from('payment_accounts').select('*').order('created_at', { ascending: true }),
+    sb.from('membership_shares').select('*'),
+    sb.from('committee_draws').select('*').order('created_at', { ascending: false })
+  ]);
+  const keys = ['profiles', 'committees', 'memberships', 'payments', 'payouts', 'accounts', 'shares', 'draws'];
+  keys.forEach((k, i) => { if (r[i].error) { console.error(k, r[i].error); if (!window.__lde) { window.__lde = 1; toast('Could not load ' + k + ': ' + r[i].error.message, 1); } } D[k] = r[i].data || []; });
+  const bad = r.find(x => x.error);
+  if (bad && !loadData.warned) { loadData.warned = true; toast('Could not load some data: ' + bad.error.message, 1); setTimeout(() => { loadData.warned = false; }, 15000); }
+  const id = uid || (me && me.id);
+  const mine = D.profiles.find(p => p.id === id);
+  if (!mine) return false;
+  me = mine; return true;
+}
+
+function subscribeRealtime() {
+  if (ch) sb.removeChannel(ch);
+  ch = sb.channel('live')
+    .on('postgres_changes', { event: '*', schema: 'public' }, () => {
+      clearTimeout(tmr); tmr = setTimeout(refresh, 500);
+    }).subscribe();
+}
+
+async function refresh() {
+  if (!me) return;
+  if (!(await loadData())) return;
+  renderNav();
+  if (window.wheelBusy) return;
+  if ($('modal')) return;
+  const a = document.activeElement, c = $('content');
+  if (a && c && c.contains(a) && ['INPUT', 'SELECT', 'TEXTAREA'].includes(a.tagName)) return;
+  renderTab(false);
+}
+
+// ================= SHELL =================
+const ICONS = {
+  home: '<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/>',
+  inbox: '<path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5h13L22 12v7H2v-7z"/>',
+  card: '<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>',
+  layers: '<path d="M12 3 2 8l10 5 10-5-10-5z"/><path d="m2 13 10 5 10-5"/>',
+  users: '<circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-3.5 3-6 7-6s7 2.5 7 6"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7"/><path d="M18 14.5c2.5.6 4 2.5 4 5.5"/>',
+  down: '<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/>',
+  bar: '<path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/>',
+  bank: '<path d="M3 10 12 4l9 6"/><path d="M5 10v8"/><path d="M10 10v8"/><path d="M14 10v8"/><path d="M19 10v8"/><path d="M3 21h18"/>',
+  history: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  cal: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18"/><path d="M8 3v4"/><path d="M16 3v4"/>',
+  save: '<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 21h16"/>',
+  wheel: '<circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4"/>',
+  more: '<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>',
+  logout: '<path d="M9 21H5V3h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/>'
+};
+const ic = (n, s = 18) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n] || ''}</svg>`;
+
+const TABS = {
+  member: [['m_home', 'Overview', 'home'], ['m_committees', 'Committees', 'layers'], ['m_pay', 'Make payment', 'card'],
+           ['m_history', 'History', 'history'], ['m_payouts', 'Payouts', 'down'], ['m_wheel', 'Lucky draw', 'wheel']],
+  admin: [['a_home', 'Overview', 'home'], ['a_requests', 'Requests', 'inbox'], ['a_payments', 'Payments', 'card'],
+          ['a_committees', 'Committees', 'layers'], ['a_members', 'Members', 'users'], ['a_payouts', 'Payouts', 'down'],
+          ['a_schedule', 'Schedule', 'cal'], ['a_wheel', 'Lucky draw', 'wheel'], ['m_committees', 'Join as member', 'layers'], ['m_pay', 'Pay as member', 'card'], ['m_history', 'My payments', 'history'], ['a_reports', 'Reports', 'bar'], ['a_activity', 'Activity', 'history'], ['a_bank', 'Accounts', 'bank'], ['a_backup', 'Backup', 'save']]
+};
+const SUBS = {
+  a_activity: 'Who did what, and when',
+  m_home: 'Your payments and committees at a glance',
+  m_committees: 'Browse committees and request to join',
+  m_pay: 'Pay by bank, wallet or cash and upload your proof',
+  m_history: 'Every payment you have submitted, with receipts',
+  m_payouts: 'Your turn in each committee and payouts received',
+  a_home: 'What needs your attention today',
+  a_requests: 'Approve or reject people who want to join',
+  a_payments: 'Check proofs and verify payments',
+  a_committees: 'Create, edit and share committees',
+  a_members: 'Everyone who has signed up',
+  a_payouts: 'Record who received the monthly pot',
+  a_schedule: 'Choose who gets each month and track payouts',
+  a_backup: 'Download all your data as an Excel file',
+  a_reports: 'Collections per committee and member',
+  a_bank: 'Banks and wallets members can pay into',
+  a_wheel: 'Spin the wheel live. Everyone watches the same result',
+  m_wheel: 'Watch the live draw for your committee'
+};
+
+function renderShell(first) {
+  const ini = (me.name || '?').trim().charAt(0).toUpperCase();
+  $('app').innerHTML = `<div class="shell ${first ? 'enter' : ''}">
+    <header class="top" id="rail">
+      <div class="brand">${logoMark()}<span>AN Committees</span></div>
+      <nav id="nav" class="nav"></nav>
+      <button class="pin" onclick="togglePin()" aria-label="Pin sidebar"><span id="pint">Pin sidebar</span></button>
+      <div class="who"><div class="av" onclick="openAccount()" role="button" tabindex="0" title="Account and security" style="cursor:pointer">${esc(ini)}</div>
+        <div class="wn"><b>${esc(me.name)}</b><span>${me.role === 'admin' ? 'Administrator' : 'Member'}</span></div>
+        <button class="ico" onclick="logout()" title="Log out" aria-label="Log out">${ic('logout')}</button></div>
+    </header>
+    <main class="main"><div id="content" class="wrap"></div><footer class="credit-in">AN Committees · Designed &amp; Developed by <em>Ahsan Ali</em></footer></main>
+    <nav class="dock" id="dock" aria-label="Main"></nav>
+    <div class="scrim" onclick="closeSheet()"></div>
+    <div class="sheet" id="sheet" role="dialog" aria-label="Menu"><div class="sht">Menu</div><div id="sg"></div><button class="sh-out acc" onclick="closeSheet();openAccount()">Account and security</button><button class="sh-out" onclick="logout()">Log out</button></div></div>`;
+  document.body.classList.remove('menu-open');
+  renderNav(); renderTab(false); animateCounts();
+}
+
+function renderNav() {
+  const adm = me.role === 'admin', list = TABS[adm ? 'admin' : 'member'];
+  const pr = D.memberships.filter(m => m.status === 'pending').length;
+  const pp = D.payments.filter(p => p.status === 'pending').length;
+  const cnt = k => { const n = adm ? (k === 'a_requests' ? pr : k === 'a_payments' ? pp : 0) : 0; return n ? `<span class="cnt">${n}</span>` : ''; };
+  const el = $('nav'); if (!el) return;
+  el.innerHTML = list.map(([k, l, i], x) => `<button class="${tab === k ? 'on' : ''}" style="--k:${x}" onclick="setTab('${k}')" aria-label="${l}">${ic(i, 22)}<span class="lf">${l}</span>${cnt(k)}</button>`).join('');
+  const pick = adm ? [['a_home', 'Home', 'home'], ['a_requests', 'Requests', 'inbox'], ['a_payments', 'Payments', 'card'], ['a_committees', 'Groups', 'layers']]
+                   : [['m_home', 'Home', 'home'], ['m_committees', 'Groups', 'layers'], ['m_pay', 'Pay', 'card'], ['m_history', 'History', 'history']];
+  const dk = ([k, l, i]) => `<button class="${tab === k ? 'on' : ''}" onclick="setTab('${k}')">${ic(i, 22)}${l}${cnt(k)}</button>`;
+  const d = $('dock');
+  if (d) d.innerHTML = dk(pick[0]) + dk(pick[1]) + `<button class="pay ${tab === pick[2][0] ? 'on' : ''}" onclick="setTab('${pick[2][0]}')" aria-label="${pick[2][1]}">${ic(pick[2][2], 24)}</button>` + dk(pick[3]) + `<button onclick="openSheet()">${ic('more', 22)}Menu</button>`;
+  const sg = $('sg');
+  if (sg) sg.innerHTML = list.map(([k, l, i], x) => `<button style="--k:${x}" class="${tab === k ? 'on' : ''}" onclick="setTab('${k}')">${ic(i, 20)}${l}${cnt(k)}</button>`).join('');
+}
+function openSheet() { document.body.classList.add('menu-open'); }
+function closeSheet() { document.body.classList.remove('menu-open'); }
+let railPinned = false;
+function togglePin() { railPinned = !railPinned; const r = $('rail'); if (r) r.classList.toggle('open', railPinned); const t = $('pint'); if (t) t.textContent = railPinned ? 'Unpin sidebar' : 'Pin sidebar'; }
+document.addEventListener('pointermove', e => { const c = e.target.closest && e.target.closest('.card,.bt'); if (c) { const r = c.getBoundingClientRect(); c.style.setProperty('--mx', (e.clientX - r.left) + 'px'); c.style.setProperty('--my', (e.clientY - r.top) + 'px'); } });
+
+function setTab(k) { tab = k; if (k === 'a_activity') ACT = null; closeSheet(); const _c = $('content'); if (_c) _c.classList.remove('noanim'); renderNav(); renderTab(true); animateCounts(); window.scrollTo(0, 0); }
+
+function renderTab(fade) {
+  const map = {
+    m_home: vMHome, m_committees: vMCommittees, m_pay: vMPay, m_history: vMHistory, m_payouts: vMPayouts,
+    a_home: vAHome, a_requests: vARequests, a_payments: vAPayments, a_committees: vACommittees, a_members: vAMembers,
+    a_payouts: vAPayouts, a_wheel: vWheel, m_wheel: vWheel, a_reports: vAReports, a_activity: vAActivity, a_bank: vABank, a_schedule: vASchedule, a_backup: vABackup
+  };
+  const c = $('content'); if (!c) return;
+  const cur = TABS[me.role === 'admin' ? 'admin' : 'member'].find(x => x[0] === tab);
+  c.classList.remove('fade'); if (fade) { void c.offsetWidth; c.classList.add('fade'); }
+  const isHome = tab === 'a_home' || tab === 'm_home';
+  c.innerHTML = (isHome ? '' : `<header class="ph"><h1>${esc(cur ? cur[1] : '')}</h1><p>${esc(SUBS[tab] || '')}</p></header>`) + map[tab]();
+  if (tab === 'm_pay') payMemChange();
+  if (tab === 'a_payouts') payoutCommChange();
+  if (tab.endsWith('_wheel')) wheelInit();
+}
+
+function barsHTML(ver) {
+  const now = new Date(), out = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const k = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    out.push({ l: MON[d.getMonth()], v: ver.filter(p => p.month_label === k).reduce((a, p) => a + Number(p.amount), 0) });
+  }
+  const mx = Math.max(1, ...out.map(o => o.v));
+  return out.map((o, i) => `<div class="b6"><i class="${i === 5 ? 'cur' : ''}" style="height:${Math.max(6, Math.round(o.v / mx * 100))}%"></i><span>${o.l}</span></div>`).join('');
+}
+
+// ================= HOME (Obsidian & Brass dashboard) =================
+let homeCid = null;
+const todayLong = () => new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }).replace(/^(\w+)\s/, '$1 · ');
+function ago(d) { const s = (Date.now() - new Date(d)) / 1000; if (s < 60) return 'just now'; if (s < 3600) return Math.floor(s / 60) + ' min ago'; if (s < 86400) return Math.floor(s / 3600) + ' h ago'; return Math.floor(s / 86400) + ' d ago'; }
+function homeComms() { return me.role === 'admin' ? D.committees : D.committees.filter(c => D.memberships.some(m => m.committee_id === c.id && m.user_id === me.id && m.status === 'approved')); }
+function pickHome(id) { homeCid = id; renderTab(false); animateCounts(); }
+function slotNames(c) {
+  const ms = D.memberships.filter(m => m.committee_id === c.id && m.status === 'approved'), out = {};
+  D.shares.filter(s => s.committee_id === c.id && s.slot_number).forEach(s => { const mm = ms.find(x => x.id === s.membership_id); if (mm) out[s.slot_number] = mm.profiles?.name || ''; });
+  ms.forEach(m => { if (m.slot_number && !out[m.slot_number]) out[m.slot_number] = m.profiles?.name || ''; });
+  return out;
+}
+function commPays(c) {
+  const ids = new Set(D.memberships.filter(m => m.committee_id === c.id).map(m => m.id));
+  let pl = D.payments.filter(p => ids.has(p.membership_id));
+  if (me.role !== 'admin') pl = pl.filter(p => p.user_id === me.id);
+  return pl;
+}
+function monthSums(list) {
+  const now = new Date(), out = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1), k = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+    out.push(list.filter(p => p.month_label === k).reduce((a, p) => a + Number(p.amount), 0));
+  }
+  return out;
+}
+const hLab = { done: 'Paid', next: 'This month', late: 'Not paid yet', up: 'Upcoming' };
+const rosterC = {};
+function ensureRoster(cid) {
+  const r = rosterC[cid]; if (r && (r.busy || Date.now() - r.t < 10000)) return;
+  rosterC[cid] = { rows: r ? r.rows : [], paid: r ? r.paid : {}, t: Date.now(), busy: true };
+  Promise.all([
+    sb.rpc('get_roster', { cid }).then(x => x, () => ({ data: null, error: true })),
+    sb.rpc('get_slot_status', { cid }).then(x => x, () => ({ data: null, error: true }))
+  ]).then(([a, b]) => {
+    const prev = JSON.stringify([rosterC[cid].rows, rosterC[cid].paid]);
+    const rows = a.error ? [] : (a.data || []), paid = {};
+    if (!b.error && Array.isArray(b.data)) b.data.forEach(x => { if (x.paid) paid[x.slot] = true; });
+    rosterC[cid] = { rows, paid, t: Date.now(), busy: false };
+    if (prev !== JSON.stringify([rows, paid]) && (tab === 'a_home' || tab === 'm_home') && !document.getElementById('modal')) { const el = $('content'); if (el) el.classList.add('noanim'); renderTab(false); }
+  }).catch(() => { if (rosterC[cid]) rosterC[cid].busy = false; });
+}
+function orbitData(c) {
+  const adm = me.role === 'admin', total = Math.max(1, Math.min(Number(c.total_members) || 1, 36)), cur = c.start_date ? curIdx(c) : 0;
+  const mems = D.memberships.filter(m => m.committee_id === c.id && m.status === 'approved');
+  const mm = mems.find(m => m.user_id === me.id), mine = mm ? mySlots(mm) : new Set(), names = slotNames(c);
+  const ro = (rosterC[c.id] && rosterC[c.id].rows) || [], sp = (rosterC[c.id] && rosterC[c.id].paid) || {}, nodes = []; let paidN = 0;
+  for (let i = 1; i <= total; i++) {
+    const own = isMine(mine, i), r = ro.find(x => x.r_slot === i), vis = adm || c.show_roster || own;
+    const nm = own ? (me.name || 'You') : (vis ? (names[i] || (r && r.r_name) || '') : '');
+    const h = D.shares.find(s => s.committee_id === c.id && s.slot_number === i), hm = h && mems.find(m => m.id === h.membership_id), sm = slotMonth(c, i);
+    const po = h && D.payouts.find(p => p.committee_id === c.id && (p.share_id ? p.share_id === h.id : (hm && p.member_id === hm.user_id)) && (!sm || p.month_label === sm.key));
+    const paid = !!((po && po.status === 'paid') || (r && r.r_paid) || sp[i]);
+    if (paid) paidN++;
+    nodes.push({ i, own, name: nm, month: sm ? sm.label : '', paid, st: paid ? 'done' : i === cur ? 'next' : i < cur ? 'late' : 'up' });
+  }
+  return { total, cur, nodes, paidN };
+}
+function orbitHTML(c) {
+  const d = orbitData(c), r = d.total <= 12 ? 17 : d.total <= 24 ? 13 : 9, P = money(pot(c));
+  const off = (942.5 * (1 - d.paidN / d.total)).toFixed(1), cn = d.nodes.find(n => n.i === d.cur);
+  const fn = n => n.name ? n.name.trim().split(' ')[0] : 'Open turn';
+  let e, b, s;
+  if (!c.start_date) { e = 'Not started'; b = 'No start date'; s = 'Set it in committee settings'; }
+  else if (d.cur > d.total) { e = d.paidN >= d.total ? 'Cycle complete' : 'Cycle ended'; b = d.paidN + ' of ' + d.total; s = 'payouts paid'; }
+  else if (d.cur < 1) { e = 'Starts'; b = slotMonth(c, 1).label; s = P + ' pot'; }
+  else { e = 'This month · ' + (cn.paid ? 'Paid' : 'Not paid yet'); b = fn(cn); s = 'Turn ' + cn.i + (cn.month ? ' · ' + cn.month : '') + ' · ' + P; }
+  const lab = d.total <= 24, fs = d.total <= 16 ? 12 : 9.5;
+  const nodes = d.nodes.map((n, k) => {
+    const a = -Math.PI / 2 + k * 2 * Math.PI / d.total, co = Math.cos(a), si = Math.sin(a);
+    const x = (210 + 150 * co).toFixed(1), y = (210 + 150 * si).toFixed(1);
+    const ltr = n.name ? n.name.trim().charAt(0).toUpperCase() : String(n.i);
+    const ax = co > .3 ? 'start' : co < -.3 ? 'end' : 'middle', lx = (210 + 206 * co).toFixed(1), ly = (210 + 206 * si + (si < -.6 ? -6 : si > .6 ? 14 : 4)).toFixed(1);
+    const nm = n.name ? n.name.trim().split(' ')[0].slice(0, d.total <= 16 ? 11 : 7) : 'Open';
+    return `<g class="hnd ${n.st}${n.own ? ' mine' : ''}" data-e="${esc(hLab[n.st])}" data-b="${esc(fn(n))}" data-s="${esc('Turn ' + n.i + (n.month ? ' · ' + n.month : '') + ' · ' + P)}" transform="translate(${x} ${y})"><g class="hndi" style="--d:${600 + k * 60}ms">${n.st === 'next' ? `<circle class="hpl" r="${r}"/>` : ''}<circle r="${r}"/>${d.total <= 24 ? `<text y="4">${esc(ltr)}</text>` : ''}</g></g>` +
+      (lab ? `<text class="hlb${n.name ? '' : ' open'}${n.own ? ' me' : ''}" x="${lx}" y="${ly}" text-anchor="${ax}" font-size="${fs}">${esc(nm)}</text>` : '');
+  }).join('');
+  return `<div class="ow"><svg viewBox="-80 -80 580 580" role="img" aria-label="Payout orbit">
+      <circle cx="210" cy="210" r="150" fill="none" stroke="var(--line)" stroke-width="2"/>
+      <circle class="harc" cx="210" cy="210" r="150" fill="none" stroke="var(--brand)" stroke-width="2.5" stroke-linecap="round" transform="rotate(-90 210 210)" style="stroke-dashoffset:${off}"/>
+      <g class="hrot"><circle cx="210" cy="210" r="188" fill="none" stroke="var(--line)" stroke-width="1.5" stroke-dasharray="2 9"/></g>
+      <g class="hrot b"><circle cx="210" cy="210" r="112" fill="none" stroke="var(--line)" stroke-width="1.5" stroke-dasharray="1 7"/></g>${nodes}</svg>
+    <div class="oc" data-e="${esc(e)}" data-b="${esc(b)}" data-s="${esc(s)}"><div class="eb oe">${esc(e)}</div><div class="hbig ser ob">${esc(b)}</div><div class="os">${esc(s)}</div></div></div>
+    <div class="hleg"><span><i style="background:var(--brand)"></i>Paid</span><span><i style="border:2px solid var(--tx)"></i>This month</span><span><i style="border:2px solid var(--amber)"></i>Not paid yet</span><span><i style="background:var(--c2);border:1px solid var(--line)"></i>Upcoming</span></div>`;
+}
+document.addEventListener('mouseover', e => { const g = e.target.closest && e.target.closest('.hnd'); if (!g) return; const o = g.closest('.horbit').querySelector('.oc'); o.querySelector('.oe').textContent = g.dataset.e; o.querySelector('.ob').textContent = g.dataset.b; o.querySelector('.os').textContent = g.dataset.s; });
+document.addEventListener('mouseout', e => { const g = e.target.closest && e.target.closest('.hnd'); if (!g || (e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('.hnd'))) return; const o = g.closest('.horbit').querySelector('.oc'); o.querySelector('.oe').textContent = o.dataset.e; o.querySelector('.ob').textContent = o.dataset.b; o.querySelector('.os').textContent = o.dataset.s; });
+
+function homeView() {
+  const adm = me.role === 'admin', comms = homeComms(), ini = (me.name || '?').trim().charAt(0).toUpperCase();
+  const first = esc((me.name || '').split(' ')[0] || (adm ? 'Admin' : 'Member'));
+  const rejN = adm ? 0 : D.payments.filter(p => p.user_id === me.id && p.status === 'rejected').length;
+  const note = rejN ? `<div class="note">${rejN} of your payments ${rejN === 1 ? 'was' : 'were'} rejected. Open History to see why and submit again.</div>` : '';
+  if (!comms.length) return `<header class="hhead"><div><div class="eb">${esc(todayLong())}</div><h1 class="ser">Assalam o Alaikum, <em>${first}</em></h1></div></header>` + (adm ? empty('No committees yet. Create your first one to start taking members.', 'layers', ['a_committees', 'Create a committee']) : empty('You are not in a committee yet. Pick one and send a join request.', 'layers', ['m_committees', 'Browse committees']));
+  const c = comms.find(x => x.id === homeCid) || comms.find(x => x.start_date) || comms[0];
+  ensureRoster(c.id);
+  const d = orbitData(c), pl = commPays(c), ver = pl.filter(p => p.status === 'verified');
+  const nk = nowKey(), pd = new Date(); pd.setMonth(pd.getMonth() - 1);
+  const pk = pd.getFullYear() + '-' + String(pd.getMonth() + 1).padStart(2, '0');
+  const thisM = ver.filter(p => p.month_label === nk).reduce((a, p) => a + Number(p.amount), 0), prevM = ver.filter(p => p.month_label === pk).reduce((a, p) => a + Number(p.amount), 0);
+  const total = ver.reduce((a, p) => a + Number(p.amount), 0);
+  const big = adm ? thisM : total, bigLabel = adm ? 'Collected this month' : 'Paid so far';
+  let delta;
+  if (adm) delta = prevM > 0 ? `<span style="color:var(--${thisM >= prevM ? 'ok' : 'amber'})">${thisM >= prevM ? '+' : ''}${Math.round((thisM - prevM) / prevM * 100)}% compared with last month</span>` : (thisM > 0 ? 'First collections this month' : 'No collections yet this month');
+  else delta = `${ver.length} verified payment${ver.length === 1 ? '' : 's'}`;
+  const sums = monthSums(ver), mx = Math.max(1, ...sums);
+  const bars = sums.map((v, k) => `<span title="${money(v)}" style="height:${Math.max(8, Math.round(v / mx * 100))}%;--k:${k}"></span>`).join('');
+  // review / due queue
+  let qItems = '', qCount = 0, qTitle;
+  if (adm) {
+    const pp = D.payments.filter(p => p.status === 'pending'), pr = D.memberships.filter(m => m.status === 'pending');
+    qCount = pp.length + pr.length; qTitle = 'Needs your review';
+    qItems = pp.slice(0, 4).map(p => `<div class="hqr"><span class="av d">${esc((p.profiles?.name || '?').charAt(0).toUpperCase())}</span><div><b>${esc(p.profiles?.name)}</b><small>${esc(p.memberships?.committees?.name)} · ${esc(fmtMonth(p.month_label))}</small></div><span class="a">${money(p.amount)}</span><button class="btn sm out" onclick="openVerify('${p.id}')">Review</button></div>`).join('') +
+      pr.slice(0, Math.max(0, 5 - Math.min(4, pp.length))).map(m => `<div class="hqr"><span class="av d">${esc((m.profiles?.name || '?').charAt(0).toUpperCase())}</span><div><b>${esc(m.profiles?.name)}</b><small>Wants to join ${esc(m.committees?.name)}</small></div><span class="a"></span><button class="btn sm out" onclick="openApprove('${m.id}')">Approve</button></div>`).join('');
+  } else {
+    qTitle = 'This month';
+    const mine = D.memberships.filter(m => m.user_id === me.id && m.status === 'approved');
+    qItems = mine.map(m => { const cc = D.committees.find(x => x.id === m.committee_id); const du = memberDue(m); if (!cc || !du) return '';
+      if (du.state === 'due') qCount++;
+      const sub = du.state === 'due' ? `${esc(fmtMonth(du.key))} · ${du.paid > 0 ? money(du.paid) + ' paid, ' : ''}${money(du.rem)} due${du.overdue ? ' (overdue)' : ''}` : (du.key ? `${esc(fmtMonth(nk))} paid · next ${esc(fmtMonth(du.key))}` : 'All months paid');
+      return `<div class="hqr"><span class="av d">${esc(cc.name.charAt(0).toUpperCase())}</span><div><b>${esc(cc.name)}</b><small>${sub}</small></div><span class="a">${du.state === 'due' ? money(du.rem) : '<span class="badge verified"><i></i>Paid</span>'}</span>${du.state === 'due' ? `<button class="btn sm out" onclick="setTab('m_pay')">Pay</button>` : ''}</div>`; }).join('');
+  }
+  const qEmpty = adm ? 'Nothing waiting. New payments and join requests appear here.' : 'You are not in a committee yet.';
+  const sw = comms.length > 1 ? `<div class="hsw">${comms.map(x => `<button class="${x.id === c.id ? 'on' : ''}" onclick="pickHome('${x.id}')">${esc(x.name)}</button>`).join('')}</div>` : '';
+  const tl = d.nodes.map(n => `<div class="htm ${n.st}${n.own ? ' mine' : ''}"><div class="m ser">${esc(n.month ? n.month.split(' ')[0] : 'Turn ' + n.i)}</div><div class="n">${esc(n.name || 'Turn ' + n.i)}</div><div class="st">${n.own && n.st !== 'done' ? 'Your turn · ' + hLab[n.st] : hLab[n.st]}</div></div>`).join('');
+  // ---------- mobile pieces ----------
+  const allVer = adm ? D.payments.filter(p => p.status === 'verified' && p.month_label === nk) : D.payments.filter(p => p.user_id === me.id && p.status === 'verified');
+  const mTotal = allVer.reduce((a, p) => a + Number(p.amount), 0);
+  const curShow = d.paidN, ringOff = (226.2 * (1 - d.paidN / d.total)).toFixed(1);
+  const cards = comms.map(cc => {
+    const cu = cc.start_date ? curIdx(cc) : 0, tt = Number(cc.total_members) || 1, pct = Math.max(0, Math.min(100, Math.round(Math.max(0, cu - 1) / tt * 100)));
+    const m = D.memberships.find(x => x.committee_id === cc.id && x.user_id === me.id && x.status === 'approved');
+    const du = m && memberDue(m);
+    const act = adm ? `<button class="btn sm fill" onclick="setTab('a_schedule')">Schedule</button>` : (!du ? '' : du.state === 'due' ? `<button class="btn sm fill" onclick="setTab('m_pay')">Pay ${money(du.rem)}</button>` : '<span class="badge verified"><i></i>Paid</span>');
+    const sm = cc.start_date && cu >= 1 && cu <= tt ? slotMonth(cc, cu) : null;
+    return `<article class="card hmc"><div class="eb">${du ? (du.state === 'due' ? (du.overdue ? 'Overdue · ' : 'Due · ') + esc(fmtMonth(du.key)) : (du.key ? esc(fmtMonth(nk)) + ' paid · next ' + esc(fmtMonth(du.key)) : 'All months paid')) : esc(sm ? sm.label : (cc.start_date ? 'Finished' : 'Not started'))}</div><h3 class="ser">${esc(cc.name)}</h3><div class="am">${money(cc.monthly_amount)} per month</div><div class="hpb"><i style="width:${pct}%"></i></div><div class="hrow"><span>${du && du.state === 'due' && du.paid > 0 ? money(du.paid) + ' paid of ' + money(du.due) : (cu >= 1 && cu <= tt ? 'Month ' + cu + ' of ' + tt : tt + ' members')}</span>${act}</div></article>`;
+  }).join('') + `<article class="card hmc hadd" onclick="setTab('${adm ? 'a_committees' : 'm_committees'}')" role="button" tabindex="0"><div class="ser" style="font-size:44px;color:var(--brand)">+</div><div style="font-size:13px;color:var(--mu)">${adm ? 'Manage committees' : 'Join another committee'}</div></article>`;
+  const qa = (adm ? [['a_requests', 'Requests', 'inbox'], ['a_payments', 'Payments', 'card'], ['a_payouts', 'Payouts', 'down'], ['a_members', 'Members', 'users']] : [['m_pay', 'Pay', 'card'], ['m_history', 'History', 'history'], ['m_payouts', 'Payouts', 'down'], ['m_committees', 'Join', 'layers']])
+    .map(([k, l, i]) => `<button onclick="setTab('${k}')"><i>${ic(i, 22)}</i>${l}</button>`).join('');
+  const act = pl.slice(0, 4).map(p => `<div class="har"><i style="${p.status === 'pending' ? 'background:var(--amber)' : p.status === 'rejected' ? 'background:var(--red)' : ''}"></i><div><b>${p.status === 'verified' ? 'Payment verified' : p.status === 'pending' ? 'Waiting for review' : 'Payment rejected'}</b><small>${esc((adm ? (p.profiles?.name || '') + ' · ' : '') + (p.memberships?.committees?.name || ''))} · ${money(p.amount)} · ${ago(p.created_at)}</small></div></div>`).join('');
+  const qm = adm ? D.payments.filter(p => p.status === 'pending').length + D.memberships.filter(m => m.status === 'pending').length : qCount;
+  return note + `<div class="hpc">
+    <header class="hhead rv" style="--i:0"><div><div class="eb">${esc(todayLong())}</div><h1 class="ser">Assalam o Alaikum, <em>${first}</em></h1></div><div class="hchip">${esc(c.name)} <span class="av">${esc(ini)}</span></div></header>${sw}
+    <section class="hgrid">
+      <article class="card horbit rv" style="--i:1"><div class="eb" style="align-self:flex-start">Payout orbit · ${d.paidN} of ${d.total} paid</div>${orbitHTML(c)}</article>
+      <article class="card hstat rv" style="--i:2"><div class="eb">${bigLabel}</div><div class="hbig ser" data-count="${big}">${money(big)}</div><div style="font-size:12.5px;font-weight:600;color:var(--mu)">${delta}</div><div class="hbars">${bars}</div></article>
+      <article class="card hq rv" style="--i:3"><div style="display:flex;justify-content:space-between"><div class="eb">${qTitle}</div><span class="eb" style="color:var(--brandd)">${qCount} ${adm ? 'pending' : 'due'}</span></div>${qItems || `<p class="muted" style="margin:14px 0 0">${qEmpty}</p>`}</article>
+      <article class="card htl rv" style="--i:4"><div class="eb">Payout timeline · ${esc(c.name)}</div><div class="htr">${tl}</div></article>
+    </section></div>
+  <div class="hmb">
+    <section class="hmh rv" style="--i:0"><div><div class="eb">${adm ? 'Collected this month' : 'Total paid so far'}</div><div class="hbig ser" data-count="${mTotal}">${money(mTotal)}</div><div class="hsub">${d.paidN} of ${d.total} payouts paid · ${esc(c.name)}</div></div>
+      <svg class="hring" width="88" height="88" viewBox="0 0 88 88" aria-label="Progress"><circle class="t" cx="44" cy="44" r="36"/><circle class="p" cx="44" cy="44" r="36" style="stroke-dashoffset:${ringOff}"/><text x="44" y="50">${curShow}/${d.total}</text></svg></section>
+    <section class="hsl rv" style="--i:1">${cards}</section>
+    <section class="hqa rv" style="--i:2">${qa}</section>
+    <section class="hsec rv" style="--i:3"><span class="eb">${qTitle} · ${adm ? qm + ' pending' : qCount + ' due'}</span><div class="hmq">${qItems ? qItems.replace(/class="hqr"/g, 'class="hqr card"') : `<p class="muted">${qEmpty}</p>`}</div></section>
+    <section class="hsec rv" style="--i:4"><span class="eb">Payout order · ${esc(c.name)}</span><div class="hord-l">${d.nodes.map(n => `<div class="hord ${n.st}${n.own ? ' mine' : ''}"><span class="no">${n.i}</span><div><b>${esc(n.name || 'Not assigned')}${n.own ? ' (you)' : ''}</b><small>${esc(n.month)}</small></div><span class="hst">${hLab[n.st]}</span></div>`).join('')}</div></section>
+    ${act ? `<section class="hsec rv" style="--i:5"><span class="eb" style="margin-bottom:16px">Recent activity</span>${act}</section>` : ''}
+  </div>`;
+}
+function vAHome() { return homeView(); }
+function vMHome() { return homeView(); }
+
+function vMCommittees() {
+  if (!D.committees.length) return empty('No committees yet. The admin will add them here.', 'layers');
+  return '<div class="grid">' + D.committees.map(c => {
+    const m = D.memberships.find(x => x.committee_id === c.id && x.user_id === me.id);
+    const ok = m && m.status === 'approved';
+    let act;
+    if (m) act = badge(m.status);
+    else if (c.status !== 'open') act = badge('closed');
+    else act = `<button class="btn" onclick="joinC('${c.id}')">Send join request</button>`;
+    const sm = ok ? slotMonth(c, m.slot_number) : null;
+    return `<div class="card"><div class="cc-h"><h3>${esc(c.name)}</h3>${m || c.status !== 'open' ? '' : badge('open')}</div>
+      <div class="amt">${money(c.monthly_amount)} <small>per month</small></div>
+      <p class="muted" style="margin:8px 0 0">${c.total_members} members${c.duration_months ? ' · ' + c.duration_months + ' months' : ''}${c.start_date ? ' · starts ' + fdate(c.start_date) : ''}</p>
+      ${ok ? `<div class="ringbox">${ringSVG(c, { mine: mySlots(m) })}</div>${ringLegend(true)}
+        ${shareLines(c, m)}
+        ${c.show_roster ? `<button class="btn sm out" onclick="openRoster('${c.id}')">See all members and payout months</button>` : ''}` : ''}
+      <div style="margin-top:12px">${act}${ok && c.status === 'open' && (m.share_count || 1) < 20 ? ` <button class="btn sm out" onclick="addShare('${m.id}')">Add another share</button>` : ''}</div></div>`;
+  }).join('') + '</div>';
+}
+
+async function openRoster(cid) {
+  const c = D.committees.find(x => x.id === cid); if (!c) return;
+  openModal(`<h2>${esc(c.name)}</h2><p class="muted">Loading members...</p>`, true);
+  const { data, error } = await sb.rpc('get_roster', { cid });
+  if (error) { closeModal(); return toast(error.message, 1); }
+  const mm = D.memberships.find(x => x.committee_id === cid && x.user_id === me.id);
+  const rows = (data || []).map(r => {
+    const sm = slotMonth(c, r.r_slot), isMe = mm && mm.slot_number === r.r_slot;
+    const st = r.r_paid ? '<span class="badge verified"><i></i>Paid</span>' : (sm && sm.key === nowKey() ? '<span class="badge pending"><i></i>This month</span>' : '<span class="muted">Upcoming</span>');
+    return `<tr class="${isMe ? 'cur' : ''}"><td><b>${sm ? sm.label : '-'}</b></td><td>${r.r_slot}</td><td>${esc(r.r_name)}${isMe ? ' <span class="muted">(you)</span>' : ''}</td><td>${st}</td></tr>`;
+  }).join('');
+  openModal(`<h2>${esc(c.name)}</h2><p class="muted">${money(c.monthly_amount)} per member · pot ${money(pot(c))} per month</p>
+    <div class="tw" style="margin-top:10px">${rows ? `<table><tr><th>Payout month</th><th>Turn</th><th>Member</th><th>Status</th></tr>${rows}</table>` : '<p class="muted">The admin has not assigned turns yet.</p>'}</div>
+    <div class="mfoot"><button class="btn" onclick="closeModal()">Close</button></div>`, true);
+}
+
+
+// ---------- dues: amount-aware (partial payments, next month) ----------
+const dueOf = m => { const c = D.committees.find(x => x.id === m.committee_id); return c ? Number(c.monthly_amount) * (m.share_count || 1) : 0; };
+const paidOf = (m, key) => D.payments.filter(p => p.membership_id === m.id && p.month_label === key && p.status !== 'rejected').reduce((a, p) => a + Number(p.amount), 0);
+const mKey = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+function dueStart(m, c) {
+  if (c.start_date) { const s0 = new Date(c.start_date + 'T00:00:00'); return new Date(s0.getFullYear(), s0.getMonth(), 1); }
+  const j = m.created_at ? new Date(m.created_at) : new Date(); return new Date(j.getFullYear(), j.getMonth(), 1);
+}
+function commRange(c) {
+  if (!c || !c.start_date) return null;
+  const s0 = new Date(c.start_date + 'T00:00:00'), st = new Date(s0.getFullYear(), s0.getMonth(), 1), n = Number(c.duration_months) || Number(c.total_members) || 12;
+  return { start: mKey(st), end: mKey(new Date(st.getFullYear(), st.getMonth() + n - 1, 1)) };
+}
+function memberDue(m) {
+  const c = D.committees.find(x => x.id === m.committee_id); if (!c) return null;
+  const due = dueOf(m), nk = nowKey(), sd = dueStart(m, c), rg = commRange(c);
+  for (let i = 0; i < 80; i++) {
+    const key = mKey(new Date(sd.getFullYear(), sd.getMonth() + i, 1));
+    if (rg && key > rg.end) break;
+    const paid = paidOf(m, key);
+    if (paid < due) return { key, due, paid, rem: due - paid, state: key <= nk ? 'due' : 'ok', overdue: key < nk };
+  }
+  return { key: null, due, paid: due, rem: 0, state: 'ok', overdue: false };
+}
+function vMPay() {
+  const mine = D.memberships.filter(m => m.user_id === me.id && m.status === 'approved');
+  if (!mine.length) return empty('You must be approved in a committee before making a payment');
+  const accts = D.accounts.filter(a => a.active);
+  return `<div class="card" style="max-width:560px"><h2>Payment details</h2>
+    <label>Committee</label>
+    <select id="p_mem" onchange="payMemChange()">${mine.map(m => `<option value="${m.id}">${esc(m.committees?.name)}</option>`).join('')}</select>
+    <div class="row"><div><label>Month</label><input id="p_month" type="month" value="${(() => { const d0 = memberDue(mine[0]); return (d0 && d0.key) || nowKey(); })()}" onchange="payMonthChange()"></div>
+    <div><label>Amount (Rs)</label><input id="p_amt" type="number" min="1"></div></div>
+    <div id="p_hint" class="phint"></div>
+    <label>Payment method</label>
+    <div class="pm"><label class="pmo"><input type="radio" name="pm" value="bank" checked onchange="payMethodChange()"><span>Online (Bank / Wallet)</span></label><label class="pmo"><input type="radio" name="pm" value="cash" onchange="payMethodChange()"><span>Cash</span></label></div>
+    <div id="bankbox">
+      ${accts.length ? '<div class="sendhd">Send payment to any one of these accounts</div>' + accts.map(a => `<div class="bank"><b>${esc(a.provider)}</b> <span class="muted">(${esc(a.type)})</span><br>Title: ${esc(a.account_title)}<br>Number: ${esc(a.account_number)}${a.iban ? '<br>IBAN: ' + esc(a.iban) : ''}${a.note ? '<br><span class="muted">' + esc(a.note) + '</span>' : ''}</div>`).join('') + `<label>Which account did you pay to? *</label><select id="p_acc">${accts.map(a => `<option value="${esc(a.provider)} - ${esc(a.account_number)}">${esc(a.provider)} - ${esc(a.account_number)}</option>`).join('')}</select>` : '<div class="bank">Admin has not added any payment account yet.</div>'}
+      <label>Payment screenshot / proof *</label><input id="p_file" type="file" accept="image/*,application/pdf">
+    </div>
+    <div id="cashbox" style="display:none" class="bank">After you hand over the cash, the admin will verify and approve the payment.</div>
+    <label>Note (optional)</label><input id="p_note" placeholder="Transaction ID etc.">
+    <br><button class="btn" id="pbtn" onclick="submitPay()">Submit</button></div>`;
+}
+
+function payMemChange() {
+  const sel = $('p_mem'); if (!sel) return;
+  const m = D.memberships.find(x => x.id === sel.value); if (!m) return;
+  const c = D.committees.find(x => x.id === m.committee_id), rg = c && commRange(c), du = memberDue(m);
+  let key = (du && du.key) || nowKey();
+  if (rg) key = key < rg.start ? rg.start : key > rg.end ? rg.end : key;
+  $('p_month').value = key; payMonthChange();
+}
+function payMonthChange() {
+  const sel = $('p_mem'), mo = $('p_month'); if (!sel || !mo) return;
+  const m = D.memberships.find(x => x.id === sel.value); if (!m) return;
+  const c = D.committees.find(x => x.id === m.committee_id), rg = c && commRange(c), h = $('p_hint');
+  if (rg) { mo.min = rg.start; mo.max = rg.end; } else { mo.removeAttribute('min'); mo.removeAttribute('max'); }
+  if (!mo.value) return;
+  if (rg && (mo.value < rg.start || mo.value > rg.end)) {
+    $('p_amt').value = '';
+    if (h) { h.innerHTML = `<b>${fmtMonth(mo.value)}</b> is outside this committee. It runs from <b>${fmtMonth(rg.start)}</b> to <b>${fmtMonth(rg.end)}</b>. Please choose a month in that range.`; h.className = 'phint part'; }
+    return;
+  }
+  const due = dueOf(m), paid = paidOf(m, mo.value), rem = Math.max(0, due - paid);
+  $('p_amt').value = rem > 0 ? rem : '';
+  if (h) { h.innerHTML = rem <= 0 ? `<b>${fmtMonth(mo.value)}</b> is already fully paid (${money(due)}). Choose another month.`
+    : paid > 0 ? `<b>${fmtMonth(mo.value)}</b>: ${money(paid)} paid of ${money(due)}. <b>${money(rem)}</b> is still due.`
+    : `<b>${fmtMonth(mo.value)}</b>: ${money(due)} due.`;
+    h.className = 'phint' + (rem <= 0 ? ' ok' : paid > 0 ? ' part' : ''); }
+}
+function payMethodChange() {
+  const bank = document.querySelector('input[name=pm]:checked').value === 'bank';
+  $('bankbox').style.display = bank ? 'block' : 'none';
+  $('cashbox').style.display = bank ? 'none' : 'block';
+}
+
+async function submitPay() {
+  const mid = $('p_mem').value, month = $('p_month').value, amount = Number($('p_amt').value),
+        method = document.querySelector('input[name=pm]:checked').value, note = $('p_note').value.trim();
+  if (!month) return toast('Select a month', 1);
+  if (!amount || amount <= 0) return toast('Enter a valid amount', 1);
+  const mm0 = D.memberships.find(x => x.id === mid), rem0 = mm0 ? Math.max(0, dueOf(mm0) - paidOf(mm0, month)) : 0;
+  const c0 = mm0 && D.committees.find(x => x.id === mm0.committee_id), rg0 = c0 && commRange(c0);
+  if (rg0 && (month < rg0.start || month > rg0.end)) return toast(fmtMonth(month) + ' is outside this committee (' + fmtMonth(rg0.start) + ' to ' + fmtMonth(rg0.end) + ')', 1);
+  if (rem0 <= 0) return toast(fmtMonth(month) + ' is already fully paid. Choose the next month', 1);
+  if (amount > rem0) return toast('Only ' + money(rem0) + ' is still due for ' + fmtMonth(month), 1);
+  if (method === 'bank' && !$('p_acc')) return toast('No payment account available. Contact the admin', 1);
+  const acc = (method === 'bank' && $('p_acc')) ? $('p_acc').value : null;
+  let path = null;
+  $('pbtn').disabled = true;
+  if (method === 'bank') {
+    const f = $('p_file').files[0];
+    if (!f) { $('pbtn').disabled = false; return toast('Payment proof is required', 1); }
+    if (f.size > 5 * 1024 * 1024) { $('pbtn').disabled = false; return toast('File must be under 5MB', 1); }
+    path = `${me.id}/${Date.now()}_${f.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+    const up = await sb.storage.from('proofs').upload(path, f);
+    if (up.error) { $('pbtn').disabled = false; return toast('Upload failed: ' + up.error.message, 1); }
+  }
+  const { error } = await sb.from('payments').insert({
+    membership_id: mid, user_id: me.id, month_label: month, amount, method, proof_path: path, account_label: acc, note: note || null, status: 'pending'
+  });
+  if (error) { $('pbtn').disabled = false; return toast(/duplicate|unique/i.test(error.message) ? 'The database allows one payment per month. Ask the admin to enable part payments' : 'Payment could not be saved: ' + error.message, 1); }
+  toast('Payment submitted. Admin will verify it');
+  tab = 'm_history'; await loadData(); renderNav(); renderTab();
+}
+
+function vMHistory() {
+  const list = D.payments.filter(p => p.user_id === me.id);
+  if (!list.length) return empty('You have not made any payment yet', 'history', ['m_pay', 'Make a payment']);
+  return `<div class="actrow"><button class="btn out" onclick="statementPdf('${me.id}','download')">Download statement (PDF)</button></div><div class="card tw"><table><tr><th>Committee</th><th>Month</th><th>Amount</th><th>Method</th><th>Status</th><th>Date</th><th>Receipt</th></tr>` +
+    list.map(p => `<tr><td>${esc(p.memberships?.committees?.name)}</td><td>${fmtMonth(p.month_label)}</td><td>${money(p.amount)}</td>
+    <td>${methodCell(p)}</td><td>${badge(p.status)}</td><td>${fdate(p.created_at)}</td>
+    <td>${p.status === 'verified' && p.receipt_no ? `<button class="btn sm out" onclick="openReceipt('${p.id}')">${esc(p.receipt_no)}</button>` : (p.note ? '<span class="muted">' + esc(p.note) + '</span>' : '-')}</td></tr>`).join('') + '</table></div>';
+}
+
+function vMPayouts() {
+  const mine = D.memberships.filter(m => m.user_id === me.id && m.status === 'approved');
+  const list = D.payouts.filter(p => p.member_id === me.id);
+  return `<h2>Your turn in each committee</h2>` +
+    (mine.length ? `<div class="grid">${mine.map(m => `<div class="card"><h3>${esc(m.committees?.name)}</h3>${shareLines(D.committees.find(x => x.id === m.committee_id), m)}</div>`).join('')}</div>` : empty('No approved committees')) +
+    `<h2 class="sec">Payouts received</h2>` +
+    (list.length ? `<div class="card tw"><table><tr><th>Committee</th><th>Month</th><th>Amount</th><th>Status</th><th></th></tr>` +
+      list.map(p => `<tr><td>${esc(p.committees?.name)}</td><td>${esc(p.month_label)}</td><td>${money(p.amount)}</td><td>${badge(p.status)}</td><td>${p.status === 'paid' ? `<button class="btn sm out" onclick="payoutSlipPdf('${p.id}','download')">Slip PDF</button>` : ''}</td></tr>`).join('') + '</table></div>' : empty('No payouts received yet'));
+}
+
+// ================= ADMIN VIEWS =================
+function vARequests() {
+  const pend = D.memberships.filter(m => m.status === 'pending');
+  const done = D.memberships.filter(m => m.status !== 'pending').slice(0, 30);
+  let h = '<h2>Waiting for approval</h2>';
+  h += pend.length ? `<div class="card tw"><table><tr><th>Member</th><th>Phone</th><th>Committee</th><th>Date</th><th></th></tr>` +
+    pend.map(m => `<tr><td>${esc(m.profiles?.name)}</td><td>${esc(m.profiles?.phone)}</td><td>${esc(m.committees?.name)}</td><td>${fdate(m.created_at)}</td>
+    <td class="actions"><button class="btn sm" onclick="openApprove('${m.id}')">Approve</button><button class="btn sm red" onclick="rejectMem('${m.id}')">Reject</button></td></tr>`).join('') + '</table></div>'
+    : empty('No pending requests', 'inbox');
+  h += '<h2 class="sec">Previous requests</h2>';
+  h += done.length ? `<div class="card tw"><table><tr><th>Member</th><th>Committee</th><th>Turn</th><th>Status</th><th></th></tr>` +
+    done.map(m => `<tr><td>${esc(m.profiles?.name)}</td><td>${esc(m.committees?.name)}</td><td>${m.slot_number ?? '-'}</td><td>${badge(m.status)}</td>
+    <td><button class="btn sm gray" onclick="removeMem('${m.id}')">Remove</button></td></tr>`).join('') + '</table></div>' : empty('Nothing here');
+  return h;
+}
+
+function openApprove(id) {
+  const m = D.memberships.find(x => x.id === id); if (!m) return;
+  const c = D.committees.find(x => x.id === m.committee_id); if (!c) return;
+  const used = new Set(D.memberships.filter(x => x.committee_id === c.id && x.status === 'approved' && x.slot_number).map(x => x.slot_number));
+  let opts = '<option value="">Assign later</option>';
+  for (let n = 1; n <= c.total_members; n++) {
+    if (used.has(n)) continue;
+    const sm = slotMonth(c, n);
+    opts += `<option value="${n}">Turn ${n}${sm ? ' · gets paid in ' + sm.label : ''}</option>`;
+  }
+  openModal(`<h2>Approve ${esc(m.profiles?.name)}</h2>
+    <p class="muted">${esc(c.name)} · ${esc(m.profiles?.phone)}</p>
+    <input type="hidden" id="ap_slot" value="">
+    <p class="muted" style="margin-top:8px">Turns are given from the Schedule tab or the Lucky draw.</p>
+    <div class="mfoot"><button class="btn gray" onclick="closeModal()">Cancel</button><button class="btn" id="ap_ok" onclick="approveMem('${id}')">Approve</button></div>`);
+}
+async function approveMem(id) {
+  const m = D.memberships.find(x => x.id === id); if (!m) return;
+  const c = D.committees.find(x => x.id === m.committee_id);
+  const slot = $('ap_slot') && $('ap_slot').value ? Number($('ap_slot').value) : null;
+  const count = D.memberships.filter(x => x.committee_id === m.committee_id && x.status === 'approved').length;
+  if (c && count >= c.total_members && !confirm('This committee is already full. Approve anyway?')) return;
+  $('ap_ok') && ($('ap_ok').disabled = true);
+  const { error } = await sb.from('memberships').update({ status: 'approved', slot_number: slot }).eq('id', id);
+  if (error) { $('ap_ok') && ($('ap_ok').disabled = false); return toast(error.code === '23505' ? 'That turn was just taken. Pick another one' : error.message, 1); }
+  closeModal(); toast('Member approved'); await loadData(); renderTab(false); renderNav();
+}
+async function rejectMem(id) {
+  if (!confirm('Reject this request?')) return;
+  const { error } = await sb.from('memberships').update({ status: 'rejected', slot_number: null }).eq('id', id);
+  if (error) return toast(error.message, 1); refresh();
+}
+async function removeMem(id) {
+  if (!confirm('Remove this record? This also deletes the member\'s payments in this committee.')) return;
+  const { error } = await sb.from('memberships').delete().eq('id', id);
+  if (error) return toast(error.message, 1); refresh();
+}
+
+async function delPayment(id) {
+  const p = D.payments.find(x => x.id === id); if (!p) return;
+  const msg = (p.status === 'verified' ? 'This payment is already VERIFIED. Deleting it removes the receipt and the member will owe ' + money(p.amount) + ' again.\n\n' : '') +
+    'Delete ' + money(p.amount) + ' from ' + (p.profiles?.name || 'member') + ' for ' + fmtMonth(p.month_label) + '? This cannot be undone.';
+  if (!confirm(msg)) return;
+  const { error, count } = await sb.from('payments').delete({ count: 'exact' }).eq('id', id);
+  if (error) return toast(error.message, 1);
+  if (count === 0) return toast('Delete was blocked by database permissions. Run the delete-policy SQL in Supabase first.', 1);
+  if (p.proof_path) { try { await sb.storage.from('proofs').remove([p.proof_path]); } catch (e) {} }
+  toast('Payment deleted'); await loadData(); renderNav(); renderTab(false);
+}
+function methodCell(p) {
+  return esc(p.method) + (p.account_label ? '<br><span class="muted">' + esc(p.account_label) + '</span>' : '');
+}
+function vAPayments() {
+  const pend = D.payments.filter(p => p.status === 'pending');
+  const done = D.payments.filter(p => p.status !== 'pending').slice(0, 60);
+  let h = '<h2>Waiting for verification</h2>';
+  h += pend.length ? `<div class="card tw"><table><tr><th>Member</th><th>Committee</th><th>Month</th><th>Amount</th><th>Method</th><th>Proof</th><th>Note</th><th></th></tr>` +
+    pend.map(p => `<tr><td>${esc(p.profiles?.name)}<br><span class="muted">${esc(p.profiles?.phone)}</span></td>
+    <td>${esc(p.memberships?.committees?.name)}</td><td>${fmtMonth(p.month_label)}</td><td><b>${money(p.amount)}</b></td><td>${methodCell(p)}</td>
+    <td>${p.proof_path ? `<button class="btn sm out" onclick="viewProof('${esc(p.proof_path)}')">View</button>` : 'Cash'}</td><td>${esc(p.note)}</td>
+    <td class="actions"><button class="btn sm" onclick="openVerify('${p.id}')">Review</button><button class="btn sm red" onclick="openReject('${p.id}')">Reject</button><button class="btn sm gray" onclick="delPayment('${p.id}')" aria-label="Delete payment">Delete</button></td></tr>`).join('') + '</table></div>'
+    : empty('No pending payments', 'card');
+  h += '<h2 class="sec">Previous payments</h2>';
+  h += done.length ? `<div class="card tw"><table><tr><th>Member</th><th>Committee</th><th>Month</th><th>Amount</th><th>Method</th><th>Status</th><th>Receipt</th><th></th></tr>` +
+    done.map(p => `<tr><td>${esc(p.profiles?.name)}</td><td>${esc(p.memberships?.committees?.name)}</td><td>${fmtMonth(p.month_label)}</td><td>${money(p.amount)}</td>
+    <td>${methodCell(p)}</td><td>${badge(p.status)}</td><td>${p.status === 'verified' && p.receipt_no ? `<button class="btn sm out" onclick="openReceipt('${p.id}')">${esc(p.receipt_no)}</button>` : (p.status === 'rejected' ? '<span class="muted">' + esc(p.note) + '</span>' : '-')}</td><td><button class="btn sm red" onclick="delPayment('${p.id}')">Delete</button></td></tr>`).join('') + '</table></div>' : empty('Nothing here');
+  return h;
+}
+
+async function viewProof(path) {
+  const w = window.open('', '_blank');
+  const { data, error } = await sb.storage.from('proofs').createSignedUrl(path, 300);
+  if (error || !data) { if (w) w.close(); return toast('Could not open proof', 1); }
+  if (w) w.location = data.signedUrl; else window.location = data.signedUrl;
+}
+
+function kv(rows) { return '<dl class="kv">' + rows.filter(Boolean).map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('') + '</dl>'; }
+
+function openVerify(id) {
+  const p = D.payments.find(x => x.id === id);
+  if (!p || p.status !== 'pending') return toast('This payment is no longer pending', 1);
+  const cash = p.method === 'cash';
+  openModal(`<h2>${cash ? 'Confirm cash received' : 'Confirm payment received'}</h2>
+    ${kv([['Member', esc(p.profiles?.name) + ' · ' + esc(p.profiles?.phone)], ['Committee', esc(p.memberships?.committees?.name)], ['For month', fmtMonth(p.month_label)],
+      ['Amount', '<b>' + money(p.amount) + '</b>'], ['Method', cash ? 'Cash handed to you' : esc(p.account_label || 'Bank / wallet')], ['Submitted', fmtDT(p.created_at)], p.note ? ['Member note', esc(p.note)] : null])}
+    ${p.proof_path ? `<button class="btn sm out" style="margin-top:12px" onclick="viewProof('${esc(p.proof_path)}')">View proof screenshot</button>` : ''}
+    <div class="warnbox">${cash ? 'Verify only after the cash is in your hand.' : 'Open your bank or wallet app and check that the money has arrived. Do not trust the screenshot alone.'} A verified payment cannot be changed later.</div>
+    <label>Type the amount you received (Rs)</label>
+    <input id="v_amt" type="number" inputmode="numeric" placeholder="${p.amount}" oninput="vCheck(${Number(p.amount)})">
+    <label>Remark for the member (optional, printed on the receipt)</label><input id="v_note" maxlength="300" placeholder="e.g. Received by hand. Thank you, see you next month">
+    <div class="mfoot"><button class="btn gray" onclick="closeModal()">Cancel</button><button class="btn" id="v_ok" disabled onclick="confirmVerify('${id}')">Verify and issue receipt</button></div>`);
+}
+function vCheck(a) { const b = $('v_ok'); if (b) b.disabled = Number($('v_amt').value) !== a; }
+async function confirmVerify(id) {
+  const b = $('v_ok'); b.disabled = true; b.classList.add('busy');
+  const { data, error } = await sb.rpc('verify_payment', { pid: id, received: Number($('v_amt').value), vnote: $('v_note').value.trim() || null });
+  if (error) { b.disabled = false; b.classList.remove('busy'); return toast(error.message, 1); }
+  await loadData(); renderNav(); renderTab(false);
+  toast('Verified. Receipt ' + data);
+  openReceipt(id);
+}
+
+// ================= FEATURES: helpers, PDFs, auth, activity =================
+function loadScript(urls, check) {
+  const list = Array.isArray(urls) ? urls : [urls];
+  return new Promise((res, rej) => {
+    const next = i => {
+      if (check()) return res();
+      if (i >= list.length) return rej(new Error('A required library could not load. Check your internet'));
+      const sc = document.createElement('script'); sc.src = list[i]; sc.onload = () => (check() ? res() : next(i + 1)); sc.onerror = () => next(i + 1); document.head.appendChild(sc);
+    };
+    next(0);
+  });
+}
+async function loadPdfLib() { await loadScript(['https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js', 'https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js'], () => !!window.PDFLib); return window.PDFLib; }
+async function qrMatrix(text) {
+  try {
+    await loadScript(['https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js', 'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js'], () => typeof window.qrcode === 'function');
+    const q = window.qrcode(0, 'M'); q.addData(text); q.make(); const n = q.getModuleCount(), m = [];
+    for (let r = 0; r < n; r++) { const row = []; for (let c = 0; c < n; c++) row.push(!!q.isDark(r, c)); m.push(row); }
+    return m;
+  } catch (e) { return null; }
+}
+async function deliverPdf(bytes, name, title, mode) {
+  const blob = new Blob([bytes], { type: 'application/pdf' });
+  if (mode === 'share' && navigator.canShare) {
+    const f = new File([blob], name, { type: 'application/pdf' });
+    if (navigator.canShare({ files: [f] })) { await navigator.share({ files: [f], title, text: title + ' - AN Committees' }); return; }
+  }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000); toast('PDF downloaded');
+}
+async function ensureLogoBytes() { if (window.__logoBytes) return; try { const r = await fetch('logo.png'); if (r.ok) window.__logoBytes = new Uint8Array(await r.arrayBuffer()); } catch (e) {} }
+async function pdfTask(fn) { try { toast('Preparing PDF...'); const L = await loadPdfLib(); await ensureLogoBytes(); await fn(L); } catch (e) { if (e && e.name === 'AbortError') return; toast('Could not create PDF: ' + (e.message || e), 1); } }
+
+// ================= PDF DOCUMENTS (pdf-lib) =================
+async function pdfKit(L, title) {
+  const { PDFDocument, StandardFonts, rgb } = L;
+  const doc = await PDFDocument.create(); doc.setTitle(title); doc.setAuthor('AN Committees'); doc.setCreator('AN Committees');
+  const k = { doc, rgb, W: 595.28, H: 841.89 };
+  k.ser = await doc.embedFont(StandardFonts.TimesRomanBold); k.serI = await doc.embedFont(StandardFonts.TimesRomanItalic);
+  k.sans = await doc.embedFont(StandardFonts.Helvetica); k.sansB = await doc.embedFont(StandardFonts.HelveticaBold);
+  Object.assign(k, { ink: rgb(.043, .051, .071), brass: rgb(.788, .643, .298), brassD: rgb(.58, .43, .1), mu: rgb(.44, .42, .37), line: rgb(.87, .85, .8), paper: rgb(.988, .978, .958), box: rgb(.955, .94, .9), light: rgb(.78, .75, .68), ok: rgb(.2, .5, .32), bad: rgb(.74, .28, .2), warn: rgb(.76, .48, .08) });
+  k.S = t => String(t == null ? '' : t).replace(/[^\x20-\x7E\u00A0-\u00FF]/g, '?');
+  k.wrap = (t, f, sz, mw) => { const out = []; String(k.S(t)).split(/\r?\n/).forEach(par => { let cur = ''; par.split(/\s+/).forEach(w => { const test = cur ? cur + ' ' + w : w; if (f.widthOfTextAtSize(test, sz) <= mw) cur = test; else { if (cur) out.push(cur); cur = w; } }); out.push(cur); }); return out; };
+  k.tx = (pg, t, x, y, sz, f, col) => pg.drawText(k.S(t), { x, y, size: sz, font: f, color: col });
+  k.rt = (pg, t, x, y, sz, f, col) => pg.drawText(k.S(t), { x: x - f.widthOfTextAtSize(k.S(t), sz), y, size: sz, font: f, color: col });
+  k.ct = (pg, t, cx, y, sz, f, col) => pg.drawText(k.S(t), { x: cx - f.widthOfTextAtSize(k.S(t), sz) / 2, y, size: sz, font: f, color: col });
+  if (typeof window !== 'undefined' && window.__logoBytes) { try { k.logoImg = await doc.embedPng(window.__logoBytes); } catch (e) {} }
+  k.page = () => { const pg = doc.addPage([k.W, k.H]); pg.drawRectangle({ x: 0, y: 0, width: k.W, height: k.H, color: k.paper }); return pg; };
+  k.brand = (pg, y, lh, ts) => {
+    let x = 48;
+    if (k.logoImg) { const w = k.logoImg.width * lh / k.logoImg.height; pg.drawImage(k.logoImg, { x, y: y - lh * .5, width: w, height: lh }); x += w + 14; }
+    return x;
+  };
+  k.header = (pg, kind, rl, rv, rs, h = 150) => {
+    pg.drawRectangle({ x: 0, y: k.H - h, width: k.W, height: h, color: k.ink });
+    pg.drawRectangle({ x: 0, y: k.H - h - 3, width: k.W, height: 3, color: k.brass });
+    const x = k.brand(pg, k.H - h / 2 - 4, k.logoImg ? 60 : 0), sz = k.logoImg ? 24 : 29;
+    k.tx(pg, 'AN COMMITTEES', x, k.H - 72, sz, k.ser, k.brass); k.tx(pg, kind, x, k.H - 98, 10, k.sansB, k.light);
+    k.rt(pg, rl, k.W - 48, k.H - 62, 8.5, k.sans, rgb(.7, .67, .6)); k.rt(pg, rv, k.W - 48, k.H - 88, 20, k.ser, rgb(.96, .93, .86));
+    if (rs) k.rt(pg, rs, k.W - 48, k.H - 108, 9, k.sans, rgb(.7, .67, .6));
+  };
+  k.mini = (pg, label) => { pg.drawRectangle({ x: 0, y: k.H - 50, width: k.W, height: 50, color: k.ink }); pg.drawRectangle({ x: 0, y: k.H - 52, width: k.W, height: 2, color: k.brass }); const x = k.brand(pg, k.H - 25, k.logoImg ? 28 : 0); k.tx(pg, 'AN COMMITTEES', x, k.H - 32, 15, k.ser, k.brass); k.rt(pg, label, k.W - 48, k.H - 31, 9, k.sans, k.light); };
+  k.stamp = (pg, cx, cy, a, b) => {
+    pg.drawCircle({ x: cx, y: cy, size: 44, borderColor: k.brassD, borderWidth: 2, opacity: 0 }); pg.drawCircle({ x: cx, y: cy, size: 38, borderColor: k.brassD, borderWidth: .8, opacity: 0 });
+    k.ct(pg, a, cx, cy + 2, 10.5, k.sansB, k.brassD); pg.drawRectangle({ x: cx - 20, y: cy - 5, width: 40, height: .8, color: k.brassD }); k.ct(pg, b, cx, cy - 18, 9, k.sansB, k.brassD);
+  };
+  k.footerAll = note => {
+    const pages = doc.getPages();
+    pages.forEach((pg, i) => {
+      pg.drawRectangle({ x: 48, y: 74, width: k.W - 96, height: .8, color: k.line });
+      k.ct(pg, note + (pages.length > 1 ? '   |   Page ' + (i + 1) + ' of ' + pages.length : ''), k.W / 2, 58, 8.5, k.sans, k.mu);
+      k.ct(pg, 'AN Committees  |  Designed & Developed by Ahsan Ali', k.W / 2, 40, 10.5, k.serI, k.brassD);
+    });
+  };
+  k.qr = (pg, m, x, y, size) => {
+    if (!m || !m.length) return; const n = m.length, cs = size / n, pad = 5;
+    pg.drawRectangle({ x: x - pad, y: y - pad, width: size + pad * 2, height: size + pad * 2, color: rgb(1, 1, 1), borderColor: k.line, borderWidth: .6 });
+    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (m[r][c]) pg.drawRectangle({ x: x + c * cs, y: y + (n - 1 - r) * cs, width: cs + .15, height: cs + .15, color: k.ink });
+  };
+  k.rows = (pg, y, rows, labelX = 48, valX = 198) => {
+    rows.filter(x => x[1]).forEach(([lb, v]) => {
+      const ls = k.wrap(v, k.sansB, 12.5, k.W - 96 - (valX - 48)), h = Math.max(32, 18 + ls.length * 16);
+      k.tx(pg, lb, labelX, y - 22, 8.5, k.sansB, k.mu); ls.forEach((t, i) => k.tx(pg, t, valX, y - 22 - i * 16, 12.5, k.sansB, k.ink));
+      y -= h; pg.drawRectangle({ x: 48, y, width: k.W - 96, height: .6, color: k.line });
+    });
+    return y;
+  };
+  return k;
+}
+
+async function buildReceiptPdf(r, L) {
+  const k = await pdfKit(L, 'Payment receipt ' + r.no), pg = k.page();
+  k.header(pg, 'PAYMENT RECEIPT', 'RECEIPT NO', r.no || '-', 'Issued ' + r.verifiedOn);
+  let y = k.H - 215;
+  k.tx(pg, 'AMOUNT RECEIVED', 48, y + 40, 9, k.sansB, k.mu); k.tx(pg, r.amount, 48, y, 46, k.ser, k.brassD);
+  if (r.qr) { k.stamp(pg, 330, y + 14, 'VERIFIED', 'PAID'); k.qr(pg, r.qr, k.W - 48 - 72, y - 36, 72); k.ct(pg, 'SCAN TO VERIFY', k.W - 48 - 36, y - 56, 7.5, k.sansB, k.mu); y -= 62; }
+  else { k.stamp(pg, k.W - 94, y + 14, 'VERIFIED', 'PAID'); y -= 36; }
+  pg.drawRectangle({ x: 48, y, width: k.W - 96, height: 1.2, color: k.brass }); y -= 14;
+  y = k.rows(pg, y, [['MEMBER', r.member], ['PHONE', r.phone], ['COMMITTEE', r.committee], ['PAYMENT FOR', r.month], ['METHOD', r.method], ['SUBMITTED ON', r.submittedOn], ['VERIFIED ON', r.verifiedOn]]);
+  if (r.remark) {
+    y -= 28; k.tx(pg, 'REMARK FROM ADMIN', 48, y, 8.5, k.sansB, k.brassD);
+    const ls = k.wrap(r.remark, k.serI, 14, k.W - 96 - 36).slice(0, 7), bh = 26 + ls.length * 19; y -= 10;
+    pg.drawRectangle({ x: 48, y: y - bh, width: k.W - 96, height: bh, color: k.box, borderColor: k.line, borderWidth: .6 }); pg.drawRectangle({ x: 48, y: y - bh, width: 3.5, height: bh, color: k.brass });
+    ls.forEach((t, i) => k.tx(pg, t, 68, y - 24 - i * 19, 14, k.serI, k.ink));
+  }
+  k.footerAll('This is a computer-generated receipt and does not require a signature.');
+  return await k.doc.save();
+}
+
+async function buildSlipPdf(r, L) {
+  const k = await pdfKit(L, 'Payout slip ' + r.no), pg = k.page();
+  k.header(pg, 'PAYOUT SLIP', 'SLIP NO', r.no || '-', 'Issued ' + r.date);
+  let y = k.H - 215;
+  k.tx(pg, 'PAYOUT AMOUNT', 48, y + 40, 9, k.sansB, k.mu); k.tx(pg, r.amount, 48, y, 46, k.ser, k.brassD);
+  k.stamp(pg, k.W - 94, y + 14, r.paid ? 'PAYOUT' : 'PENDING', r.paid ? 'PAID' : 'NOT YET');
+  y -= 36; pg.drawRectangle({ x: 48, y, width: k.W - 96, height: 1.2, color: k.brass }); y -= 14;
+  y = k.rows(pg, y, [['MEMBER', r.member], ['PHONE', r.phone], ['COMMITTEE', r.committee], ['PAYOUT FOR', r.month], ['TURN', r.turn], ['STATUS', r.paid ? 'Paid' : 'Pending'], ['DATE RECORDED', r.date]]);
+  const sy = Math.min(y - 90, 230);
+  pg.drawRectangle({ x: 48, y: sy, width: 200, height: .8, color: k.ink }); pg.drawRectangle({ x: k.W - 248, y: sy, width: 200, height: .8, color: k.ink });
+  k.tx(pg, 'Received by (member signature)', 48, sy - 14, 9, k.sans, k.mu); k.tx(pg, r.member, 48, sy - 28, 10.5, k.sansB, k.ink);
+  k.tx(pg, 'Paid by (authorised signatory)', k.W - 248, sy - 14, 9, k.sans, k.mu); if (r.paidBy) k.tx(pg, r.paidBy, k.W - 248, sy - 28, 10.5, k.sansB, k.ink);
+  k.footerAll('This slip confirms the payout recorded in AN Committees.');
+  return await k.doc.save();
+}
+
+async function buildStatementPdf(s, L) {
+  const k = await pdfKit(L, 'Statement ' + s.member), W = k.W;
+  let pg = k.page(); k.header(pg, 'MEMBER STATEMENT', 'GENERATED', s.generatedOn, '', 130);
+  let y = k.H - 175;
+  k.tx(pg, 'MEMBER', 48, y + 22, 8.5, k.sansB, k.mu); k.tx(pg, s.member, 48, y - 4, 24, k.ser, k.ink); if (s.phone) k.tx(pg, s.phone, 48, y - 22, 11, k.sans, k.mu);
+  y -= 46;
+  const need = h => { if (y - h < 100) { pg = k.page(); k.mini(pg, 'Member statement  |  ' + s.member); y = k.H - 90; } };
+  const stCol = t => /^Paid$/.test(t) ? k.ok : /overdue/i.test(t) ? k.bad : /^Due|^Part/.test(t) ? k.warn : k.mu;
+  if (!s.sections.length) { k.tx(pg, 'No approved committees yet.', 48, y - 10, 12, k.sans, k.mu); }
+  s.sections.forEach(sec => {
+    need(150);
+    k.tx(pg, sec.committee, 48, y, 20, k.ser, k.brassD); k.tx(pg, sec.sub, 48, y - 16, 10, k.sans, k.mu); y -= 34;
+    const cols = { m: 54, due: 236, paid: 314, pend: 390, bal: 462, st: 478 };
+    const head = () => { pg.drawRectangle({ x: 48, y: y - 20, width: W - 96, height: 22, color: k.ink }); k.tx(pg, 'MONTH', cols.m, y - 13, 8, k.sansB, k.light); k.rt(pg, 'DUE', cols.due, y - 13, 8, k.sansB, k.light); k.rt(pg, 'PAID', cols.paid, y - 13, 8, k.sansB, k.light); k.rt(pg, 'PENDING', cols.pend, y - 13, 8, k.sansB, k.light); k.rt(pg, 'BALANCE', cols.bal - 8, y - 13, 8, k.sansB, k.light); k.tx(pg, 'STATUS', cols.st + 8, y - 13, 8, k.sansB, k.light); y -= 22; };
+    head();
+    sec.rows.forEach((r, i) => {
+      if (y - 22 < 100) { need(9999); k.tx(pg, sec.committee + ' (continued)', 48, y, 12, k.ser, k.brassD); y -= 16; head(); }
+      if (i % 2 === 0) pg.drawRectangle({ x: 48, y: y - 20, width: W - 96, height: 22, color: k.box });
+      k.tx(pg, r.month, cols.m, y - 13, 10, k.sansB, k.ink); k.rt(pg, r.due, cols.due, y - 13, 10, k.sans, k.ink); k.rt(pg, r.paid, cols.paid, y - 13, 10, k.sans, k.ink); k.rt(pg, r.pend, cols.pend, y - 13, 10, k.sans, k.mu); k.rt(pg, r.bal, cols.bal - 8, y - 13, 10, k.sansB, r.balN > 0 ? k.bad : k.ink); k.tx(pg, r.status, cols.st + 8, y - 13, 9.5, k.sansB, stCol(r.status));
+      y -= 22;
+    });
+    if (!sec.rows.length) { k.tx(pg, 'No months to show yet.', 54, y - 14, 10, k.sans, k.mu); y -= 22; }
+    need(70); y -= 8; pg.drawRectangle({ x: 48, y: y - 52, width: W - 96, height: 56, color: k.box, borderColor: k.line, borderWidth: .6 }); pg.drawRectangle({ x: 48, y: y - 52, width: 3.5, height: 56, color: k.brass });
+    [['TOTAL DUE', sec.t.due], ['PAID (VERIFIED)', sec.t.paid], ['PENDING CHECK', sec.t.pend], ['BALANCE DUE', sec.t.bal]].forEach(([l, v], i) => { const x = 66 + i * 125; k.tx(pg, l, x, y - 18, 7.5, k.sansB, k.mu); k.tx(pg, v, x, y - 38, 14, k.ser, i === 3 && sec.t.balN > 0 ? k.bad : k.ink); });
+    y -= 76;
+    if (sec.turns.length) { need(40 + sec.turns.length * 20); k.tx(pg, 'PAYOUT TURN', 48, y, 8.5, k.sansB, k.brassD); y -= 6; sec.turns.forEach(t => { y -= 20; k.tx(pg, t.label, 54, y, 10.5, k.sansB, k.ink); k.rt(pg, t.status, W - 54, y, 10, k.sansB, t.paid ? k.ok : k.mu); pg.drawRectangle({ x: 48, y: y - 6, width: W - 96, height: .5, color: k.line }); }); y -= 28; }
+    else y -= 10;
+  });
+  k.footerAll('Statement generated from AN Committees records. Pending items are not yet verified.');
+  return await k.doc.save();
+}
+
+async function receiptPdf(id, mode) {
+  const p = D.payments.find(x => x.id === id); if (!p || p.status !== 'verified') return;
+  await pdfTask(async L => {
+    const link = location.protocol.startsWith('http') && p.receipt_no ? location.origin + '/#verify=' + encodeURIComponent(p.receipt_no) : null;
+    const qr = link ? await qrMatrix(link) : null;
+    const bytes = await buildReceiptPdf({
+      no: p.receipt_no, member: p.profiles?.name, phone: p.profiles?.phone, committee: p.memberships?.committees?.name, month: fmtMonth(p.month_label), amount: money(p.amount),
+      method: p.method === 'cash' ? 'Cash' : (p.account_label || 'Bank / wallet'), submittedOn: fmtDT(p.created_at), verifiedOn: fmtDT(p.verified_at), remark: p.verify_note || '', qr
+    }, L);
+    await deliverPdf(bytes, 'Receipt-' + (p.receipt_no || id) + '.pdf', 'Payment receipt ' + (p.receipt_no || ''), mode);
+  });
+}
+async function payoutSlipPdf(id, mode) {
+  const p = D.payouts.find(x => x.id === id); if (!p) return;
+  const c = D.committees.find(x => x.id === p.committee_id), prof = p.profiles || D.profiles.find(x => x.id === p.member_id) || {};
+  let turn = '';
+  if (c) for (let n = 1; n <= (Number(c.total_members) || 0); n++) { const sm = slotMonth(c, n); if (sm && sm.key === p.month_label) { turn = 'Turn ' + n + ' of ' + c.total_members; break; } }
+  await pdfTask(async L => {
+    const bytes = await buildSlipPdf({ no: 'PO-' + String(p.id).replace(/-/g, '').slice(0, 8).toUpperCase(), member: prof.name || '', phone: prof.phone || '', committee: p.committees?.name || (c && c.name) || '', month: fmtMonth(p.month_label), turn, amount: money(p.amount), paid: p.status === 'paid', date: fmtDT(p.paid_at || p.created_at), paidBy: me.role === 'admin' ? me.name : '' }, L);
+    await deliverPdf(bytes, 'Payout-slip-' + String(p.id).slice(0, 8) + '.pdf', 'Payout slip', mode);
+  });
+}
+function stmtSection(m) {
+  const c = D.committees.find(x => x.id === m.committee_id); if (!c) return null;
+  const due = dueOf(m), nk = nowKey(), sum = (a, f) => a.filter(f).reduce((s, p) => s + Number(p.amount), 0);
+  const sd = dueStart(m, c), rg = commRange(c);
+  const pays = D.payments.filter(p => p.membership_id === m.id && p.status !== 'rejected');
+  let last = nk; pays.forEach(p => { if (p.month_label > last) last = p.month_label; });
+  const rows = [], t = { due: 0, paid: 0, pend: 0, bal: 0 };
+  for (let i = 0; i < 80; i++) {
+    const key = mKey(new Date(sd.getFullYear(), sd.getMonth() + i, 1)); if (key > last || (rg && key > rg.end)) break;
+    const pv = sum(pays, p => p.month_label === key && p.status === 'verified'), pp = sum(pays, p => p.month_label === key && p.status === 'pending');
+    const bal = Math.max(0, due - pv - pp), covered = pv + pp >= due;
+    let st = covered ? (pv >= due ? 'Paid' : 'Pending check') : (key < nk ? 'Overdue' : key === nk ? 'Due' : 'Upcoming');
+    if (!covered && pv + pp > 0) st = key < nk ? 'Part paid, overdue' : 'Part paid';
+    if (key <= nk) { t.due += due; t.bal += bal; } t.paid += pv; t.pend += pp;
+    rows.push({ month: fmtMonth(key), due: money(due), paid: pv ? money(pv) : '-', pend: pp ? money(pp) : '-', bal: bal ? money(bal) : '-', balN: key <= nk ? bal : 0, status: st });
+  }
+  const cur = c.start_date ? curIdx(c) : 0, turns = [];
+  const held = D.shares.filter(s => s.membership_id === m.id && s.slot_number).map(s => ({ n: s.slot_number, id: s.id }));
+  if (!held.length && m.slot_number) held.push({ n: m.slot_number, id: null });
+  held.sort((a, b) => a.n - b.n).forEach(h => {
+    const sm = slotMonth(c, h.n);
+    const po = D.payouts.find(p => p.committee_id === c.id && (p.share_id && h.id ? p.share_id === h.id : p.member_id === m.user_id) && (!sm || p.month_label === sm.key));
+    const paid = !!(po && po.status === 'paid');
+    turns.push({ label: 'Turn ' + h.n + '  |  ' + (sm ? sm.label : 'not scheduled') + '  |  ' + money(pot(c)), paid, status: paid ? 'Paid out' : (c.start_date && h.n < cur ? 'Not paid yet' : 'Upcoming') });
+  });
+  return { committee: c.name, sub: money(c.monthly_amount) + ' per month  |  ' + (m.share_count || 1) + ' share' + ((m.share_count || 1) > 1 ? 's' : ''), rows, t: { due: money(t.due), paid: money(t.paid), pend: t.pend ? money(t.pend) : '-', bal: t.bal ? money(t.bal) : '-', balN: t.bal }, turns };
+}
+async function statementPdf(uid, mode) {
+  const prof = D.profiles.find(x => x.id === uid) || (me && me.id === uid ? me : null); if (!prof) return;
+  const sections = D.memberships.filter(m => m.user_id === uid && m.status === 'approved').map(stmtSection).filter(Boolean);
+  await pdfTask(async L => {
+    const bytes = await buildStatementPdf({ member: prof.name || '', phone: prof.phone || '', generatedOn: fmtDT(new Date()), sections }, L);
+    await deliverPdf(bytes, 'Statement-' + String(prof.name || 'member').replace(/[^A-Za-z0-9]+/g, '-') + '.pdf', 'Statement ' + (prof.name || ''), mode);
+  });
+}
+function dueMonthKeys(m) {
+  const c = D.committees.find(x => x.id === m.committee_id); if (!c) return [];
+  const due = dueOf(m), nk = nowKey(); const sd = dueStart(m, c), rg = commRange(c);
+  const out = [];
+  for (let i = 0; i < 80; i++) { const key = mKey(new Date(sd.getFullYear(), sd.getMonth() + i, 1)); if (key > nk || (rg && key > rg.end)) break; const rem = due - paidOf(m, key); if (rem > 0) out.push({ key, rem }); }
+  return out;
+}
+const waNumber = ph => { let d = cleanPhone(ph); if (d.startsWith('00')) d = d.slice(2); else if (d.startsWith('0')) d = '92' + d.slice(1); return d; };
+function remindMember(uid) {
+  const prof = D.profiles.find(x => x.id === uid); if (!prof) return;
+  const nk = nowKey(), lines = []; let tot = 0;
+  D.memberships.filter(m => m.user_id === uid && m.status === 'approved').forEach(m => { const c = D.committees.find(x => x.id === m.committee_id); dueMonthKeys(m).forEach(d => { lines.push('- ' + (c ? c.name : 'Committee') + ': ' + fmtMonth(d.key) + ', ' + money(d.rem) + (d.key < nk ? ' (overdue)' : '')); tot += d.rem; }); });
+  if (!lines.length) return toast((prof.name || 'This member') + ' has no dues right now');
+  const msg = 'Assalam o Alaikum ' + ((prof.name || '').split(' ')[0] || '') + ',\n\nA friendly reminder from AN Committees. Your pending payments:\n' + lines.join('\n') + '\n\nTotal due: ' + money(tot) + '\nPlease pay in the app and upload your receipt.' + (location.protocol.startsWith('http') ? '\n' + location.origin : '') + '\n\nJazakAllah.';
+  window.open('https://wa.me/' + waNumber(prof.phone) + '?text=' + encodeURIComponent(msg), '_blank', 'noopener');
+}
+
+// ---------- Email OTP, forgot password, account ----------
+const AUTH_CREDIT = '<div class="credit"><b>Welcome to AN Committees</b><span>Trusted committee management, engineered by Ahsan Ali</span></div>';
+function authSwap(html) {
+  if (!document.querySelector('.af-in')) showAuth('login');
+  const f = document.querySelector('.af-in'); if (!f) return; f.innerHTML = html + AUTH_CREDIT;
+  const i = f.querySelector('input'); if (i) setTimeout(() => i.focus(), 60);
+}
+const maskEmail = e => { const [u, d] = String(e).split('@'); return (u || '').slice(0, 2) + '***@' + (d || ''); };
+const busyOn = id => { const b = $(id); if (b) { b.disabled = true; b.classList.add('busy'); } };
+const busyOff = id => { const b = $(id); if (b) { b.disabled = false; b.classList.remove('busy'); } };
+let otpState = { kind: null, email: null };
+function showForgot() {
+  authSwap(`<h2>Reset password</h2><p class="muted">Enter your phone number. We will email a code to the address saved on your account.</p>
+    <label>Phone number</label><input id="f_phone" type="tel" inputmode="numeric" placeholder="03001234567" onkeydown="if(event.key==='Enter')fpSend()">
+    <br><button class="btn" style="width:100%" id="fbtn" onclick="fpSend()">Send code</button><p class="lnk-row"><a onclick="showAuth('login')">Back to log in</a></p>`);
+}
+async function fpSend() {
+  const phone = cleanPhone($('f_phone').value); if (phone.length < 10) { shakeForm(); return toast('Enter a valid phone number', 1); }
+  busyOn('fbtn');
+  const r = await sb.rpc('login_email', { p_phone: phone });
+  if (r.error) { busyOff('fbtn'); return toast('Password reset is not set up yet. Please contact the admin', 1); }
+  if (!r.data) { busyOff('fbtn'); shakeForm(); return toast('No account found with this number', 1); }
+  if (String(r.data).endsWith(EMAIL_DOMAIN)) {
+    return authSwap(`<h2>No email on this account</h2><p class="muted">This account was created with a phone number only, so a code cannot be emailed. Please contact the admin to help you get back in.</p><br><button class="btn gray" style="width:100%" onclick="showAuth('login')">Back to log in</button>`);
+  }
+  const { error } = await sb.auth.resetPasswordForEmail(r.data);
+  busyOff('fbtn');
+  if (error) return toast(/rate|limit|seconds/i.test(error.message) ? 'Too many requests. Please wait a few minutes and try again' : error.message, 1);
+  showOtp('recovery', r.data);
+}
+function showOtp(kind, email) {
+  otpState = { kind, email };
+  authSwap(`<h2>Enter your code</h2><p class="muted">We emailed a code to <b>${esc(maskEmail(email))}</b>. It can take a minute. Check spam as well.</p>
+    <label>Verification code</label><input id="o_code" class="otp" inputmode="numeric" autocomplete="one-time-code" maxlength="8" placeholder="000000" onkeydown="if(event.key==='Enter')otpVerify()">
+    <br><button class="btn" style="width:100%" id="obtn" onclick="otpVerify()">Verify</button>
+    <p class="lnk-row"><a id="o_resend" onclick="otpResend()">Resend code</a> <span>.</span> <a onclick="showAuth('login')">Cancel</a></p>`);
+}
+async function otpVerify() {
+  const code = ($('o_code').value || '').replace(/\D/g, ''); if (code.length < 6) { shakeForm(); return toast('Enter the code from your email', 1); }
+  busyOn('obtn');
+  const { error } = await sb.auth.verifyOtp({ email: otpState.email, token: code, type: otpState.kind === 'signup' ? 'signup' : 'recovery' });
+  if (error) { busyOff('obtn'); shakeForm(); return toast('That code is wrong or has expired', 1); }
+  if (otpState.kind === 'signup') { toast('Email verified. Welcome!'); return boot(); }
+  newPassPanel();
+}
+let otpCool = false;
+async function otpResend() {
+  if (otpCool) return toast('Please wait a few seconds before asking again');
+  otpCool = true; setTimeout(() => { otpCool = false; }, 30000);
+  const r = otpState.kind === 'signup' ? await sb.auth.resend({ type: 'signup', email: otpState.email }) : await sb.auth.resetPasswordForEmail(otpState.email);
+  if (r.error) { otpCool = false; return toast(/rate|limit|seconds/i.test(r.error.message) ? 'Too many requests. Please wait a few minutes' : r.error.message, 1); }
+  toast('A new code was sent');
+}
+function newPassPanel() {
+  authSwap(`<h2>Set a new password</h2><p class="muted">Choose a password you will remember.</p>
+    <label>New password</label><input id="n_p1" type="password" autocomplete="new-password"><label>Confirm password</label><input id="n_p2" type="password" autocomplete="new-password" onkeydown="if(event.key==='Enter')newPassSave()">
+    <br><button class="btn" style="width:100%" id="nbtn" onclick="newPassSave()">Save password</button>`);
+}
+async function newPassSave() {
+  const p1 = $('n_p1').value, p2 = $('n_p2').value;
+  if (p1.length < 6) { shakeForm(); return toast('Password must be at least 6 characters', 1); }
+  if (p1 !== p2) { shakeForm(); return toast('Passwords do not match', 1); }
+  busyOn('nbtn');
+  const { error } = await sb.auth.updateUser({ password: p1 });
+  if (error) { busyOff('nbtn'); return toast(error.message, 1); }
+  toast('Password updated'); boot();
+}
+async function doSignup() {
+  const name = $('s_name').value.trim(), phone = cleanPhone($('s_phone').value), email = ($('s_email').value || '').trim().toLowerCase(),
+        cnic = $('s_cnic').value.trim(), p1 = $('s_pass').value, p2 = $('s_pass2').value;
+  const bad = m => { shakeForm(); toast(m, 1); };
+  if (!name || !phone || !email || !p1) return bad('Name, phone, email and password are required');
+  if (phone.length < 10 || phone.length > 13) return bad('Enter a valid phone number');
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return bad('Enter a valid email address');
+  if (p1.length < 6) return bad('Password must be at least 6 characters');
+  if (p1 !== p2) return bad('Passwords do not match');
+  busyOn('sbtn');
+  const ex = await sb.rpc('phone_exists', { p_phone: phone });
+  if (!ex.error && ex.data) { busyOff('sbtn'); return bad('This phone number is already registered'); }
+  const { data, error } = await sb.auth.signUp({ email, password: p1, options: { data: { name, phone, cnic } } });
+  if (error) { busyOff('sbtn'); shakeForm(); return toast(/registered|exists/i.test(error.message) ? 'This email is already registered' : (/rate|limit/i.test(error.message) ? 'Too many requests. Please wait a few minutes' : error.message), 1); }
+  if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) { busyOff('sbtn'); return bad('This email is already registered'); }
+  if (!data.session) { toast('We sent a code to your email'); return showOtp('signup', email); }
+  boot();
+}
+async function doLogin() {
+  const phone = cleanPhone($('l_phone').value), pass = $('l_pass').value;
+  if (!phone || !pass) { shakeForm(); return toast('Enter phone and password', 1); }
+  busyOn('lbtn');
+  let email = phone + EMAIL_DOMAIN;
+  try { const r = await sb.rpc('login_email', { p_phone: phone }); if (!r.error && r.data) email = r.data; } catch (e) {}
+  const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+  if (error) {
+    busyOff('lbtn');
+    if (/not confirmed/i.test(error.message)) { await sb.auth.resend({ type: 'signup', email }); toast('Please verify your email. We sent a new code'); return showOtp('signup', email); }
+    shakeForm(); return toast('Wrong phone or password', 1);
+  }
+  boot();
+}
+let accEmail = '';
+let deferredInstall = null;
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredInstall = e; });
+async function installApp() { if (!deferredInstall) return; deferredInstall.prompt(); try { await deferredInstall.userChoice; } catch (e) {} deferredInstall = null; closeModal(); }
+async function openAccount() {
+  let email = ''; try { const { data: { user } } = await sb.auth.getUser(); email = (user && user.email) || ''; } catch (e) {}
+  accEmail = email;
+  const real = email && !email.endsWith(EMAIL_DOMAIN), standalone = matchMedia('(display-mode: standalone)').matches;
+  openModal(`<h3>Account and security</h3>
+    <div class="acc-id"><span class="av">${esc((me.name || '?').trim().charAt(0).toUpperCase())}</span><div><b>${esc(me.name)}</b><small>${esc(me.phone || '')}</small></div></div>
+    <div class="acc-sec"><div class="eb">Email</div>
+      ${real ? `<p class="acc-em">${esc(email)} <span class="badge verified"><i></i>Verified</span></p><button class="btn sm gray" onclick="accEmailForm()">Change email</button>` : `<p class="muted">No email is saved on this account. Add one so you can reset your password if you forget it.</p><button class="btn sm out" onclick="accEmailForm()">Add email</button>`}
+      <div id="acc_em"></div></div>
+    <div class="acc-sec"><div class="eb">Change password</div>${real ? `<p class="muted">For your safety, we email a code to <b>${esc(maskEmail(email))}</b> before the password can be changed.</p><div id="acc_pw"><button class="btn sm out" onclick="accPassSend()">Send code to my email</button></div>` : `<p class="muted">Add and verify your email first. After that you can change your password with a code sent to your email.</p>`}</div>
+    ${standalone ? '' : `<div class="acc-sec"><div class="eb">App</div>${deferredInstall ? `<button class="btn sm out" onclick="installApp()">Install AN Committees on this device</button>` : `<p class="muted">To install: open the browser menu and choose "Add to Home screen" (on iPhone: Share, then Add to Home Screen).</p>`}</div>`}
+    <div class="mfoot"><button class="btn" onclick="closeModal()">Done</button></div>`);
+}
+function accEmailForm() { $('acc_em').innerHTML = `<label>New email address</label><input id="a_email" type="email" placeholder="you@example.com" autocomplete="email"><button class="btn sm" style="margin-top:10px" id="a_send" onclick="accEmailSend()">Send code</button>`; const i = $('a_email'); if (i) i.focus(); }
+async function accEmailSend() {
+  const email = ($('a_email').value || '').trim().toLowerCase(); if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return toast('Enter a valid email address', 1);
+  busyOn('a_send');
+  const { error } = await sb.auth.updateUser({ email });
+  if (error) { busyOff('a_send'); return toast(/rate|limit|seconds/i.test(error.message) ? 'Too many requests. Please wait a few minutes' : (/registered|exists/i.test(error.message) ? 'That email is already used by another account' : error.message), 1); }
+  $('acc_em').innerHTML = `<p class="muted">We sent a code to <b>${esc(maskEmail(email))}</b>.</p><input id="a_code" class="otp" inputmode="numeric" maxlength="8" placeholder="000000"><button class="btn sm" style="margin-top:10px" id="a_ver" onclick="accEmailVerify('${esc(email)}')">Verify email</button>`;
+}
+async function accEmailVerify(email) {
+  const code = ($('a_code').value || '').replace(/\D/g, ''); if (code.length < 6) return toast('Enter the code from your email', 1);
+  busyOn('a_ver');
+  const { error } = await sb.auth.verifyOtp({ email, token: code, type: 'email_change' });
+  if (error) { busyOff('a_ver'); return toast('That code is wrong or has expired', 1); }
+  toast('Email saved and verified'); closeModal(); openAccount();
+}
+async function accPassSend() {
+  if (!accEmail || accEmail.endsWith(EMAIL_DOMAIN)) return toast('Add and verify your email first', 1);
+  const btn = document.querySelector('#acc_pw button'); if (btn) { btn.disabled = true; btn.classList.add('busy'); }
+  const { error } = await sb.auth.resetPasswordForEmail(accEmail);
+  if (error) { if (btn) { btn.disabled = false; btn.classList.remove('busy'); } return toast(/rate|limit|seconds/i.test(error.message) ? 'Too many requests. Please wait a few minutes' : error.message, 1); }
+  $('acc_pw').innerHTML = `<p class="muted">Code sent to <b>${esc(maskEmail(accEmail))}</b>. Enter it below with your new password.</p><input id="a_code" class="otp" inputmode="numeric" maxlength="8" placeholder="000000"><input id="a_p1" type="password" placeholder="New password" autocomplete="new-password"><input id="a_p2" type="password" placeholder="Confirm new password" autocomplete="new-password"><button class="btn sm" style="margin-top:10px" id="a_psave" onclick="accPassSave()">Change password</button>`;
+  toast('A code was sent to your email');
+}
+async function accPassSave() {
+  const code = ($('a_code').value || '').replace(/\D/g, ''), p1 = $('a_p1').value, p2 = $('a_p2').value;
+  if (code.length < 6) return toast('Enter the code from your email', 1);
+  if (p1.length < 6) return toast('Password must be at least 6 characters', 1);
+  if (p1 !== p2) return toast('Passwords do not match', 1);
+  busyOn('a_psave');
+  const v = await sb.auth.verifyOtp({ email: accEmail, token: code, type: 'recovery' });
+  if (v.error) { busyOff('a_psave'); return toast('That code is wrong or has expired', 1); }
+  const { error } = await sb.auth.updateUser({ password: p1 });
+  if (error) { busyOff('a_psave'); return toast(error.message, 1); }
+  toast('Password changed'); closeModal();
+}
+
+// ---------- Activity log (admin) ----------
+let ACT = null, ACT_ERR = null;
+async function loadActivity() {
+  const r = await sb.from('activity_log').select('*').order('created_at', { ascending: false }).limit(200);
+  if (r.error) { ACT = []; ACT_ERR = r.error.message; } else { ACT = r.data || []; ACT_ERR = null; }
+  if (tab === 'a_activity') { const c = $('content'); if (c) c.classList.add('noanim'); renderTab(false); }
+}
+const ACT_L = { payment_submitted: 'Payment submitted', payment_verified: 'Payment verified', payment_rejected: 'Payment rejected', payment_deleted: 'Payment deleted', payout_added: 'Payout recorded', payout_paid: 'Payout marked paid', payout_pending: 'Payout set to pending', payout_deleted: 'Payout deleted', membership_pending: 'Join request', membership_approved: 'Join request approved', membership_rejected: 'Join request rejected', membership_removed: 'Membership removed' };
+function vAActivity() {
+  if (ACT === null) { loadActivity(); return '<div class="empty"><p>Loading activity...</p></div>'; }
+  if (ACT_ERR) return empty('The activity log is not set up yet. Run supabase-advanced-setup.sql in Supabase.', 'history');
+  if (!ACT.length) return empty('Nothing recorded yet. New actions will appear here.', 'history');
+  const groups = []; ACT.forEach(a => { const d = fdate(a.created_at); let g = groups[groups.length - 1]; if (!g || g[0] !== d) { g = [d, []]; groups.push(g); } g[1].push(a); });
+  return '<div class="actl">' + groups.map(([d, items]) => `<div class="eb actd">${esc(d)}</div><div class="card actc">` + items.map(a => {
+    const bad = /deleted|rejected|removed/.test(a.action), good = /verified|approved|paid/.test(a.action);
+    return `<div class="har"><i style="${bad ? 'background:var(--red)' : good ? '' : 'background:var(--mu)'}"></i><div><b>${esc(ACT_L[a.action] || a.action)}</b><small>${esc(a.summary || '')}</small><small class="by">by ${esc(a.actor_name || 'system')} . ${esc(fmtDT(a.created_at))}</small></div></div>`;
+  }).join('') + '</div>').join('') + '</div>';
+}
+
+// ---------- Public receipt verification ----------
+async function showVerify(no) {
+  $('app').innerHTML = `<div class="vwrap"><div class="card vcard"><div class="brand">${logoMark()}<span>AN Committees</span></div><div class="eb" style="margin-top:22px">Receipt verification</div><div id="vres"><p class="muted">Checking ${esc(no)}...</p></div><button class="btn out" style="margin-top:22px" onclick="leaveVerify()">Open AN Committees</button><p class="vfoot">Designed &amp; Developed by <em>Ahsan Ali</em></p></div></div>`;
+  const r = await sb.rpc('verify_receipt', { p_no: no }); const row = !r.error && Array.isArray(r.data) ? r.data[0] : null, box = $('vres'); if (!box) return;
+  if (r.error) box.innerHTML = '<p class="muted">Verification is not available right now.</p>';
+  else if (!row) box.innerHTML = `<div class="vbad ser">Not found</div><p class="muted">No verified receipt matches <b>${esc(no)}</b>. Please check the number or contact the admin.</p>`;
+  else box.innerHTML = `<div class="vok ser">Genuine receipt</div><div class="vamt ser">${money(row.amount)}</div>${kv([['Receipt no', esc(no)], ['Member', esc(row.member_name)], ['Committee', esc(row.committee)], ['For month', fmtMonth(row.month_label)], ['Verified on', fmtDT(row.verified_at)]])}`;
+}
+function leaveVerify() { history.replaceState(null, '', location.pathname + location.search); boot(); }
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+
+
+function receiptText(p) {
+  return ['PAYMENT RECEIPT', 'Receipt no: ' + p.receipt_no, 'Member: ' + (p.profiles?.name || ''), 'Committee: ' + (p.memberships?.committees?.name || ''),
+    'Month: ' + fmtMonth(p.month_label), 'Amount: ' + money(p.amount), 'Method: ' + (p.method === 'cash' ? 'Cash' : (p.account_label || 'Bank / wallet')), 'Verified: ' + fmtDT(p.verified_at)].concat(p.verify_note ? ['Remark: ' + p.verify_note] : []).join('\n');
+}
+function openReceipt(id) {
+  const p = D.payments.find(x => x.id === id); if (!p || p.status !== 'verified') return;
+  openModal(`<div class="rcpt"><div class="rh">${logoMark()}<div><b>Payment receipt</b><span>${esc(p.receipt_no || '')}</span></div>${badge('verified')}</div>
+    <div class="ramt">${money(p.amount)}</div>
+    ${kv([['Member', esc(p.profiles?.name)], ['Committee', esc(p.memberships?.committees?.name)], ['For month', fmtMonth(p.month_label)], ['Method', p.method === 'cash' ? 'Cash' : esc(p.account_label || 'Bank / wallet')], ['Verified on', fmtDT(p.verified_at)], p.verify_note ? ['Remark from admin', esc(p.verify_note)] : null])}
+    <div class="mfoot"><button class="btn gray" onclick="copyText(receiptText(D.payments.find(x => x.id === '${id}')))">Copy text</button>${navigator.canShare ? `<button class="btn out" onclick="receiptPdf('${id}','share')">Share PDF</button>` : ''}<button class="btn" onclick="receiptPdf('${id}','download')">Download PDF</button></div></div>`);
+}
+
+function openReject(id) {
+  const p = D.payments.find(x => x.id === id); if (!p) return;
+  openModal(`<h2>Reject payment</h2><p class="muted">${esc(p.profiles?.name)} · ${money(p.amount)} · ${fmtMonth(p.month_label)}</p>
+    <label>Reason (the member will see this) *</label>
+    <input id="rj_why" list="rj_list" placeholder="Choose or type a reason">
+    <datalist id="rj_list"><option value="Money not received"><option value="Amount does not match"><option value="Screenshot is unclear"><option value="Wrong account or month"></datalist>
+    <div class="mfoot"><button class="btn gray" onclick="closeModal()">Cancel</button><button class="btn red" onclick="confirmReject('${id}')">Reject payment</button></div>`);
+}
+async function confirmReject(id) {
+  const why = $('rj_why').value.trim();
+  if (why.length < 3) return toast('Please give a reason', 1);
+  const p = D.payments.find(x => x.id === id);
+  const note = (p.note ? p.note + ' | ' : '') + 'Rejected: ' + why;
+  const { error } = await sb.from('payments').update({ status: 'rejected', note }).eq('id', id);
+  if (error) return toast(error.message, 1);
+  closeModal(); toast('Payment rejected'); await loadData(); renderNav(); renderTab(false);
+}
+
+function vACommittees() {
+  return `<div class="card" style="max-width:620px"><h2>Create a committee</h2>
+    <label>Committee name *</label><input id="c_name" placeholder="e.g. Friends Committee">
+    <div class="row"><div><label>Monthly amount per member (Rs) *</label><input id="c_amt" type="number" min="1"></div>
+    <div><label>Total members *</label><input id="c_mem" type="number" min="1" max="60"></div></div>
+    <div class="row"><div><label>Start date *</label><input id="c_start" type="date"></div>
+    <div><label>Duration (months)</label><input id="c_dur" type="number" min="1"></div></div>
+    <label class="chk"><input type="checkbox" id="c_roster"> Let members see everyone's name and payout month</label>
+    <br><button class="btn" onclick="addCommittee()">Create committee</button></div>
+    <h2 class="sec">Your committees</h2>` +
+    (D.committees.length ? `<div class="card tw"><table><tr><th>Name</th><th>Starts</th><th>Monthly</th><th>Pot</th><th>Members</th><th>Member list</th><th>Status</th><th></th></tr>` +
+      D.committees.map(c => {
+        const n = D.memberships.filter(m => m.committee_id === c.id && m.status === 'approved').length;
+        return `<tr><td><b>${esc(c.name)}</b></td><td>${c.start_date ? fdate(c.start_date) : '<span class="muted">not set</span>'}</td><td>${money(c.monthly_amount)}</td><td>${money(pot(c))}</td><td>${n} / ${c.total_members}</td>
+        <td>${c.show_roster ? '<span class="badge open"><i></i>Shared</span>' : '<span class="badge closed"><i></i>Hidden</span>'}</td><td>${badge(c.status)}</td>
+        <td class="actions"><button class="btn sm out" onclick="openEditCommittee('${c.id}')">Edit</button>
+        <button class="btn sm gray" onclick="toggleRoster('${c.id}', ${!!c.show_roster})">${c.show_roster ? 'Hide list' : 'Share list'}</button>
+        <button class="btn sm gray" onclick="toggleC('${c.id}','${c.status}')">${c.status === 'open' ? 'Close' : 'Reopen'}</button>
+        <button class="btn sm red" onclick="delC('${c.id}')">Delete</button></td></tr>`;
+      }).join('') + '</table></div>' : empty('No committees yet', 'layers'));
+}
+async function addCommittee() {
+  const name = $('c_name').value.trim(), amt = Number($('c_amt').value), mem = Number($('c_mem').value);
+  if (!name || !amt || !mem) return toast('Name, amount and members are required', 1);
+  if (!$('c_start').value) return toast('Pick a start date. Payout months are calculated from it', 1);
+  if (mem > 60) return toast('Maximum 60 members per committee', 1);
+  const { error } = await sb.from('committees').insert({
+    name, monthly_amount: amt, total_members: mem, start_date: $('c_start').value,
+    duration_months: Number($('c_dur').value) || null, show_roster: $('c_roster').checked
+  });
+  if (error) return toast(error.message, 1);
+  toast('Committee created'); await loadData(); renderTab(false);
+}
+function openEditCommittee(id) {
+  const c = D.committees.find(x => x.id === id); if (!c) return;
+  openModal(`<h2>Edit committee</h2>
+    <label>Name</label><input id="e_name" value="${esc(c.name)}">
+    <div class="row"><div><label>Monthly amount (Rs)</label><input id="e_amt" type="number" min="1" value="${c.monthly_amount}"></div>
+    <div><label>Total members</label><input id="e_mem" type="number" min="1" max="60" value="${c.total_members}"></div></div>
+    <div class="row"><div><label>Start date</label><input id="e_start" type="date" value="${c.start_date || ''}"></div>
+    <div><label>Duration (months)</label><input id="e_dur" type="number" min="1" value="${c.duration_months || ''}"></div></div>
+    <label class="chk"><input type="checkbox" id="e_roster" ${c.show_roster ? 'checked' : ''}> Let members see everyone's name and payout month</label>
+    <div class="mfoot"><button class="btn gray" onclick="closeModal()">Cancel</button><button class="btn" onclick="saveCommittee('${id}')">Save changes</button></div>`);
+}
+async function saveCommittee(id) {
+  const name = $('e_name').value.trim(), amt = Number($('e_amt').value), mem = Number($('e_mem').value);
+  if (!name || !amt || !mem) return toast('Name, amount and members are required', 1);
+  if (mem > 60) return toast('Maximum 60 members per committee', 1);
+  const maxSlot = Math.max(0, ...D.shares.filter(s => s.committee_id === id && s.slot_number).map(s => s.slot_number));
+  if (mem < maxSlot) return toast('Turn ' + maxSlot + ' is already assigned. Total members cannot be less than that', 1);
+  const { error } = await sb.from('committees').update({
+    name, monthly_amount: amt, total_members: mem, start_date: $('e_start').value || null,
+    duration_months: Number($('e_dur').value) || null, show_roster: $('e_roster').checked
+  }).eq('id', id);
+  if (error) return toast(error.message, 1);
+  closeModal(); toast('Committee updated'); await loadData(); renderTab(false);
+}
+async function toggleRoster(id, on) {
+  const { error } = await sb.from('committees').update({ show_roster: !on }).eq('id', id);
+  if (error) return toast(error.message, 1);
+  toast(on ? 'Member list is now hidden from members' : 'Members can now see the member list'); refresh();
+}
+async function toggleC(id, st) {
+  const { error } = await sb.from('committees').update({ status: st === 'open' ? 'closed' : 'open' }).eq('id', id);
+  if (error) return toast(error.message, 1); refresh();
+}
+async function delC(id) {
+  if (!confirm('Deleting this committee also deletes all its members, payments and payouts. Are you sure?')) return;
+  const { error } = await sb.from('committees').delete().eq('id', id);
+  if (error) return toast(error.message, 1); refresh();
+}
+
+function vAMembers() {
+  return `<h2>${D.profiles.length} registered</h2><div class="card tw"><table><tr><th>Name</th><th>Phone</th><th>CNIC</th><th>Role</th><th>Date</th><th></th></tr>` +
+    D.profiles.map(p => `<tr><td>${esc(p.name)}</td><td>${esc(p.phone)}</td><td>${esc(p.cnic) || '-'}</td><td>${esc(p.role)}</td><td>${fdate(p.created_at)}</td>
+    <td class="actions"><button class="btn sm gray" onclick="statementPdf('${p.id}','download')">Statement</button>${p.id !== me.id ? `<button class="btn sm out" onclick="remindMember('${p.id}')">Remind</button>` : ''} ${adminCell(p)}</td></tr>`).join('') + '</table></div>';
+}
+async function delMember(id) {
+  const p = D.profiles.find(x => x.id === id); if (!p) return;
+  if (!confirm('Delete ' + p.name + '? This permanently removes their account, join requests, payments and payouts. This cannot be undone.')) return;
+  const { error } = await sb.rpc('delete_member', { target: id });
+  if (error) return toast(error.message, 1);
+  toast('Member deleted'); refresh();
+}
+
+function vAPayouts() {
+  return `<div class="card" style="max-width:600px"><h2>Record Payout</h2>
+    <label>Committee</label><select id="po_c" onchange="payoutCommChange()">${D.committees.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('')}</select>
+    <label>Member</label><select id="po_m"></select>
+    <div class="row"><div><label>Month</label><input id="po_month" type="month" value="${new Date().toISOString().slice(0, 7)}"></div>
+    <div><label>Amount (Rs)</label><input id="po_amt" type="number" min="1"></div></div>
+    <label>Status</label><select id="po_st"><option value="pending">pending</option><option value="paid">paid</option></select>
+    <br><button class="btn" onclick="addPayout()">Save</button></div>
+    <h2 class="sec">Payouts</h2>` +
+    (D.payouts.length ? `<div class="card tw"><table><tr><th>Committee</th><th>Member</th><th>Month</th><th>Amount</th><th>Status</th><th></th></tr>` +
+      D.payouts.map(p => `<tr><td>${esc(p.committees?.name)}</td><td>${esc(p.profiles?.name)}</td><td>${esc(p.month_label)}</td><td>${money(p.amount)}</td><td>${badge(p.status)}</td>
+      <td class="actions">${p.status !== 'paid' ? `<button class="btn sm" onclick="payoutPaid('${p.id}')">Mark Paid</button>` : ''}${p.status === 'paid' ? `<button class="btn sm gray" onclick="payoutSlipPdf('${p.id}','download')">Slip PDF</button>` : ''}<button class="btn sm red" onclick="delPayout('${p.id}')">X</button></td></tr>`).join('') + '</table></div>' : empty('No payouts yet'));
+}
+function payoutCommChange() {
+  const sel = $('po_c'); if (!sel) return;
+  const c = D.committees.find(x => x.id === sel.value);
+  const mems = D.memberships.filter(m => m.committee_id === sel.value && m.status === 'approved');
+  $('po_m').innerHTML = mems.map(m => `<option value="${m.user_id}">${esc(m.profiles?.name)} (No. ${m.slot_number ?? '-'})</option>`).join('') || '<option value="">No approved members</option>';
+  if (c) $('po_amt').value = c.monthly_amount * c.total_members;
+}
+async function addPayout() {
+  const cid = $('po_c').value, mid = $('po_m').value, month = $('po_month').value, amt = Number($('po_amt').value);
+  if (!cid || !mid || !month || !amt) return toast('Fill in all fields', 1);
+  const { error } = await sb.from('payouts').insert({ committee_id: cid, member_id: mid, month_label: month, amount: amt, status: $('po_st').value });
+  if (error) return toast(error.message, 1);
+  toast('Payout saved'); await loadData(); renderTab();
+}
+async function payoutPaid(id) {
+  const { error } = await sb.from('payouts').update({ status: 'paid' }).eq('id', id);
+  if (error) return toast(error.message, 1); refresh();
+}
+async function delPayout(id) {
+  if (!confirm('Delete?')) return;
+  const { error } = await sb.from('payouts').delete().eq('id', id);
+  if (error) return toast(error.message, 1); refresh();
+}
+
+function vAReports() {
+  if (!D.committees.length) return empty('No committees yet');
+  return '' + D.committees.map(c => {
+    const mems = D.memberships.filter(m => m.committee_id === c.id && m.status === 'approved');
+    let total = 0;
+    const rows = mems.map(m => {
+      const ps = D.payments.filter(p => p.membership_id === m.id);
+      const ver = ps.filter(p => p.status === 'verified');
+      const sum = ver.reduce((a, p) => a + Number(p.amount), 0);
+      total += sum;
+      return `<tr><td>${m.slot_number ?? '-'}</td><td>${esc(m.profiles?.name)}</td><td>${esc(m.profiles?.phone)}</td>
+      <td>${ver.length}</td><td>${money(sum)}</td><td>${ps.filter(p => p.status === 'pending').length}</td>
+      <td>${ver.map(p => esc(p.month_label)).join(', ') || '-'}</td></tr>`;
+    }).join('');
+    return `<div class="card"><h3>${esc(c.name)}</h3>
+      <p class="muted">Monthly ${money(c.monthly_amount)} | Members ${mems.length}/${c.total_members} | Total verified so far: <b>${money(total)}</b></p>
+      ${mems.length ? `<div class="tw"><table><tr><th>No.</th><th>Name</th><th>Phone</th><th>Verified</th><th>Total</th><th>Pending</th><th>Months paid</th></tr>${rows}</table></div>` : '<p class="muted">No approved members</p>'}</div>`;
+  }).join('');
+}
+
+function vASchedule() {
+  if (!D.committees.length) return empty('No committees yet. Create one to see its payout schedule.', 'layers', ['a_committees', 'Create a committee']);
+  return D.committees.map(c => {
+    const mems = D.memberships.filter(m => m.committee_id === c.id && m.status === 'approved');
+    const mids = new Set(D.memberships.filter(m => m.committee_id === c.id).map(m => m.id));
+    const shs = D.shares.filter(s => s.committee_id === c.id && mems.some(m => m.id === s.membership_id));
+    const mof = s => mems.find(m => m.id === s.membership_id);
+    const lab = s => (mof(s).profiles?.name || '?') + (mof(s).share_count > 1 ? ' (share ' + s.share_number + ')' : '');
+    const loose = shs.filter(s => !s.slot_number);
+    let rows = '';
+    for (let n = 1; n <= c.total_members; n++) {
+      const h = shs.find(s => s.slot_number === n), sm = slotMonth(c, n);
+      const po = h ? D.payouts.find(p => p.committee_id === c.id && (p.share_id ? p.share_id === h.id : p.member_id === mof(h).user_id) && (!sm || p.month_label === sm.key)) : null;
+      const coll = sm ? D.payments.filter(p => p.status === 'verified' && p.month_label === sm.key && mids.has(p.membership_id)).reduce((a, p) => a + Number(p.amount), 0) : 0;
+      const opts = '<option value="">Empty</option>' + shs.map(s => `<option value="${s.id}" ${h && s.id === h.id ? 'selected' : ''}>${esc(lab(s))}${s.slot_number && !(h && s.id === h.id) ? ' (turn ' + s.slot_number + ')' : ''}</option>`).join('');
+      const status = po ? badge(po.status) : '<span class="muted">not paid yet</span>';
+      const act = ((h && sm && !po) ? `<button class="btn sm" onclick="markPayout('${c.id}','${h.id}','${sm.key}',${pot(c)})">Mark paid</button>` : (po && po.status !== 'paid' ? `<button class="btn sm" onclick="payoutPaid('${po.id}')">Mark paid</button>` : '')) + (po && po.status === 'paid' ? `<button class="btn sm gray" onclick="payoutSlipPdf('${po.id}','download')">Slip</button>` : '') + (po ? `<button class="btn sm red" onclick="delPayout('${po.id}')">Undo</button>` : '');
+      rows += `<tr class="${sm && sm.key === nowKey() ? 'cur' : ''}"><td><b>${sm ? sm.label : '-'}</b></td><td>${n}</td>
+        <td><select class="cell" onchange="assignSlot('${c.id}', ${n}, this.value)">${opts}</select></td>
+        <td>${money(pot(c))}</td><td>${sm ? money(coll) : '-'}</td><td>${status}</td><td>${act}</td></tr>`;
+    }
+    return `<div class="sh"><div><h2 style="margin:0">${esc(c.name)} ${badge(c.status)}</h2>
+      <p class="muted" style="margin:4px 0 0">${c.start_date ? 'Starts ' + fdate(c.start_date) : 'No start date yet. Use Edit on the Committees tab.'} · ${money(c.monthly_amount)} per share · pot ${money(pot(c))} per turn</p></div>
+      <div class="actions"><button class="btn sm out" onclick="copySchedule('${c.id}')">Copy for WhatsApp</button></div></div>
+      ${loose.length ? `<div class="note">${loose.length} share${loose.length === 1 ? ' has' : 's have'} no turn yet: ${loose.map(x => esc(lab(x))).join(', ')}. Pick them below or use the Lucky draw.</div>` : ''}
+      <div class="card tw"><table><tr><th>Payout month</th><th>Turn</th><th>Receives the pot</th><th>Pot</th><th>Collected that month</th><th>Payout</th><th></th></tr>${rows}</table></div>`;
+  }).join('<div style="height:18px"></div>');
+}
+async function assignSlot(cid, n, sid) {
+  const rpc = (id, slot) => sb.rpc('assign_membership_share_slot', { p_share_id: id, p_slot_number: slot });
+  const holder = D.shares.find(s => s.committee_id === cid && s.slot_number === n);
+  let r = {};
+  if (!sid) { if (!holder) return; r = await rpc(holder.id, null); }
+  else {
+    const t = D.shares.find(s => s.id === sid); if (!t || (holder && holder.id === t.id)) return;
+    const prev = t.slot_number || null;
+    if (holder) {
+      if (!confirm('Turn ' + n + ' is already taken. Swap the two?')) return renderTab(false);
+      r = await rpc(holder.id, null); if (!r.error) r = await rpc(t.id, n); if (!r.error && prev) r = await rpc(holder.id, prev);
+    } else r = await rpc(t.id, n);
+  }
+  toast(r.error ? r.error.message : 'Turn saved', !!r.error); await loadData(); renderTab(false);
+}
+function copySchedule(cid) {
+  const c = D.committees.find(x => x.id === cid); if (!c) return;
+  const lines = [c.name, money(c.monthly_amount) + ' per share, pot ' + money(pot(c)) + ' per month', ''];
+  for (let n = 1; n <= c.total_members; n++) {
+    const sh = D.shares.find(x => x.committee_id === cid && x.slot_number === n), m = sh && D.memberships.find(x => x.id === sh.membership_id), sm = slotMonth(c, n);
+    lines.push(n + '. ' + (sm ? sm.label : '-') + ' - ' + (m ? m.profiles?.name : '(open)'));
+  }
+  copyText(lines.join('\n'));
+}
+async function markPayout(cid, sid, key, amt) {
+  if (!confirm('Mark this payout as paid? Only do this after you have handed over the money.')) return;
+  const sh = D.shares.find(x => x.id === sid), m = sh && D.memberships.find(x => x.id === sh.membership_id);
+  if (!m) return toast('Share not found', 1);
+  const { error } = await sb.from('payouts').insert({ committee_id: cid, member_id: m.user_id, share_id: sid, month_label: key, amount: amt, status: 'paid' });
+  if (error) return toast(error.message, 1);
+  toast('Payout marked as paid'); await loadData(); renderTab();
+}
+
+function vABackup() {
+  return `<div class="card" style="max-width:560px"><h2>Download a full backup</h2>
+    <p class="muted">One Excel file with separate sheets for members (with their shares and turns), committees, join requests, payments (with received amount and your remarks), payouts, the payout schedule, lucky draws, payment accounts and the activity log. Payment proof images are not included.</p>
+    <br><button class="btn" id="bkbtn" onclick="downloadBackup()">Download Excel backup</button></div>`;
+}
+function loadXlsx() {
+  return new Promise((res, rej) => {
+    if (window.XLSX) return res();
+    const t = document.createElement('script');
+    t.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    t.onload = res; t.onerror = rej; document.head.appendChild(t);
+  });
+}
+async function downloadBackup() {
+  try { await loadXlsx(); } catch (e) { return toast('Could not load the Excel library. Check your internet and try again', 1); }
+  const cn = id => (D.committees.find(c => c.id === id) || {}).name || '';
+  const turnsOf = m => D.shares.filter(s => s.membership_id === m.id && s.slot_number).map(s => s.slot_number).sort((x, y) => x - y);
+  const memSummary = uid => D.memberships.filter(m => m.user_id === uid && m.status === 'approved').map(m => {
+    const n = m.share_count || 1, t = turnsOf(m);
+    return cn(m.committee_id) + ': ' + n + ' share' + (n > 1 ? 's' : '') + (t.length ? ' (turns ' + t.join(', ') + ')' : '');
+  }).join(' | ');
+  const sheets = {
+    Members: D.profiles.map(p => ({ Name: p.name, Phone: p.phone, CNIC: p.cnic || '', Role: p.role, Joined: fdate(p.created_at), 'Committees and shares': memSummary(p.id) })),
+    Committees: D.committees.map(c => ({ Name: c.name, 'Member list shared': c.show_roster ? 'Yes' : 'No', 'Monthly amount': c.monthly_amount, 'Total members': c.total_members, 'Pot per month': pot(c), 'Start date': c.start_date || '', 'Duration (months)': c.duration_months || '', Status: c.status })),
+    'Join requests': D.memberships.map(m => ({ Member: m.profiles?.name, Phone: m.profiles?.phone, Committee: m.committees?.name, Slot: m.slot_number || '', Shares: m.share_count || 1, Turns: turnsOf(m).join(', '), Status: m.status, Date: fdate(m.created_at) })),
+    Payments: D.payments.map(p => ({ Member: p.profiles?.name, Phone: p.profiles?.phone, Committee: p.memberships?.committees?.name, Month: p.month_label, Amount: p.amount, Method: p.method, Account: p.account_label || '', Status: p.status, Note: p.note || '', Receipt: p.receipt_no || '', Submitted: fdate(p.created_at), Verified: fdate(p.verified_at), Received: p.received_amount == null ? '' : p.received_amount, 'Admin remark': p.verify_note || '' })),
+    Payouts: D.payouts.map(p => ({ Committee: p.committees?.name, Member: p.profiles?.name, Phone: p.profiles?.phone, Month: p.month_label, Amount: p.amount, Status: p.status })),
+    Schedule: [],
+    'Lucky draws': (D.draws || []).map(d => ({ Committee: cn(d.committee_id), Month: d.month_label, Status: d.status, Winner: d.winner_name || '', Created: fdate(d.created_at) })),
+    Accounts: D.accounts.map(a => ({ Type: a.type, Name: a.provider, Title: a.account_title, Number: a.account_number, IBAN: a.iban || '', Visible: a.active ? 'Yes' : 'No' }))
+  };
+  D.committees.forEach(c => {
+    for (let n = 1; n <= c.total_members; n++) {
+      const sm = slotMonth(c, n), h = D.shares.find(x => x.committee_id === c.id && x.slot_number === n);
+      const m = h ? D.memberships.find(x => x.id === h.membership_id && x.status === 'approved') : D.memberships.find(x => x.committee_id === c.id && x.status === 'approved' && x.slot_number === n);
+      const po = m ? D.payouts.find(p => p.committee_id === c.id && (p.share_id && h ? p.share_id === h.id : p.member_id === m.user_id) && (!sm || p.month_label === sm.key)) : null;
+      sheets.Schedule.push({ Committee: c.name, 'Payout month': sm ? sm.label : '', Slot: n, Member: m ? (m.profiles?.name || '') + (h && m.share_count > 1 ? ' #' + h.share_number : '') : '', Phone: m ? (m.profiles?.phone || '') : '', Pot: pot(c), Payout: !m ? 'no member assigned' : (po ? po.status : 'not paid yet') });
+    }
+  });
+  try {
+    const r = await sb.from('activity_log').select('*').order('created_at', { ascending: false }).limit(2000);
+    if (!r.error && r.data && r.data.length) sheets.Activity = r.data.map(a => ({ When: fmtDT(a.created_at), Action: ACT_L[a.action] || a.action, Details: a.summary || '', By: a.actor_name || '' }));
+  } catch (e) {}
+  const wb = XLSX.utils.book_new();
+  Object.entries(sheets).forEach(([name, rows]) => XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows.length ? rows : [{ Info: 'No data' }]), name));
+  XLSX.writeFile(wb, 'committee-backup-' + new Date().toISOString().slice(0, 10) + '.xlsx');
+  toast('Backup downloaded');
+}
+
+function vABank() {
+  const list = D.accounts;
+  return `<div class="card" style="max-width:560px"><h2>Add Payment Account</h2>
+    <p class="muted">Add as many banks or wallets (JazzCash, Easypaisa, etc.) as you want. Members will choose one when paying.</p>
+    <label>Type</label><select id="a_type"><option value="Bank">Bank</option><option value="Mobile Wallet">Mobile Wallet</option><option value="Other">Other</option></select>
+    <label>Bank / Wallet Name *</label><input id="a_prov" placeholder="e.g. HBL, Meezan, JazzCash, Easypaisa">
+    <label>Account Title *</label><input id="a_title">
+    <label>Account / Wallet Number *</label><input id="a_num">
+    <label>IBAN (optional)</label><input id="a_iban">
+    <label>Note (optional)</label><input id="a_note" placeholder="e.g. Please attach a screenshot after payment">
+    <br><button class="btn" onclick="addAccount()">Add Account</button></div>
+    <h2 class="sec">My accounts</h2>` +
+    (list.length ? `<div class="card tw"><table><tr><th>Name</th><th>Type</th><th>Title</th><th>Number</th><th>Visible</th><th></th></tr>` +
+      list.map(a => `<tr><td>${esc(a.provider)}</td><td>${esc(a.type)}</td><td>${esc(a.account_title)}</td><td>${esc(a.account_number)}${a.iban ? '<br><span class="muted">' + esc(a.iban) + '</span>' : ''}</td>
+      <td>${a.active ? badge('open') : badge('closed')}</td>
+      <td class="actions"><button class="btn sm gray" onclick="toggleAcc('${a.id}', ${a.active})">${a.active ? 'Hide' : 'Show'}</button><button class="btn sm red" onclick="delAcc('${a.id}')">Delete</button></td></tr>`).join('') + '</table></div>' : empty('No payment accounts added yet'));
+}
+async function addAccount() {
+  const provider = $('a_prov').value.trim(), title = $('a_title').value.trim(), num = $('a_num').value.trim();
+  if (!provider || !title || !num) return toast('Name, title and number are required', 1);
+  const { error } = await sb.from('payment_accounts').insert({
+    type: $('a_type').value, provider, account_title: title, account_number: num,
+    iban: $('a_iban').value.trim() || null, note: $('a_note').value.trim() || null
+  });
+  if (error) return toast(error.message, 1);
+  toast('Account added'); await loadData(); renderTab();
+}
+async function toggleAcc(id, active) {
+  const { error } = await sb.from('payment_accounts').update({ active: !active }).eq('id', id);
+  if (error) return toast(error.message, 1); refresh();
+}
+async function delAcc(id) {
+  if (!confirm('Delete this account?')) return;
+  const { error } = await sb.from('payment_accounts').delete().eq('id', id);
+  if (error) return toast(error.message, 1); refresh();
+}
+
+// ================= SHARES / ADMINS / WHEEL =================
+const isMine = (m, i) => m && m.has ? m.has(i) : m === i;
+function mySlots(m) { return new Set(D.shares.filter(s => s.membership_id === m.id && s.slot_number).map(s => s.slot_number)); }
+function shareLines(c, m) {
+  const sh = D.shares.filter(s => s.membership_id === m.id).sort((a, b) => a.share_number - b.share_number);
+  const n = m.share_count || 1;
+  let h = `<p class="pay-line"><b>${n} share${n > 1 ? 's' : ''}</b> · you pay ${money(c.monthly_amount * n)} per month</p>`;
+  (sh.length ? sh : [{ share_number: 1, slot_number: m.slot_number }]).forEach(s => {
+    const sm = slotMonth(c, s.slot_number);
+    h += `<p class="pay-line">${n > 1 ? 'Share ' + s.share_number + ': ' : ''}${s.slot_number ? (sm ? 'You receive <b>' + money(pot(c)) + '</b> in <b>' + sm.label + '</b> (turn ' + s.slot_number + ')' : 'Turn ' + s.slot_number + ', month appears once the start date is set') : '<span class="muted">Turn not assigned yet</span>'}</p>`;
+  });
+  return h;
+}
+function joinC(id) {
+  const c = D.committees.find(x => x.id === id); if (!c) return;
+  const mx = Math.min(20, c.total_members);
+  openModal(`<h2>Join ${esc(c.name)}</h2><p class="muted">${money(c.monthly_amount)} per share per month · pot ${money(pot(c))} per share</p>
+    <label>How many shares do you want?</label>
+    <select id="j_sh">${Array.from({ length: mx }, (_, i) => `<option value="${i + 1}">${i + 1} share${i ? 's' : ''} · pay ${money(c.monthly_amount * (i + 1))}/month · ${i + 1} payout${i ? 's' : ''} of ${money(pot(c))}</option>`).join('')}</select>
+    <p class="muted" style="margin-top:8px">Each share gets its own payout turn, chosen by the admin or the lucky draw.</p>
+    <div class="mfoot"><button class="btn gray" onclick="closeModal()">Cancel</button><button class="btn" id="j_ok" onclick="sendJoin('${id}')">Send request</button></div>`);
+}
+async function sendJoin(id) {
+  const n = Number($('j_sh').value) || 1; $('j_ok').disabled = true;
+  const { error } = await sb.from('memberships').insert({ user_id: me.id, committee_id: id, status: 'pending', share_count: n });
+  if (error) { $('j_ok').disabled = false; return toast('Request failed: ' + error.message, 1); }
+  closeModal(); toast('Request sent. Please wait for admin approval'); refresh();
+}
+async function addShare(mid) {
+  if (!confirm('Add one more share? Your monthly payment goes up by one share.')) return;
+  const { error } = await sb.rpc('request_add_membership_share', { p_membership_id: mid });
+  if (error) return toast(error.message, 1);
+  toast('Share added. The admin will give it a turn'); await loadData(); renderTab(false);
+}
+function adminCell(p) {
+  let h = '';
+  if (p.role === 'admin') {
+    if (p.is_owner) return '<span class="badge approved"><i></i>Owner</span>';
+    if (me.is_owner) h = `<button class="btn sm gray" onclick="setAdmin('${p.id}', false)">Remove admin</button>`;
+  } else {
+    if (me.is_owner) h = `<button class="btn sm out" onclick="setAdmin('${p.id}', true)">Make admin</button> `;
+    h += `<button class="btn sm red" onclick="delMember('${p.id}')">Delete</button>`;
+  }
+  return '<div class="actions">' + h + '</div>';
+}
+async function setAdmin(id, on) {
+  const p = D.profiles.find(x => x.id === id); if (!p) return;
+  if (!confirm(on ? 'Make ' + p.name + ' an admin? They can manage everything except owner settings.' : 'Remove admin access from ' + p.name + '?')) return;
+  const { error } = await sb.rpc('set_admin', { target: id, make_admin: on });
+  if (error) return toast(error.message, 1);
+  toast(on ? 'Admin added' : 'Admin removed'); await loadData(); renderTab(false);
+}
+
+let wheelCid = null; const wheelDone = new Set(); window.wheelBusy = false;
+const wheelComms = () => me.role === 'admin' ? D.committees : D.committees.filter(c => D.memberships.some(m => m.committee_id === c.id && m.user_id === me.id && m.status === 'approved'));
+function monthSlot(c, key) {
+  if (!c.start_date || !key) return null;
+  const s = new Date(c.start_date + 'T00:00:00'), [y, m] = key.split('-').map(Number);
+  const n = (y - s.getFullYear()) * 12 + (m - 1 - s.getMonth()) + 1;
+  return n >= 1 && n <= c.total_members ? n : null;
+}
+function wheelSVG(names) {
+  const n = names.length || 1, cols = ['#12151C', '#1E2330', '#161A24', '#242B3B', '#10131A', '#1A1F2C'];
+  let s = '';
+  names.forEach((w, i) => {
+    const a0 = i / n * 2 * Math.PI, a1 = (i + 1) / n * 2 * Math.PI, P = a => (120 + 112 * Math.sin(a)).toFixed(1) + ' ' + (120 - 112 * Math.cos(a)).toFixed(1);
+    const mid = (i + .5) * 360 / n;
+    s += `<path d="M120 120 L${P(a0)} A112 112 0 0 1 ${P(a1)} Z" fill="${cols[i % cols.length]}" stroke="#C9A44C" stroke-width="1.2"/>` +
+      `<text transform="rotate(${mid - 90} 120 120)" x="226" y="123.5" text-anchor="end" font-size="${n > 20 ? 7 : n > 12 ? 9 : 11}" font-weight="700" fill="#F3EDE0">${esc(String(w.name || '').slice(0, 13))}</text>`;
+  });
+  return `<svg viewBox="0 -16 240 256"><g id="whg" style="transform-origin:120px 120px">${s}</g><circle cx="120" cy="120" r="14" fill="#C9A44C" stroke="#0B0D12" stroke-width="4"/><path d="M108 -14 L132 -14 L120 8 Z" fill="#E4C778"/></svg>`;
+}
+function vWheel() {
+  const cs = wheelComms();
+  if (!cs.length) return empty('No committee yet for the lucky draw', 'layers');
+  if (!cs.find(c => c.id === wheelCid)) wheelCid = cs[0].id;
+  const c = cs.find(x => x.id === wheelCid), adm = me.role === 'admin';
+  const ds = D.draws.filter(d => d.committee_id === c.id), d = ds[0];
+  const free = D.shares.filter(s => s.committee_id === c.id && !s.slot_number).length;
+  let ctl = '';
+  if (adm) {
+    if (!d || d.status === 'completed') ctl = `<label>Draw for month</label><input id="w_month" type="month" value="${nowKey()}"><p class="muted" style="margin-top:8px">${free} share${free === 1 ? '' : 's'} without a turn will be on the wheel.</p><br><button class="btn" onclick="createDraw('${c.id}')">Create draw</button>`;
+    else if (d.status === 'scheduled') ctl = `<p class="muted">Draw for ${fmtMonth(d.month_label)} is ready. Members can already see the wheel.</p><div class="actions"><button class="btn" onclick="startSpin('${d.id}')">Spin the wheel</button><button class="btn gray" onclick="cancelDraw('${d.id}')">Cancel</button></div>`;
+    else ctl = '<p class="muted">Spinning...</p>';
+  } else ctl = d && d.status !== 'completed' ? `<p>Draw for <b>${fmtMonth(d.month_label)}</b>. Stay on this page to watch it live.</p>` : '<p class="muted">The admin will start the next draw here.</p>';
+  const done = ds.filter(x => x.status === 'completed');
+  return `<div class="two"><div class="card"><select id="w_c" onchange="wheelCid=this.value;renderTab(false)">${cs.map(x => `<option value="${x.id}" ${x.id === c.id ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select>
+    <div class="wheelbox">${d ? wheelSVG(d.wheel_names) : '<p class="muted">No draw yet.</p>'}</div><h3 id="wstat" style="text-align:center;margin:8px 0 0"></h3></div>
+    <div class="card">${ctl}<h3 style="margin-top:20px">Past draws</h3>${done.length ? `<table><tr><th>Month</th><th>Winner</th></tr>${done.map(x => `<tr><td>${fmtMonth(x.month_label)}</td><td>${esc(x.winner_name)}</td></tr>`).join('')}</table>` : '<p class="muted">Nothing yet.</p>'}</div></div>`;
+}
+async function createDraw(cid) {
+  const month = $('w_month').value; if (!month) return toast('Pick a month', 1);
+  const items = [];
+  D.shares.filter(s => s.committee_id === cid && !s.slot_number).forEach(s => {
+    const m = D.memberships.find(x => x.id === s.membership_id && x.status === 'approved');
+    if (m) items.push({ membership_id: m.id, name: (m.profiles?.name || '?') + (m.share_count > 1 ? ' #' + s.share_number : '') });
+  });
+  if (items.length < 2) return toast('At least 2 shares without a turn are needed', 1);
+  items.sort(() => Math.random() - .5);
+  const { error } = await sb.from('committee_draws').insert({ committee_id: cid, month_label: month, wheel_names: items, created_by: me.id });
+  if (error) return toast(error.message, 1);
+  toast('Draw created'); await loadData(); renderTab(false);
+}
+async function cancelDraw(id) {
+  if (!confirm('Cancel this draw?')) return;
+  const { error } = await sb.from('committee_draws').delete().eq('id', id);
+  if (error) return toast(error.message, 1); await loadData(); renderTab(false);
+}
+async function startSpin(id) {
+  const { error } = await sb.rpc('prepare_committee_draw', { p_draw_id: id });
+  if (error) return toast(error.message, 1);
+  await loadData(); renderTab(false);
+}
+async function wheelAssign(d, c) {
+  const sh = D.shares.filter(s => s.membership_id === d.winner_membership_id && !s.slot_number).sort((a, b) => a.share_number - b.share_number)[0], sl = monthSlot(c, d.month_label);
+  if (!sh || !sl) return toast('Winner chosen. Give the turn manually from Schedule', 1);
+  const { error } = await sb.rpc('assign_membership_share_slot', { p_share_id: sh.id, p_slot_number: sl });
+  toast(error ? error.message : d.winner_name + ' gets ' + fmtMonth(d.month_label), !!error);
+}
+function wheelInit() {
+  const g = $('whg'), st = $('wstat'); if (!g) return;
+  const c = D.committees.find(x => x.id === wheelCid), d = D.draws.filter(x => x.committee_id === wheelCid)[0]; if (!d) return;
+  const n = d.wheel_names.length || 1, center = ((d.winner_index || 0) + .5) * 360 / n;
+  const show = () => { st.textContent = 'Winner: ' + d.winner_name; };
+  if (d.status === 'scheduled') { st.textContent = 'Waiting for the admin to spin'; return; }
+  if (d.status === 'completed' || wheelDone.has(d.id)) { g.style.transform = `rotate(${-center}deg)`; show(); return; }
+  window.wheelBusy = true; st.textContent = 'Spinning...';
+  requestAnimationFrame(() => requestAnimationFrame(() => { g.style.transition = 'transform 7s cubic-bezier(.12,.6,.1,1)'; g.style.transform = `rotate(${360 * 7 - center}deg)`; }));
+  setTimeout(async () => {
+    wheelDone.add(d.id); window.wheelBusy = false; show();
+    if (me.role === 'admin') { const { error } = await sb.rpc('complete_committee_draw', { p_draw_id: d.id }); if (error) toast(error.message, 1); else await wheelAssign(d, c); }
+    await loadData(); renderTab(false);
+  }, 7400);
+}
+
+// ================= START =================
+boot();
+</script>
+</body>
+</html>
