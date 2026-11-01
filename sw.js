@@ -1,5 +1,5 @@
 // AN Committees service worker: network first for the page, so updates always show.
-const V = 'anc-v1';
+const V = 'anc-v2';
 self.addEventListener('install', e => { self.skipWaiting(); e.waitUntil(caches.open(V).then(c => c.addAll(['/icon-192.png', '/manifest.webmanifest'])).catch(() => {})); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== V).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {

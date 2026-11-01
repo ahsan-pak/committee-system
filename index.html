@@ -459,7 +459,7 @@ tr:hover td{background:rgba(255,255,255,.03)}tr.cur td{background:rgba(201,164,7
 .pin,.dock,.scrim,.sheet{display:none}
 /* ---- PC rail ---- */
 @media(min-width:900px){
-.top{position:fixed;left:0;top:0;bottom:0;width:80px;z-index:40;flex-direction:column;align-items:stretch;gap:18px;padding:22px 16px;background:rgba(11,13,18,.86);backdrop-filter:blur(16px);border-right:1px solid var(--line);overflow:hidden;transition:width .5s cubic-bezier(.2,.8,.2,1),box-shadow .5s}
+.top{position:fixed;left:0;top:0;bottom:0;width:88px;z-index:40;flex-direction:column;align-items:stretch;gap:18px;padding:22px 14px;background:rgba(11,13,18,.86);backdrop-filter:blur(16px);border-right:1px solid var(--line);overflow:hidden;transition:width .5s cubic-bezier(.2,.8,.2,1),box-shadow .5s}
 .top:hover,.top.open{width:252px;box-shadow:24px 0 60px rgba(0,0,0,.55)}
 .top .brand{height:48px;padding:0 0 0 4px;white-space:nowrap;gap:12px}
 .top .brand span{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:24px;color:var(--brandd);font-weight:600;opacity:0;transition:opacity .3s}
@@ -478,7 +478,7 @@ tr:hover td{background:rgba(255,255,255,.03)}tr.cur td{background:rgba(201,164,7
 .who{margin:0;white-space:nowrap}
 .top .wn,.top .who .ico{opacity:0;transition:opacity .3s}
 .top:hover .wn,.top:hover .who .ico,.top.open .wn,.top.open .who .ico{opacity:1;transition-delay:.2s}
-.main{margin-left:80px}
+.main{margin-left:88px}
 .wrap{max-width:1240px;padding:36px 44px 64px}
 }
 /* ---- Mobile ---- */
@@ -650,6 +650,13 @@ input.otp{margin-bottom:12px;text-align:center;font-size:28px;letter-spacing:.35
 .vok{font-size:34px;color:var(--ok);font-weight:600;margin:10px 0 2px}.vbad{font-size:34px;color:var(--red);font-weight:600;margin:10px 0 6px}
 .vamt{font-size:46px;color:var(--brandd);font-weight:600;line-height:1;margin:2px 0 14px}
 .vfoot{margin:18px 0 0;text-align:center;font-size:12px;color:var(--mu)}.vfoot em{font-style:normal;color:var(--brandd);font-weight:700}
+
+/* ---- logo ---- */
+.logo-img{display:block;flex:none;height:30px;width:auto;object-fit:contain;filter:drop-shadow(0 2px 8px rgba(201,164,76,.25))}
+.top .brand{gap:10px}
+@media(min-width:900px){.top .brand .logo-img{width:60px;height:auto;margin-left:0}.top .brand{padding-left:0}}
+.ap .brand .logo-img{height:38px}
+.vcard .brand .logo-img{height:34px}
 </style>
 </head>
 <body>
@@ -691,7 +698,7 @@ function toast(m, err) {
 
 // ================= AUTH =================
 function logoMark() {
-  return '<svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><rect x="2" y="2" width="10" height="10" rx="2.5" fill="#C8F169"/><rect x="14" y="2" width="10" height="10" rx="2.5" fill="currentColor" opacity=".35"/><rect x="2" y="14" width="10" height="10" rx="2.5" fill="currentColor" opacity=".35"/><rect x="14" y="14" width="10" height="10" rx="2.5" fill="currentColor" opacity=".35"/></svg>';
+  return '<img class="logo-img" src="logo.png" alt="AN Committees" width="62" height="30" decoding="async">';
 }
 const nowKey = () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); };
 const fmtMonth = k => { const [y, m] = String(k || '').split('-'); return m ? MON[+m - 1] + ' ' + y : '-'; };
@@ -1471,7 +1478,8 @@ async function deliverPdf(bytes, name, title, mode) {
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(a.href), 5000); toast('PDF downloaded');
 }
-async function pdfTask(fn) { try { toast('Preparing PDF...'); const L = await loadPdfLib(); await fn(L); } catch (e) { if (e && e.name === 'AbortError') return; toast('Could not create PDF: ' + (e.message || e), 1); } }
+async function ensureLogoBytes() { if (window.__logoBytes) return; try { const r = await fetch('logo.png'); if (r.ok) window.__logoBytes = new Uint8Array(await r.arrayBuffer()); } catch (e) {} }
+async function pdfTask(fn) { try { toast('Preparing PDF...'); const L = await loadPdfLib(); await ensureLogoBytes(); await fn(L); } catch (e) { if (e && e.name === 'AbortError') return; toast('Could not create PDF: ' + (e.message || e), 1); } }
 
 // ================= PDF DOCUMENTS (pdf-lib) =================
 async function pdfKit(L, title) {
@@ -1486,15 +1494,22 @@ async function pdfKit(L, title) {
   k.tx = (pg, t, x, y, sz, f, col) => pg.drawText(k.S(t), { x, y, size: sz, font: f, color: col });
   k.rt = (pg, t, x, y, sz, f, col) => pg.drawText(k.S(t), { x: x - f.widthOfTextAtSize(k.S(t), sz), y, size: sz, font: f, color: col });
   k.ct = (pg, t, cx, y, sz, f, col) => pg.drawText(k.S(t), { x: cx - f.widthOfTextAtSize(k.S(t), sz) / 2, y, size: sz, font: f, color: col });
+  if (typeof window !== 'undefined' && window.__logoBytes) { try { k.logoImg = await doc.embedPng(window.__logoBytes); } catch (e) {} }
   k.page = () => { const pg = doc.addPage([k.W, k.H]); pg.drawRectangle({ x: 0, y: 0, width: k.W, height: k.H, color: k.paper }); return pg; };
+  k.brand = (pg, y, lh, ts) => {
+    let x = 48;
+    if (k.logoImg) { const w = k.logoImg.width * lh / k.logoImg.height; pg.drawImage(k.logoImg, { x, y: y - lh * .5, width: w, height: lh }); x += w + 14; }
+    return x;
+  };
   k.header = (pg, kind, rl, rv, rs, h = 150) => {
     pg.drawRectangle({ x: 0, y: k.H - h, width: k.W, height: h, color: k.ink });
     pg.drawRectangle({ x: 0, y: k.H - h - 3, width: k.W, height: 3, color: k.brass });
-    k.tx(pg, 'AN COMMITTEES', 48, k.H - 72, 29, k.ser, k.brass); k.tx(pg, kind, 48, k.H - 98, 10, k.sansB, k.light);
+    const x = k.brand(pg, k.H - h / 2 - 4, k.logoImg ? 60 : 0), sz = k.logoImg ? 24 : 29;
+    k.tx(pg, 'AN COMMITTEES', x, k.H - 72, sz, k.ser, k.brass); k.tx(pg, kind, x, k.H - 98, 10, k.sansB, k.light);
     k.rt(pg, rl, k.W - 48, k.H - 62, 8.5, k.sans, rgb(.7, .67, .6)); k.rt(pg, rv, k.W - 48, k.H - 88, 20, k.ser, rgb(.96, .93, .86));
     if (rs) k.rt(pg, rs, k.W - 48, k.H - 108, 9, k.sans, rgb(.7, .67, .6));
   };
-  k.mini = (pg, label) => { pg.drawRectangle({ x: 0, y: k.H - 50, width: k.W, height: 50, color: k.ink }); pg.drawRectangle({ x: 0, y: k.H - 52, width: k.W, height: 2, color: k.brass }); k.tx(pg, 'AN COMMITTEES', 48, k.H - 32, 15, k.ser, k.brass); k.rt(pg, label, k.W - 48, k.H - 31, 9, k.sans, k.light); };
+  k.mini = (pg, label) => { pg.drawRectangle({ x: 0, y: k.H - 50, width: k.W, height: 50, color: k.ink }); pg.drawRectangle({ x: 0, y: k.H - 52, width: k.W, height: 2, color: k.brass }); const x = k.brand(pg, k.H - 25, k.logoImg ? 28 : 0); k.tx(pg, 'AN COMMITTEES', x, k.H - 32, 15, k.ser, k.brass); k.rt(pg, label, k.W - 48, k.H - 31, 9, k.sans, k.light); };
   k.stamp = (pg, cx, cy, a, b) => {
     pg.drawCircle({ x: cx, y: cy, size: 44, borderColor: k.brassD, borderWidth: 2, opacity: 0 }); pg.drawCircle({ x: cx, y: cy, size: 38, borderColor: k.brassD, borderWidth: .8, opacity: 0 });
     k.ct(pg, a, cx, cy + 2, 10.5, k.sansB, k.brassD); pg.drawRectangle({ x: cx - 20, y: cy - 5, width: 40, height: .8, color: k.brassD }); k.ct(pg, b, cx, cy - 18, 9, k.sansB, k.brassD);
